@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	colTitleIndex         = "#"
-	colTitleContainerName = "Container"
-	colTitlePassedFailed  = "Passed/Failed"
-	rowHeader             = table.Row{colTitleContainerName, colTitlePassedFailed}
+	colTitleIndex        = "#"
+	colTitleExeName      = "Executable Name"
+	colTitlePassedFailed = "Passed/Failed"
+	rowHeader            = table.Row{colTitleExeName, colTitlePassedFailed}
 )
 
 func printResults(results []*ScanResults) {

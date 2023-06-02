@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"log"
@@ -93,6 +94,22 @@ func main() {
 	}
 
 	printResults(runs)
+
+	if isFailed(runs) {
+		fmt.Println("Test failed")
+		os.Exit(1)
+	}
+}
+
+func isFailed(results []*ScanResults) bool {
+	for _, result := range results {
+		for _, res := range result.Items {
+			if !res.ScanPassed {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func DownloadArtifactPods(url string) (*ArtifactPod, error) {
