@@ -6,15 +6,17 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/gabriel-vasile/mimetype"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -52,22 +54,12 @@ func main() {
 	defer cancel()
 	for i, pod := range apods.Items {
 		for _, container := range pod.Spec.Containers {
-			var entryPoint string
-			var err error
-			if len(container.Command) == 0 {
-				// need to use entrypoint of image
-				entryPoint, err = fetchImageEntryPoint(ctx, container.Image)
-			} else {
-				entryPoint, err = resolveEntryPoint(ctx, container.Image, container.Command[0])
+			if err := validateContainer(ctx, &container); err != nil {
+				log.Fatal(err)
 			}
-			if err != nil {
-				log.Printf("Error: %v", err)
-				continue
-			}
-			fmt.Printf("entryPoint: %v\n", entryPoint)
-			copyImageFileToHost(ctx, pod.Name, container.Name, container.Image, entryPoint)
 		}
 		log.Printf("Completed %d pods of %d", i+1, len(apods.Items))
+		os.Exit(1)
 	}
 }
 
@@ -100,56 +92,104 @@ func ReadArtifactPods(filename string) (*ArtifactPod, error) {
 	return apod, nil
 }
 
-func resolveEntryPoint(ctx context.Context, image string, command string) (string, error) {
-	cmdArgs := []string{"run", "--rm", "--entrypoint", "which", image, command}
-	exe := "podman"
-	fmt.Printf("cmd args: %v %v\n", exe, cmdArgs)
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, exe, cmdArgs...)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(stdout.String()), nil
+var ignoredMimes = []string{
+	"application/gzip",
+	"application/json",
+	"application/octet-stream",
+	"application/tzif",
+	"application/vnd.sqlite3",
+	"application/x-sharedlib",
+	"application/zip",
+	"text/csv",
+	"text/html",
+	"text/plain",
+	"text/tab-separated-values",
+	"text/xml",
+	"text/x-python",
 }
 
-func fetchImageEntryPoint(ctx context.Context, image string) (string, error) {
-	//log.Printf("Pulling %v", image)
-	cmd := exec.CommandContext(ctx, "podman", "pull", image)
-	if err := cmd.Run(); err != nil {
-		return "", err
+func validateContainer(ctx context.Context, c *corev1.Container) error {
+	// pull
+	if err := podmanPull(ctx, c.Image); err != nil {
+		return err
 	}
-	var stdout bytes.Buffer
-	cmd = exec.CommandContext(ctx, "podman", "image", "inspect", image, "--format", "{{ (index .Config.Entrypoint 0) }}")
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(stdout.String()), nil
-}
-
-func copyImageFileToHost(ctx context.Context, podName string, containerName string, image string, entryPoint string) error {
-	wd, err := os.Getwd()
+	// create
+	createID, err := podmanCreate(ctx, c.Image)
 	if err != nil {
 		return err
 	}
+	// mount
+	mountPath, err := podmanMount(ctx, createID)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		podmanUnmount(ctx, createID)
+	}()
 
-	localMountPoint := path.Join(wd, "binaries")
-	if err := os.Mkdir(localMountPoint, 0770); err != nil {
-		if !os.IsExist(err) {
+	// business logic for scan
+	if err := filepath.WalkDir(mountPath, func(path string, file fs.DirEntry, err error) error {
+		if err != nil {
 			return err
 		}
+		if file.IsDir() {
+			return nil
+		}
+		if !file.Type().IsRegular() {
+			return nil
+		}
+		mtype, err := mimetype.DetectFile(path)
+		if err != nil {
+			return err
+		}
+		if mimetype.EqualsAny(mtype.String(), ignoredMimes...) {
+			return nil
+		}
+		if mtype.Is("text/plain") || mtype.Is("text/csv") {
+			return nil
+		}
+		fmt.Printf("Need to scan %v (type=%v)\n", path, mtype.String())
+		return nil
+	}); err != nil {
+		log.Fatal(err)
+		return err
 	}
 
-	remoteMountPoint := "/binaries"
-	mountArg := fmt.Sprintf("%v:%v", localMountPoint, remoteMountPoint)
-	localName := path.Join(remoteMountPoint, fmt.Sprintf("%v-%v-%v", podName, containerName, path.Base(entryPoint)))
+	fmt.Printf("Checked Container %v", c.Name)
 
-	exe := "podman"
-	cmdArgs := []string{"run", "--rm", "--entrypoint", "cp", "-v", mountArg, image, entryPoint, localName}
-	fmt.Printf("cp: %v", cmdArgs)
-	cmd := exec.CommandContext(ctx, exe, cmdArgs...)
-	cmd.Stdout = os.Stdout
+	return nil
+}
+
+func podmanCreate(ctx context.Context, image string) (string, error) {
+	var stdout bytes.Buffer
+	cmd := exec.CommandContext(ctx, "podman", "create", image)
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(stdout.String()), nil
+}
+
+func podmanUnmount(ctx context.Context, id string) error {
+	cmd := exec.CommandContext(ctx, "podman", "unmount", id)
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func podmanMount(ctx context.Context, id string) (string, error) {
+	var stdout bytes.Buffer
+	cmd := exec.CommandContext(ctx, "podman", "mount", id)
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(stdout.String()), nil
+}
+
+func podmanPull(ctx context.Context, image string) error {
+	cmd := exec.CommandContext(ctx, "podman", "pull", image)
 	if err := cmd.Run(); err != nil {
 		return err
 	}
