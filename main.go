@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"log"
@@ -23,6 +22,15 @@ import (
 type ArtifactPod struct {
 	ApiVersion string       `json:"apiVersion"`
 	Items      []corev1.Pod `json:"items"`
+}
+
+type ScanResult struct {
+	Path       string
+	ScanPassed bool
+}
+
+type ScanResults struct {
+	Items []*ScanResult
 }
 
 const (
@@ -68,15 +76,23 @@ func main() {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Hour)
 	defer cancel()
-	for _, pod := range apods.Items {
+
+	max := 5
+	var runs []*ScanResults
+	for i, pod := range apods.Items {
 		for _, container := range pod.Spec.Containers {
-			if err := validateContainer(ctx, &container); err != nil {
+			scanResults, err := validateContainer(ctx, &container)
+			if err != nil {
 				log.Fatal(err)
 			}
+			runs = append(runs, scanResults)
 		}
-		//log.Printf("Completed %d pods of %d", i+1, len(apods.Items))
-		//os.Exit(1)
+		if i == max {
+			break
+		}
 	}
+
+	printResults(runs)
 }
 
 func DownloadArtifactPods(url string) (*ArtifactPod, error) {
@@ -108,24 +124,26 @@ func ReadArtifactPods(filename string) (*ArtifactPod, error) {
 	return apod, nil
 }
 
-func validateContainer(ctx context.Context, c *corev1.Container) error {
+func validateContainer(ctx context.Context, c *corev1.Container) (*ScanResults, error) {
 	// pull
 	if err := podmanPull(ctx, c.Image); err != nil {
-		return err
+		return nil, err
 	}
 	// create
 	createID, err := podmanCreate(ctx, c.Image)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// mount
 	mountPath, err := podmanMount(ctx, createID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func() {
 		podmanUnmount(ctx, createID)
 	}()
+
+	results := &ScanResults{}
 
 	// business logic for scan
 	if err := filepath.WalkDir(mountPath, func(path string, file fs.DirEntry, err error) error {
@@ -148,14 +166,21 @@ func validateContainer(ctx context.Context, c *corev1.Container) error {
 		if mtype.Is("text/plain") || mtype.Is("text/csv") {
 			return nil
 		}
-		fmt.Printf("Need to scan %v (type=%v)\n", path, mtype.String())
+		results.Items = append(results.Items, scanBinary(ctx, path))
 		return nil
 	}); err != nil {
 		log.Fatal(err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return results, nil
+}
+
+func scanBinary(ctx context.Context, path string) *ScanResult {
+	result := &ScanResult{}
+	result.Path = filepath.Base(path)
+	result.ScanPassed = true
+	return result
 }
 
 func podmanCreate(ctx context.Context, image string) (string, error) {
