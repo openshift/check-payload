@@ -29,6 +29,22 @@ const (
 	defaultPodsFilename = "pods.json"
 )
 
+var ignoredMimes = []string{
+	"application/gzip",
+	"application/json",
+	"application/octet-stream",
+	"application/tzif",
+	"application/vnd.sqlite3",
+	"application/x-sharedlib",
+	"application/zip",
+	"text/csv",
+	"text/html",
+	"text/plain",
+	"text/tab-separated-values",
+	"text/xml",
+	"text/x-python",
+}
+
 func main() {
 	var help = flag.Bool("help", false, "Show help")
 	var fromUrl = flag.String("url", "", "http URL to pull pods.json from")
@@ -52,14 +68,14 @@ func main() {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Hour)
 	defer cancel()
-	for i, pod := range apods.Items {
+	for _, pod := range apods.Items {
 		for _, container := range pod.Spec.Containers {
 			if err := validateContainer(ctx, &container); err != nil {
 				log.Fatal(err)
 			}
 		}
-		log.Printf("Completed %d pods of %d", i+1, len(apods.Items))
-		os.Exit(1)
+		//log.Printf("Completed %d pods of %d", i+1, len(apods.Items))
+		//os.Exit(1)
 	}
 }
 
@@ -90,22 +106,6 @@ func ReadArtifactPods(filename string) (*ArtifactPod, error) {
 		return nil, err
 	}
 	return apod, nil
-}
-
-var ignoredMimes = []string{
-	"application/gzip",
-	"application/json",
-	"application/octet-stream",
-	"application/tzif",
-	"application/vnd.sqlite3",
-	"application/x-sharedlib",
-	"application/zip",
-	"text/csv",
-	"text/html",
-	"text/plain",
-	"text/tab-separated-values",
-	"text/xml",
-	"text/x-python",
 }
 
 func validateContainer(ctx context.Context, c *corev1.Container) error {
@@ -154,8 +154,6 @@ func validateContainer(ctx context.Context, c *corev1.Container) error {
 		log.Fatal(err)
 		return err
 	}
-
-	fmt.Printf("Checked Container %v", c.Name)
 
 	return nil
 }
