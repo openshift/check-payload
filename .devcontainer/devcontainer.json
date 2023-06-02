@@ -1,0 +1,13 @@
+{
+	"image": "registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.19-openshift-4.13",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"golang.go"
+			]
+		}
+	},
+	"forwardPorts": [
+		3000
+	]
+}
