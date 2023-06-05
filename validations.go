@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"debug/elf"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -13,7 +14,8 @@ import (
 )
 
 var (
-	ErrNotGolangExe = errors.New("not golang executable")
+	ErrNotGolangExe  = errors.New("not golang executable")
+	ErrNotExecutable = errors.New("not a regular executable")
 )
 
 type ValidationFn func(ctx context.Context, container *corev1.Container, path string) error
@@ -77,13 +79,24 @@ func isGoExecutable(ctx context.Context, path string) error {
 	if err := cmd.Run(); err != nil {
 		return err
 	}
-
 	goVersionRegex := regexp.MustCompile(`.*:\s+go.*`)
 	if isGo := goVersionRegex.Match(stdout.Bytes()); isGo {
 		return nil
 	}
 
 	return ErrNotGolangExe
+}
+
+func isExecutable(ctx context.Context, path string) error {
+	exe, err := elf.Open(path)
+	if err != nil {
+		return err
+	}
+	defer exe.Close()
+	if exe.Type != elf.ET_EXEC {
+		return ErrNotExecutable
+	}
+	return nil
 }
 
 func scanBinary(ctx context.Context, pod *corev1.Pod, container *corev1.Container, path string) *ScanResult {
@@ -104,7 +117,7 @@ func scanBinary(ctx context.Context, pod *corev1.Pod, container *corev1.Containe
 				return NewScanResultByPod(pod).SetBinaryPath(path).SetError(err)
 			}
 		}
-	} else {
+	} else if isExecutable(ctx, path) == nil {
 		// is a regular binary
 		for _, fn := range exeFn {
 			if err := fn(ctx, container, path); err != nil {

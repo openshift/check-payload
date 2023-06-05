@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
@@ -59,17 +60,37 @@ var requiredGolangSymbols = []string{
 	"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 }
 
+type Config struct {
+	FromURL      string
+	FromFile     string
+	Limit        int
+	TimeLimit    time.Duration
+	Parallelism  int
+	OutputFormat string
+}
+
 func main() {
 	var help = flag.Bool("help", false, "show help")
 	var fromUrl = flag.String("url", "", "http URL to pull pods.json from")
 	var fromFile = flag.String("file", defaultPodsFilename, "")
-	var limit = flag.Int64("limit", 0, "limit the number of pods scanned")
+	var limit = flag.Int("limit", 0, "limit the number of pods scanned")
 	var timeLimit = flag.Duration("time-limit", 1*time.Hour, "limit running time")
+	var parallelism = flag.Int("parallelism", 5, "how many pods to check at once")
+	var outputFormat = flag.String("output-format", "table", "output format (table, csv, markdown)")
 
 	flag.Parse()
 	if *help {
 		flag.Usage()
 		os.Exit(0)
+	}
+
+	config := Config{
+		FromURL:      *fromUrl,
+		FromFile:     *fromFile,
+		Limit:        *limit,
+		TimeLimit:    *timeLimit,
+		Parallelism:  *parallelism,
+		OutputFormat: *outputFormat,
 	}
 
 	klog.InitFlags(nil)
@@ -82,11 +103,12 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), *timeLimit)
 	defer cancel()
 
-	results := run(ctx, *limit, apods)
-	printResults(results)
+	results := run(ctx, &config, apods)
+	fmt.Println("---")
+	printResults(&config, results)
 
 	if isFailed(results) {
-		klog.Fatal("test failed")
+		os.Exit(1)
 	}
 }
 
@@ -99,15 +121,17 @@ type Result struct {
 	Results *ScanResults
 }
 
-func run(ctx context.Context, limit int64, apods *ArtifactPod) []*ScanResults {
+func run(ctx context.Context, config *Config, apods *ArtifactPod) []*ScanResults {
 	var runs []*ScanResults
 
-	parallelism := 1
+	parallelism := config.Parallelism
+	limit := config.Limit
+
 	tx := make(chan *Request, parallelism)
 	rx := make(chan *Result, parallelism)
 	var wg sync.WaitGroup
 
-	wg.Add(parallelism)
+	wg.Add(config.Parallelism)
 	for i := 0; i < parallelism; i++ {
 		go func() {
 			scan(ctx, tx, rx)
@@ -124,7 +148,7 @@ func run(ctx context.Context, limit int64, apods *ArtifactPod) []*ScanResults {
 
 	for i, pod := range apods.Items {
 		tx <- &Request{Pod: &pod}
-		if limit != 0 && int64(i) == limit {
+		if limit != 0 && int(i) == limit {
 			break
 		}
 	}

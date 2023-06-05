@@ -14,7 +14,7 @@ var (
 	rowHeader            = table.Row{colTitleNamespace, colTitlePodName, colTitleExeName, colTitlePassedFailed}
 )
 
-func printResults(results []*ScanResults) {
+func printResults(cfg *Config, results []*ScanResults) {
 	var tableRows []table.Row
 
 	for _, result := range results {
@@ -32,5 +32,12 @@ func printResults(results []*ScanResults) {
 	tw.AppendRows(tableRows)
 	tw.SetIndexColumn(1)
 
-	fmt.Println(tw.Render())
+	switch cfg.OutputFormat {
+	case "table":
+		fmt.Println(tw.Render())
+	case "csv":
+		fmt.Println(tw.RenderCSV())
+	case "markdown":
+		fmt.Println(tw.RenderMarkdown())
+	}
 }
