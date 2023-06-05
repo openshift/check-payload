@@ -28,16 +28,15 @@ var validationFns = map[string][]ValidationFn{
 	"exe": {
 		validateExe,
 	},
-	"all": {},
 }
 
 func validateGoSymbols(ctx context.Context, container *corev1.Container, path string) error {
 	symtable, err := readTable(path)
 	if err != nil {
-		return fmt.Errorf("expected symbols not found for %v: %v", filepath.Base(path), err)
+		return fmt.Errorf("go: expected symbols not found for %v: %v", filepath.Base(path), err)
 	}
 	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
-		return fmt.Errorf("expected symbols not found for %v: %v", filepath.Base(path), err)
+		return fmt.Errorf("go: expected symbols not found for %v: %v", filepath.Base(path), err)
 	}
 	return nil
 }
@@ -51,7 +50,7 @@ func validateGoVersion(ctx context.Context, container *corev1.Container, path st
 	}
 
 	if !bytes.Contains(stdout.Bytes(), []byte("CGO_ENABLED")) || !bytes.Contains(stdout.Bytes(), []byte("ldflags")) {
-		return fmt.Errorf("binary is not CGO_ENABLED or static with ldflags")
+		return fmt.Errorf("go: binary is not CGO_ENABLED or static with ldflags")
 	}
 
 	return nil
@@ -66,7 +65,7 @@ func validateExe(ctx context.Context, container *corev1.Container, path string) 
 	}
 
 	if !bytes.Contains(stdout.Bytes(), []byte("Shared library: [libdl")) {
-		return fmt.Errorf("binary is not dynamic executable with libdl")
+		return fmt.Errorf("exe: binary is not dynamic executable with libdl")
 	}
 
 	return nil

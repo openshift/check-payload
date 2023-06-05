@@ -57,6 +57,7 @@ var ignoredMimes = []string{
 
 var requiredGolangSymbols = []string{
 	"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
+	"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 }
 
 type Config struct {
