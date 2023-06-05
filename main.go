@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
@@ -67,6 +66,7 @@ type Config struct {
 	TimeLimit    time.Duration
 	Parallelism  int
 	OutputFormat string
+	OutputFile   string
 }
 
 func main() {
@@ -76,7 +76,8 @@ func main() {
 	var limit = flag.Int("limit", 0, "limit the number of pods scanned")
 	var timeLimit = flag.Duration("time-limit", 1*time.Hour, "limit running time")
 	var parallelism = flag.Int("parallelism", 5, "how many pods to check at once")
-	var outputFormat = flag.String("output-format", "table", "output format (table, csv, markdown)")
+	var outputFormat = flag.String("output-format", "html", "output format (table, csv, markdown, html)")
+	var outputFile = flag.String("output-file", "", "write report to this file")
 
 	flag.Parse()
 	if *help {
@@ -91,6 +92,7 @@ func main() {
 		TimeLimit:    *timeLimit,
 		Parallelism:  *parallelism,
 		OutputFormat: *outputFormat,
+		OutputFile:   *outputFile,
 	}
 
 	klog.InitFlags(nil)
@@ -104,10 +106,9 @@ func main() {
 	defer cancel()
 
 	results := run(ctx, &config, apods)
-	fmt.Println("---")
-	printResults(&config, results)
+	err = printResults(&config, results)
 
-	if isFailed(results) {
+	if err != nil || isFailed(results) {
 		os.Exit(1)
 	}
 }
