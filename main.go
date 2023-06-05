@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -24,8 +25,11 @@ type ArtifactPod struct {
 }
 
 type ScanResult struct {
-	Path  string
-	Error error
+	PodNamespace  string
+	PodName       string
+	ContainerName string
+	Path          string
+	Error         error
 }
 
 type ScanResults struct {
@@ -53,7 +57,7 @@ var ignoredMimes = []string{
 }
 
 var requiredGolangSymbols = []string{
-	"vendor/github.com/golang-fips/openssl-fips/openssl.init",
+	"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 }
 
 func main() {
@@ -79,29 +83,68 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), *timeLimit)
 	defer cancel()
 
-	runs := run(ctx, *limit, apods)
-	printResults(runs)
+	results := run(ctx, *limit, apods)
+	printResults(results)
 
-	if isFailed(runs) {
+	if isFailed(results) {
 		klog.Fatal("test failed")
 	}
 }
 
+type Request struct {
+	Pod *corev1.Pod
+}
+
+type Result struct {
+	Pod     *corev1.Pod
+	Results *ScanResults
+}
+
 func run(ctx context.Context, limit int64, apods *ArtifactPod) []*ScanResults {
 	var runs []*ScanResults
-	for i, pod := range apods.Items {
-		for _, container := range pod.Spec.Containers {
-			scanResults, err := validateContainer(ctx, &container)
-			if err != nil {
-				klog.Errorf("error with pod %v/%v %v\n", pod.Namespace, pod.Name, err)
-			}
-			runs = append(runs, scanResults)
+
+	parallelism := 1
+	tx := make(chan *Request, parallelism)
+	rx := make(chan *Result, parallelism)
+	var wg sync.WaitGroup
+
+	wg.Add(parallelism)
+	for i := 0; i < parallelism; i++ {
+		go func() {
+			scan(ctx, tx, rx)
+			wg.Done()
+		}()
+	}
+
+	go func() {
+		for res := range rx {
+			runs = append(runs, res.Results)
 		}
+		close(rx)
+	}()
+
+	for i, pod := range apods.Items {
+		tx <- &Request{Pod: &pod}
 		if limit != 0 && int64(i) == limit {
 			break
 		}
 	}
+
+	close(tx)
+	wg.Wait()
+
 	return runs
+}
+
+func scan(ctx context.Context, tx <-chan *Request, rx chan<- *Result) {
+	for req := range tx {
+		validatePod(ctx, req.Pod, rx)
+	}
+}
+
+func validatePod(ctx context.Context, pod *corev1.Pod, rx chan<- *Result) {
+	result := validateContainers(ctx, pod)
+	rx <- &Result{Results: result}
 }
 
 func getPods(fromUrl *string, fromFile *string) (*ArtifactPod, error) {
@@ -155,102 +198,126 @@ func ReadArtifactPods(filename string) (*ArtifactPod, error) {
 	return apod, nil
 }
 
-func validateContainer(ctx context.Context, c *corev1.Container) (*ScanResults, error) {
-	// pull
-	if err := podmanPull(ctx, c.Image); err != nil {
-		return nil, err
-	}
-	// create
-	createID, err := podmanCreate(ctx, c.Image)
-	if err != nil {
-		return nil, err
-	}
-	// mount
-	mountPath, err := podmanMount(ctx, createID)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		podmanUnmount(ctx, createID)
-	}()
-
+func validateContainers(ctx context.Context, pod *corev1.Pod) *ScanResults {
 	results := &ScanResults{}
 
-	// business logic for scan
-	if err := filepath.WalkDir(mountPath, func(path string, file fs.DirEntry, err error) error {
+	for _, c := range pod.Spec.Containers {
+		// pull
+		if err := podmanPull(ctx, c.Image); err != nil {
+			results.Items = append(results.Items, NewScanResultByPod(pod).SetError(err))
+			continue
+		}
+		// create
+		createID, err := podmanCreate(ctx, c.Image)
 		if err != nil {
-			return err
+			results.Items = append(results.Items, NewScanResultByPod(pod).SetError(err))
+			continue
 		}
-		if file.IsDir() {
-			return nil
-		}
-		if !file.Type().IsRegular() {
-			return nil
-		}
-		mtype, err := mimetype.DetectFile(path)
+		// mount
+		mountPath, err := podmanMount(ctx, createID)
 		if err != nil {
-			return err
+			results.Items = append(results.Items, NewScanResultByPod(pod).SetError(err))
+			continue
 		}
-		if mimetype.EqualsAny(mtype.String(), ignoredMimes...) {
+		defer func() {
+			podmanUnmount(ctx, createID)
+		}()
+
+		// business logic for scan
+		if err := filepath.WalkDir(mountPath, func(path string, file fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if file.IsDir() {
+				return nil
+			}
+			if !file.Type().IsRegular() {
+				return nil
+			}
+			mtype, err := mimetype.DetectFile(path)
+			if err != nil {
+				return err
+			}
+			if mimetype.EqualsAny(mtype.String(), ignoredMimes...) {
+				return nil
+			}
+			printablePath := filepath.Base(path)
+			klog.InfoS("scanning image", "image", c.Image, "path", printablePath)
+			res := scanBinary(ctx, pod, &c, path)
+			if res.Error == nil {
+				klog.InfoS("scanning success", "image", c.Image, "path", printablePath, "status", "success")
+			} else {
+				klog.InfoS("scanning failed", "image", c.Image, "path", printablePath, "error", res.Error, "status", "failed")
+			}
+			results.Items = append(results.Items, res)
 			return nil
+		}); err != nil {
+			return results
 		}
-		printablePath := filepath.Base(path)
-		klog.InfoS("scanning image", "image", c.Image, "path", printablePath)
-		res := scanBinary(ctx, path)
-		if res.Error == nil {
-			klog.InfoS("scanning success", "image", c.Image, "path", printablePath, "status", "success")
-		} else {
-			klog.InfoS("scanning failed", "image", c.Image, "path", printablePath, "error", res.Error, "status", "failed")
-		}
-		results.Items = append(results.Items, res)
-		return nil
-	}); err != nil {
-		return nil, err
 	}
 
-	return results, nil
+	return results
 }
 
-type ValidationFn func(ctx context.Context, path string) error
+type ValidationFn func(ctx context.Context, container *corev1.Container, path string) error
 
 var validationFns = map[string][]ValidationFn{
 	"go":  {validateGoSymbols},
 	"all": {},
 }
 
-func validateGoSymbols(ctx context.Context, path string) error {
+func validateGoSymbols(ctx context.Context, container *corev1.Container, path string) error {
 	symtable, err := readTable(path)
 	if err != nil {
-		return fmt.Errorf("expected symbols not found for %v: %v", path, err)
+		return fmt.Errorf("expected symbols not found for %v: %v", filepath.Base(path), err)
 	}
 	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
-		return fmt.Errorf("expected symbols not found for %v: %v", path, err)
+		return fmt.Errorf("expected symbols not found for %v: %v", filepath.Base(path), err)
 	}
 	return nil
 }
 
-func NewScanResult(path string, err error) *ScanResult {
+func NewScanResult() *ScanResult {
+	return &ScanResult{}
+}
+
+func NewScanResultByPod(pod *corev1.Pod) *ScanResult {
 	return &ScanResult{
-		Path:  path,
-		Error: err,
+		PodNamespace: pod.Namespace,
+		PodName:      pod.Name,
 	}
 }
 
-func scanBinary(ctx context.Context, path string) *ScanResult {
+func (r *ScanResult) Success() *ScanResult {
+	r.Error = nil
+	return r
+}
+
+func (r *ScanResult) SetError(err error) *ScanResult {
+	r.Error = err
+	return r
+}
+
+func (r *ScanResult) SetBinaryPath(path string) *ScanResult {
+	r.Path = filepath.Base(path)
+	return r
+}
+
+func scanBinary(ctx context.Context, pod *corev1.Pod, container *corev1.Container, path string) *ScanResult {
 	var allFn = validationFns["all"]
 	var goFn = validationFns["go"]
 
 	for _, fn := range allFn {
-		if err := fn(ctx, path); err != nil {
-			return NewScanResult(path, err)
+		if err := fn(ctx, container, path); err != nil {
+			return NewScanResult().SetBinaryPath(path).SetError(err)
 		}
 	}
 
 	for _, fn := range goFn {
-		if err := fn(ctx, path); err != nil {
-			return NewScanResult(path, err)
+		if err := fn(ctx, container, path); err != nil {
+			return NewScanResultByPod(pod).SetBinaryPath(path).SetError(err)
 		}
 	}
 
-	return NewScanResult(path, nil)
+	return NewScanResultByPod(pod).SetBinaryPath(path).Success()
 }

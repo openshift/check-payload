@@ -10,7 +10,7 @@ import (
 )
 
 func podmanCreate(ctx context.Context, image string) (string, error) {
-	klog.Infof("podman: create %v", image)
+	klog.InfoS("podman: create", "image", image)
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "podman", "create", image)
 	cmd.Stdout = &stdout
@@ -21,7 +21,7 @@ func podmanCreate(ctx context.Context, image string) (string, error) {
 }
 
 func podmanUnmount(ctx context.Context, id string) error {
-	klog.Infof("podman: unmount %v", id)
+	klog.InfoS("podman: unmount", "id", id)
 	cmd := exec.CommandContext(ctx, "podman", "unmount", id)
 	if err := cmd.Run(); err != nil {
 		return err
@@ -30,7 +30,7 @@ func podmanUnmount(ctx context.Context, id string) error {
 }
 
 func podmanMount(ctx context.Context, id string) (string, error) {
-	klog.Infof("podman: mount%v", id)
+	klog.InfoS("podman: mount", "id", id)
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "podman", "mount", id)
 	cmd.Stdout = &stdout
@@ -41,7 +41,7 @@ func podmanMount(ctx context.Context, id string) (string, error) {
 }
 
 func podmanPull(ctx context.Context, image string) error {
-	klog.Infof("podman: pull %v", image)
+	klog.InfoS("podman: pull", "image", image)
 	cmd := exec.CommandContext(ctx, "podman", "pull", image)
 	if err := cmd.Run(); err != nil {
 		return err

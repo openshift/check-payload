@@ -7,9 +7,11 @@ import (
 )
 
 var (
+	colTitleNamespace    = "Namespace"
+	colTitlePodName      = "Pod Name"
 	colTitleExeName      = "Executable Name"
-	colTitlePassedFailed = "Error"
-	rowHeader            = table.Row{colTitleExeName, colTitlePassedFailed}
+	colTitlePassedFailed = "Status"
+	rowHeader            = table.Row{colTitleNamespace, colTitlePodName, colTitleExeName, colTitlePassedFailed}
 )
 
 func printResults(results []*ScanResults) {
@@ -17,7 +19,11 @@ func printResults(results []*ScanResults) {
 
 	for _, result := range results {
 		for _, res := range result.Items {
-			tableRows = append(tableRows, table.Row{res.Path, res.Error})
+			if res.Error == nil {
+				tableRows = append(tableRows, table.Row{res.PodNamespace, res.PodName, res.Path, "ok"})
+			} else {
+				tableRows = append(tableRows, table.Row{res.PodNamespace, res.PodName, res.Path, res.Error})
+			}
 		}
 	}
 
