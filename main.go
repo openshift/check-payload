@@ -229,19 +229,19 @@ func validateContainers(ctx context.Context, pod *corev1.Pod) *ScanResults {
 	for _, c := range pod.Spec.Containers {
 		// pull
 		if err := podmanPull(ctx, c.Image); err != nil {
-			results.Items = append(results.Items, NewScanResultByPod(pod).SetError(err))
+			results.Items = append(results.Items, NewScanResult().SetPod(pod).SetError(err))
 			continue
 		}
 		// create
 		createID, err := podmanCreate(ctx, c.Image)
 		if err != nil {
-			results.Items = append(results.Items, NewScanResultByPod(pod).SetError(err))
+			results.Items = append(results.Items, NewScanResult().SetPod(pod).SetError(err))
 			continue
 		}
 		// mount
 		mountPath, err := podmanMount(ctx, createID)
 		if err != nil {
-			results.Items = append(results.Items, NewScanResultByPod(pod).SetError(err))
+			results.Items = append(results.Items, NewScanResult().SetPod(pod).SetError(err))
 			continue
 		}
 		defer func() {
@@ -288,13 +288,6 @@ func NewScanResult() *ScanResult {
 	return &ScanResult{}
 }
 
-func NewScanResultByPod(pod *corev1.Pod) *ScanResult {
-	return &ScanResult{
-		PodNamespace: pod.Namespace,
-		PodName:      pod.Name,
-	}
-}
-
 func (r *ScanResult) Success() *ScanResult {
 	r.Error = nil
 	return r
@@ -302,6 +295,12 @@ func (r *ScanResult) Success() *ScanResult {
 
 func (r *ScanResult) SetError(err error) *ScanResult {
 	r.Error = err
+	return r
+}
+
+func (r *ScanResult) SetPod(pod *corev1.Pod) *ScanResult {
+	r.PodNamespace = pod.Namespace
+	r.PodName = pod.Name
 	return r
 }
 

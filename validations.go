@@ -113,17 +113,17 @@ func scanBinary(ctx context.Context, pod *corev1.Pod, container *corev1.Containe
 	if isGoExecutable(ctx, path) == nil {
 		for _, fn := range goFn {
 			if err := fn(ctx, container, path); err != nil {
-				return NewScanResultByPod(pod).SetBinaryPath(path).SetError(err)
+				return NewScanResult().SetPod(pod).SetBinaryPath(path).SetError(err)
 			}
 		}
 	} else if isExecutable(ctx, path) == nil {
 		// is a regular binary
 		for _, fn := range exeFn {
 			if err := fn(ctx, container, path); err != nil {
-				return NewScanResultByPod(pod).SetBinaryPath(path).SetError(err)
+				return NewScanResult().SetPod(pod).SetBinaryPath(path).SetError(err)
 			}
 		}
 	}
 
-	return NewScanResultByPod(pod).SetBinaryPath(path).Success()
+	return NewScanResult().SetPod(pod).SetBinaryPath(path).Success()
 }
