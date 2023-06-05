@@ -1,20 +1,18 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
+
+	"k8s.io/klog/v2"
 
 	"github.com/gabriel-vasile/mimetype"
 	corev1 "k8s.io/api/core/v1"
@@ -26,8 +24,8 @@ type ArtifactPod struct {
 }
 
 type ScanResult struct {
-	Path       string
-	ScanPassed bool
+	Path  string
+	Error error
 }
 
 type ScanResults struct {
@@ -54,10 +52,16 @@ var ignoredMimes = []string{
 	"text/x-python",
 }
 
+var requiredGolangSymbols = []string{
+	"vendor/github.com/golang-fips/openssl-fips/openssl.init",
+}
+
 func main() {
-	var help = flag.Bool("help", false, "Show help")
+	var help = flag.Bool("help", false, "show help")
 	var fromUrl = flag.String("url", "", "http URL to pull pods.json from")
 	var fromFile = flag.String("file", defaultPodsFilename, "")
+	var limit = flag.Int64("limit", 0, "limit the number of pods scanned")
+	var timeLimit = flag.Duration("time-limit", 1*time.Hour, "limit running time")
 
 	flag.Parse()
 	if *help {
@@ -65,6 +69,42 @@ func main() {
 		os.Exit(0)
 	}
 
+	klog.InitFlags(nil)
+
+	apods, err := getPods(fromUrl, fromFile)
+	if err != nil {
+		klog.Fatalf("could not get pods: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), *timeLimit)
+	defer cancel()
+
+	runs := run(ctx, *limit, apods)
+	printResults(runs)
+
+	if isFailed(runs) {
+		klog.Fatal("test failed")
+	}
+}
+
+func run(ctx context.Context, limit int64, apods *ArtifactPod) []*ScanResults {
+	var runs []*ScanResults
+	for i, pod := range apods.Items {
+		for _, container := range pod.Spec.Containers {
+			scanResults, err := validateContainer(ctx, &container)
+			if err != nil {
+				klog.Errorf("error with pod %v/%v %v\n", pod.Namespace, pod.Name, err)
+			}
+			runs = append(runs, scanResults)
+		}
+		if limit != 0 && int64(i) == limit {
+			break
+		}
+	}
+	return runs
+}
+
+func getPods(fromUrl *string, fromFile *string) (*ArtifactPod, error) {
 	var apods *ArtifactPod
 	var err error
 	if *fromUrl != "" {
@@ -72,39 +112,13 @@ func main() {
 	} else {
 		apods, err = ReadArtifactPods(*fromFile)
 	}
-	if err != nil {
-		log.Fatal(err)
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Hour)
-	defer cancel()
-
-	max := 5
-	var runs []*ScanResults
-	for i, pod := range apods.Items {
-		for _, container := range pod.Spec.Containers {
-			scanResults, err := validateContainer(ctx, &container)
-			if err != nil {
-				log.Fatal(err)
-			}
-			runs = append(runs, scanResults)
-		}
-		if i == max {
-			break
-		}
-	}
-
-	printResults(runs)
-
-	if isFailed(runs) {
-		fmt.Println("Test failed")
-		os.Exit(1)
-	}
+	return apods, err
 }
 
 func isFailed(results []*ScanResults) bool {
 	for _, result := range results {
 		for _, res := range result.Items {
-			if !res.ScanPassed {
+			if res.Error != nil {
 				return true
 			}
 		}
@@ -118,7 +132,7 @@ func DownloadArtifactPods(url string) (*ArtifactPod, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -180,58 +194,63 @@ func validateContainer(ctx context.Context, c *corev1.Container) (*ScanResults, 
 		if mimetype.EqualsAny(mtype.String(), ignoredMimes...) {
 			return nil
 		}
-		if mtype.Is("text/plain") || mtype.Is("text/csv") {
-			return nil
+		printablePath := filepath.Base(path)
+		klog.InfoS("scanning image", "image", c.Image, "path", printablePath)
+		res := scanBinary(ctx, path)
+		if res.Error == nil {
+			klog.InfoS("scanning success", "image", c.Image, "path", printablePath, "status", "success")
+		} else {
+			klog.InfoS("scanning failed", "image", c.Image, "path", printablePath, "error", res.Error, "status", "failed")
 		}
-		results.Items = append(results.Items, scanBinary(ctx, path))
+		results.Items = append(results.Items, res)
 		return nil
 	}); err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
 	return results, nil
 }
 
+type ValidationFn func(ctx context.Context, path string) error
+
+var validationFns = map[string][]ValidationFn{
+	"go":  {validateGoSymbols},
+	"all": {},
+}
+
+func validateGoSymbols(ctx context.Context, path string) error {
+	symtable, err := readTable(path)
+	if err != nil {
+		return fmt.Errorf("expected symbols not found for %v: %v", path, err)
+	}
+	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
+		return fmt.Errorf("expected symbols not found for %v: %v", path, err)
+	}
+	return nil
+}
+
+func NewScanResult(path string, err error) *ScanResult {
+	return &ScanResult{
+		Path:  path,
+		Error: err,
+	}
+}
+
 func scanBinary(ctx context.Context, path string) *ScanResult {
-	result := &ScanResult{}
-	result.Path = filepath.Base(path)
-	result.ScanPassed = true
-	return result
-}
+	var allFn = validationFns["all"]
+	var goFn = validationFns["go"]
 
-func podmanCreate(ctx context.Context, image string) (string, error) {
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "podman", "create", image)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return "", err
+	for _, fn := range allFn {
+		if err := fn(ctx, path); err != nil {
+			return NewScanResult(path, err)
+		}
 	}
-	return strings.TrimSpace(stdout.String()), nil
-}
 
-func podmanUnmount(ctx context.Context, id string) error {
-	cmd := exec.CommandContext(ctx, "podman", "unmount", id)
-	if err := cmd.Run(); err != nil {
-		return err
+	for _, fn := range goFn {
+		if err := fn(ctx, path); err != nil {
+			return NewScanResult(path, err)
+		}
 	}
-	return nil
-}
 
-func podmanMount(ctx context.Context, id string) (string, error) {
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "podman", "mount", id)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(stdout.String()), nil
-}
-
-func podmanPull(ctx context.Context, image string) error {
-	cmd := exec.CommandContext(ctx, "podman", "pull", image)
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
+	return NewScanResult(path, nil)
 }

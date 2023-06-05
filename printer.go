@@ -7,9 +7,8 @@ import (
 )
 
 var (
-	colTitleIndex        = "#"
 	colTitleExeName      = "Executable Name"
-	colTitlePassedFailed = "Passed/Failed"
+	colTitlePassedFailed = "Error"
 	rowHeader            = table.Row{colTitleExeName, colTitlePassedFailed}
 )
 
@@ -18,9 +17,10 @@ func printResults(results []*ScanResults) {
 
 	for _, result := range results {
 		for _, res := range result.Items {
-			tableRows = append(tableRows, table.Row{res.Path, res.ScanPassed})
+			tableRows = append(tableRows, table.Row{res.Path, res.Error})
 		}
 	}
+
 	tw := table.NewWriter()
 	tw.AppendHeader(rowHeader)
 	tw.AppendRows(tableRows)
