@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
@@ -259,24 +258,6 @@ func validateContainers(ctx context.Context, pod *corev1.Pod) *ScanResults {
 	return results
 }
 
-type ValidationFn func(ctx context.Context, container *corev1.Container, path string) error
-
-var validationFns = map[string][]ValidationFn{
-	"go":  {validateGoSymbols},
-	"all": {},
-}
-
-func validateGoSymbols(ctx context.Context, container *corev1.Container, path string) error {
-	symtable, err := readTable(path)
-	if err != nil {
-		return fmt.Errorf("expected symbols not found for %v: %v", filepath.Base(path), err)
-	}
-	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
-		return fmt.Errorf("expected symbols not found for %v: %v", filepath.Base(path), err)
-	}
-	return nil
-}
-
 func NewScanResult() *ScanResult {
 	return &ScanResult{}
 }
@@ -301,23 +282,4 @@ func (r *ScanResult) SetError(err error) *ScanResult {
 func (r *ScanResult) SetBinaryPath(path string) *ScanResult {
 	r.Path = filepath.Base(path)
 	return r
-}
-
-func scanBinary(ctx context.Context, pod *corev1.Pod, container *corev1.Container, path string) *ScanResult {
-	var allFn = validationFns["all"]
-	var goFn = validationFns["go"]
-
-	for _, fn := range allFn {
-		if err := fn(ctx, container, path); err != nil {
-			return NewScanResult().SetBinaryPath(path).SetError(err)
-		}
-	}
-
-	for _, fn := range goFn {
-		if err := fn(ctx, container, path); err != nil {
-			return NewScanResultByPod(pod).SetBinaryPath(path).SetError(err)
-		}
-	}
-
-	return NewScanResultByPod(pod).SetBinaryPath(path).Success()
 }
