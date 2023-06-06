@@ -48,7 +48,7 @@ func printResults(cfg *Config, results []*ScanResults) error {
 	fmt.Println(report)
 
 	if cfg.OutputFile != "" {
-		if err := os.WriteFile(cfg.OutputFile, []byte(report), 0); err != nil {
+		if err := os.WriteFile(cfg.OutputFile, []byte(report), 0770); err != nil {
 			return fmt.Errorf("could not write file %v : %v", cfg.OutputFile, err)
 		}
 	}
