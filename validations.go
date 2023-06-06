@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	corev1 "k8s.io/api/core/v1"
+	v1 "github.com/openshift/api/image/v1"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 	ErrNotExecutable = errors.New("not a regular executable")
 )
 
-type ValidationFn func(ctx context.Context, container *corev1.Container, path string) error
+type ValidationFn func(ctx context.Context, tag *v1.TagReference, path string) error
 
 var validationFns = map[string][]ValidationFn{
 	"go": {
@@ -30,7 +30,7 @@ var validationFns = map[string][]ValidationFn{
 	},
 }
 
-func validateGoSymbols(ctx context.Context, container *corev1.Container, path string) error {
+func validateGoSymbols(ctx context.Context, tag *v1.TagReference, path string) error {
 	symtable, err := readTable(path)
 	if err != nil {
 		return fmt.Errorf("go: expected symbols not found for %v: %v", filepath.Base(path), err)
@@ -41,7 +41,7 @@ func validateGoSymbols(ctx context.Context, container *corev1.Container, path st
 	return nil
 }
 
-func validateGoVersion(ctx context.Context, container *corev1.Container, path string) error {
+func validateGoVersion(ctx context.Context, tag *v1.TagReference, path string) error {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
 	cmd.Stdout = &stdout
@@ -56,18 +56,16 @@ func validateGoVersion(ctx context.Context, container *corev1.Container, path st
 	return nil
 }
 
-func validateExe(ctx context.Context, container *corev1.Container, path string) error {
+func validateExe(ctx context.Context, tag *v1.TagReference, path string) error {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "readelf", "-d", path)
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
 		return err
 	}
-
 	if !bytes.Contains(stdout.Bytes(), []byte("Shared library: [libdl")) {
 		return fmt.Errorf("exe: binary is not dynamic executable with libdl")
 	}
-
 	return nil
 }
 
@@ -82,7 +80,6 @@ func isGoExecutable(ctx context.Context, path string) error {
 	if isGo := goVersionRegex.Match(stdout.Bytes()); isGo {
 		return nil
 	}
-
 	return ErrNotGolangExe
 }
 
@@ -98,13 +95,13 @@ func isExecutable(ctx context.Context, path string) error {
 	return nil
 }
 
-func scanBinary(ctx context.Context, pod *corev1.Pod, container *corev1.Container, path string) *ScanResult {
+func scanBinary(ctx context.Context, tag *v1.TagReference, path string) *ScanResult {
 	var allFn = validationFns["all"]
 	var goFn = validationFns["go"]
 	var exeFn = validationFns["exe"]
 
 	for _, fn := range allFn {
-		if err := fn(ctx, container, path); err != nil {
+		if err := fn(ctx, tag, path); err != nil {
 			return NewScanResult().SetBinaryPath(path).SetError(err)
 		}
 	}
@@ -112,18 +109,18 @@ func scanBinary(ctx context.Context, pod *corev1.Pod, container *corev1.Containe
 	// is this a go executable
 	if isGoExecutable(ctx, path) == nil {
 		for _, fn := range goFn {
-			if err := fn(ctx, container, path); err != nil {
-				return NewScanResult().SetPod(pod).SetBinaryPath(path).SetError(err)
+			if err := fn(ctx, tag, path); err != nil {
+				return NewScanResult().SetTag(tag).SetBinaryPath(path).SetError(err)
 			}
 		}
 	} else if isExecutable(ctx, path) == nil {
 		// is a regular binary
 		for _, fn := range exeFn {
-			if err := fn(ctx, container, path); err != nil {
-				return NewScanResult().SetPod(pod).SetBinaryPath(path).SetError(err)
+			if err := fn(ctx, tag, path); err != nil {
+				return NewScanResult().SetTag(tag).SetBinaryPath(path).SetError(err)
 			}
 		}
 	}
 
-	return NewScanResult().SetPod(pod).SetBinaryPath(path).Success()
+	return NewScanResult().SetTag(tag).SetBinaryPath(path).Success()
 }

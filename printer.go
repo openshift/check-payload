@@ -8,11 +8,11 @@ import (
 )
 
 var (
-	colTitleNamespace    = "Namespace"
-	colTitlePodName      = "Pod Name"
+	colTitleTagName      = "Tag Name"
 	colTitleExeName      = "Executable Name"
 	colTitlePassedFailed = "Status"
-	rowHeader            = table.Row{colTitleNamespace, colTitlePodName, colTitleExeName, colTitlePassedFailed}
+	colTitleImage        = "Image"
+	rowHeader            = table.Row{colTitleTagName, colTitleExeName, colTitlePassedFailed, colTitleImage}
 )
 
 func printResults(cfg *Config, results []*ScanResults) error {
@@ -23,7 +23,7 @@ func printResults(cfg *Config, results []*ScanResults) error {
 	for _, result := range results {
 		for _, res := range result.Items {
 			if res.Error != nil {
-				tableRows = append(tableRows, table.Row{res.PodNamespace, res.PodName, res.Path, res.Error})
+				tableRows = append(tableRows, table.Row{res.Tag.Name, res.Path, res.Error, res.Tag.From.Name})
 			}
 		}
 	}

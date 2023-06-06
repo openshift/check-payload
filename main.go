@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
-	"io"
 	"io/fs"
-	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sync"
 	"time"
@@ -15,28 +15,12 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/gabriel-vasile/mimetype"
-	corev1 "k8s.io/api/core/v1"
+	v1 "github.com/openshift/api/image/v1"
+	"github.com/openshift/oc/pkg/cli/admin/release"
 )
 
-type ArtifactPod struct {
-	ApiVersion string       `json:"apiVersion"`
-	Items      []corev1.Pod `json:"items"`
-}
-
-type ScanResult struct {
-	PodNamespace  string
-	PodName       string
-	ContainerName string
-	Path          string
-	Error         error
-}
-
-type ScanResults struct {
-	Items []*ScanResult
-}
-
 const (
-	defaultPodsFilename = "pods.json"
+	defaultPayloadFilename = "payload.json"
 )
 
 var ignoredMimes = []string{
@@ -60,24 +44,14 @@ var requiredGolangSymbols = []string{
 	"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 }
 
-type Config struct {
-	FromURL      string
-	FromFile     string
-	Limit        int
-	TimeLimit    time.Duration
-	Parallelism  int
-	OutputFormat string
-	OutputFile   string
-}
-
 func main() {
 	var help = flag.Bool("help", false, "show help")
-	var fromUrl = flag.String("url", "", "http URL to pull pods.json from")
-	var fromFile = flag.String("file", defaultPodsFilename, "")
+	var fromUrl = flag.String("url", "", "http URL to pull payload from")
+	var fromFile = flag.String("file", defaultPayloadFilename, "json file for payload")
 	var limit = flag.Int("limit", 0, "limit the number of pods scanned")
 	var timeLimit = flag.Duration("time-limit", 1*time.Hour, "limit running time")
 	var parallelism = flag.Int("parallelism", 5, "how many pods to check at once")
-	var outputFormat = flag.String("output-format", "html", "output format (table, csv, markdown, html)")
+	var outputFormat = flag.String("output-format", "table", "output format (table, csv, markdown, html)")
 	var outputFile = flag.String("output-file", "", "write report to this file")
 
 	flag.Parse()
@@ -98,7 +72,7 @@ func main() {
 
 	klog.InitFlags(nil)
 
-	apods, err := getPods(fromUrl, fromFile)
+	apods, err := GetPods(&config)
 	if err != nil {
 		klog.Fatalf("could not get pods: %v", err)
 	}
@@ -115,15 +89,15 @@ func main() {
 }
 
 type Request struct {
-	Pod *corev1.Pod
+	Tag *v1.TagReference
 }
 
 type Result struct {
-	Pod     *corev1.Pod
+	Tag     *v1.TagReference
 	Results *ScanResults
 }
 
-func run(ctx context.Context, config *Config, apods *ArtifactPod) []*ScanResults {
+func run(ctx context.Context, config *Config, payload *release.ReleaseInfo) []*ScanResults {
 	var runs []*ScanResults
 
 	parallelism := config.Parallelism
@@ -148,9 +122,10 @@ func run(ctx context.Context, config *Config, apods *ArtifactPod) []*ScanResults
 		close(rx)
 	}()
 
-	for i, pod := range apods.Items {
-		tx <- &Request{Pod: &pod}
-		if limit != 0 && int(i) == limit {
+	for i, tag := range payload.References.Spec.Tags {
+		tag := tag
+		tx <- &Request{Tag: &tag}
+		if limit != 0 && int(i) == limit-1 {
 			break
 		}
 	}
@@ -163,24 +138,13 @@ func run(ctx context.Context, config *Config, apods *ArtifactPod) []*ScanResults
 
 func scan(ctx context.Context, tx <-chan *Request, rx chan<- *Result) {
 	for req := range tx {
-		validatePod(ctx, req.Pod, rx)
+		ValidateTag(ctx, req.Tag, rx)
 	}
 }
 
-func validatePod(ctx context.Context, pod *corev1.Pod, rx chan<- *Result) {
-	result := validateContainers(ctx, pod)
+func ValidateTag(ctx context.Context, tag *v1.TagReference, rx chan<- *Result) {
+	result := validateTag(ctx, tag)
 	rx <- &Result{Results: result}
-}
-
-func getPods(fromUrl *string, fromFile *string) (*ArtifactPod, error) {
-	var apods *ArtifactPod
-	var err error
-	if *fromUrl != "" {
-		apods, err = DownloadArtifactPods(*fromUrl)
-	} else {
-		apods, err = ReadArtifactPods(*fromFile)
-	}
-	return apods, err
 }
 
 func isFailed(results []*ScanResults) bool {
@@ -194,117 +158,102 @@ func isFailed(results []*ScanResults) bool {
 	return false
 }
 
-func DownloadArtifactPods(url string) (*ArtifactPod, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
+func GetPods(config *Config) (*release.ReleaseInfo, error) {
+	var payload *release.ReleaseInfo
+	var err error
+	if config.FromURL != "" {
+		payload, err = DownloadReleaseInfo(config.FromURL)
+	} else {
+		payload, err = ReadReleaseInfo(config.FromFile)
 	}
-	defer resp.Body.Close()
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	apod := &ArtifactPod{}
-	if err := json.Unmarshal([]byte(data), &apod); err != nil {
-		return nil, err
-	}
-	return apod, nil
+	return payload, err
 }
 
-func ReadArtifactPods(filename string) (*ArtifactPod, error) {
+func DownloadReleaseInfo(url string) (*release.ReleaseInfo, error) {
+	// oc adm release info  --output json --pullspecs
+	klog.InfoS("oc adm release info", "url", url)
+	var stdout bytes.Buffer
+	cmd := exec.CommandContext(context.Background(), "oc", "adm", "release", "info", "--output", "json", "--pullspecs", url)
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+	releaseInfo := &release.ReleaseInfo{}
+	if err := json.Unmarshal(stdout.Bytes(), releaseInfo); err != nil {
+		return nil, err
+	}
+	return releaseInfo, nil
+}
+
+func ReadReleaseInfo(filename string) (*release.ReleaseInfo, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	apod := &ArtifactPod{}
-	if err := json.Unmarshal([]byte(data), &apod); err != nil {
+	releaseInfo := &release.ReleaseInfo{}
+	if err := json.Unmarshal([]byte(data), releaseInfo); err != nil {
 		return nil, err
 	}
-	return apod, nil
+	return releaseInfo, nil
 }
 
-func validateContainers(ctx context.Context, pod *corev1.Pod) *ScanResults {
+func validateTag(ctx context.Context, tag *v1.TagReference) *ScanResults {
 	results := &ScanResults{}
 
-	for _, c := range pod.Spec.Containers {
-		// pull
-		if err := podmanPull(ctx, c.Image); err != nil {
-			results.Items = append(results.Items, NewScanResult().SetPod(pod).SetError(err))
-			continue
-		}
-		// create
-		createID, err := podmanCreate(ctx, c.Image)
-		if err != nil {
-			results.Items = append(results.Items, NewScanResult().SetPod(pod).SetError(err))
-			continue
-		}
-		// mount
-		mountPath, err := podmanMount(ctx, createID)
-		if err != nil {
-			results.Items = append(results.Items, NewScanResult().SetPod(pod).SetError(err))
-			continue
-		}
-		defer func() {
-			podmanUnmount(ctx, createID)
-		}()
+	image := tag.From.Name
 
-		// business logic for scan
-		if err := filepath.WalkDir(mountPath, func(path string, file fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if file.IsDir() {
-				return nil
-			}
-			if !file.Type().IsRegular() {
-				return nil
-			}
-			mtype, err := mimetype.DetectFile(path)
-			if err != nil {
-				return err
-			}
-			if mimetype.EqualsAny(mtype.String(), ignoredMimes...) {
-				return nil
-			}
-			printablePath := filepath.Base(path)
-			klog.InfoS("scanning image", "image", c.Image, "path", printablePath)
-			res := scanBinary(ctx, pod, &c, path)
-			if res.Error == nil {
-				klog.InfoS("scanning success", "image", c.Image, "path", printablePath, "status", "success")
-			} else {
-				klog.InfoS("scanning failed", "image", c.Image, "path", printablePath, "error", res.Error, "status", "failed")
-			}
-			results.Items = append(results.Items, res)
-			return nil
-		}); err != nil {
-			return results
+	// pull
+	if err := podmanPull(ctx, image); err != nil {
+		results.Items = append(results.Items, NewScanResult().SetTag(tag).SetError(err))
+		return results
+	}
+	// create
+	createID, err := podmanCreate(ctx, image)
+	if err != nil {
+		results.Items = append(results.Items, NewScanResult().SetTag(tag).SetError(err))
+		return results
+	}
+	// mount
+	mountPath, err := podmanMount(ctx, createID)
+	if err != nil {
+		results.Items = append(results.Items, NewScanResult().SetTag(tag).SetError(err))
+		return results
+	}
+	defer func() {
+		podmanUnmount(ctx, createID)
+	}()
+
+	// business logic for scan
+	if err := filepath.WalkDir(mountPath, func(path string, file fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
+		if file.IsDir() {
+			return nil
+		}
+		if !file.Type().IsRegular() {
+			return nil
+		}
+		mtype, err := mimetype.DetectFile(path)
+		if err != nil {
+			return err
+		}
+		if mimetype.EqualsAny(mtype.String(), ignoredMimes...) {
+			return nil
+		}
+		printablePath := filepath.Base(path)
+		klog.InfoS("scanning tag", "tag", tag)
+		res := scanBinary(ctx, tag, path)
+		if res.Error == nil {
+			klog.InfoS("scanning success", "image", image, "path", printablePath, "status", "success")
+		} else {
+			klog.InfoS("scanning failed", "image", image, "path", printablePath, "error", res.Error, "status", "failed")
+		}
+		results.Items = append(results.Items, res)
+		return nil
+	}); err != nil {
+		return results
 	}
 
 	return results
-}
-
-func NewScanResult() *ScanResult {
-	return &ScanResult{}
-}
-
-func (r *ScanResult) Success() *ScanResult {
-	r.Error = nil
-	return r
-}
-
-func (r *ScanResult) SetError(err error) *ScanResult {
-	r.Error = err
-	return r
-}
-
-func (r *ScanResult) SetPod(pod *corev1.Pod) *ScanResult {
-	r.PodNamespace = pod.Namespace
-	r.PodName = pod.Name
-	return r
-}
-
-func (r *ScanResult) SetBinaryPath(path string) *ScanResult {
-	r.Path = filepath.Base(path)
-	return r
 }
