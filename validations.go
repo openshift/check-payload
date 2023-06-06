@@ -63,6 +63,10 @@ func validateGoVersion(ctx context.Context, tag *v1.TagReference, path string) e
 }
 
 func validateStaticGo(ctx context.Context, path string) error {
+	return isDynamicallyLinked(ctx, path)
+}
+
+func isDynamicallyLinked(ctx context.Context, path string) error {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "file", "-s", path)
 	cmd.Stdout = &stdout
@@ -70,22 +74,13 @@ func validateStaticGo(ctx context.Context, path string) error {
 		return err
 	}
 	if !bytes.Contains(stdout.Bytes(), []byte("dynamically linked")) {
-		return fmt.Errorf("go: executable is statically linked")
+		return fmt.Errorf("exe: executable is statically linked")
 	}
 	return nil
 }
 
-func validateExe(ctx context.Context, tag *v1.TagReference, path string) error {
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "readelf", "-d", path)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	if !bytes.Contains(stdout.Bytes(), []byte("Shared library: [libdl")) {
-		return fmt.Errorf("exe: binary is not dynamic executable with libdl")
-	}
-	return nil
+func validateExe(ctx context.Context, _ *v1.TagReference, path string) error {
+	return isDynamicallyLinked(ctx, path)
 }
 
 func isGoExecutable(ctx context.Context, path string) error {
