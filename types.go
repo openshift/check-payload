@@ -31,6 +31,7 @@ type Config struct {
 	Parallelism  int
 	OutputFormat string
 	OutputFile   string
+	Components   []string
 }
 
 func NewScanResult() *ScanResult {
