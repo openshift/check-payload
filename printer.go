@@ -27,7 +27,7 @@ func printResults(cfg *Config, results []*ScanResults) error {
 	if cfg.Verbose {
 		fmt.Println("---- Success Report")
 		fmt.Println(successReport)
-		combinedReport += "\n\n ---- Success Report"
+		combinedReport += "\n\n ---- Success Report" + successReport
 	}
 
 	if cfg.OutputFile != "" {
@@ -71,6 +71,7 @@ func generateReport(results []*ScanResults, cfg *Config) (string, string) {
 func renderFailures(results []*ScanResults) (failures table.Writer, successes table.Writer) {
 	var failureTableRows []table.Row
 	var successTableRows []table.Row
+
 	for _, result := range results {
 		for _, res := range result.Items {
 			if res.Error != nil {
