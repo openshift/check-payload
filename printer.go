@@ -13,7 +13,8 @@ var (
 	colTitlePassedFailed = "Status"
 	colTitleImage        = "Image"
 	colTitleUsingCrypto  = "Using Crypto"
-	rowHeader            = table.Row{colTitleTagName, colTitleExeName, colTitlePassedFailed, colTitleImage}
+	failureRowHeader     = table.Row{colTitleTagName, colTitleExeName, colTitlePassedFailed, colTitleImage}
+	successRowHeader     = table.Row{colTitleTagName, colTitleExeName, colTitleImage}
 )
 
 func printResults(cfg *Config, results []*ScanResults) error {
@@ -77,18 +78,18 @@ func renderFailures(results []*ScanResults) (failures table.Writer, successes ta
 			if res.Error != nil {
 				failureTableRows = append(failureTableRows, table.Row{res.Tag.Name, res.Path, res.Error, res.Tag.From.Name})
 			} else {
-				successTableRows = append(successTableRows, table.Row{res.Tag.Name, res.Path, "", res.Tag.From.Name})
+				successTableRows = append(successTableRows, table.Row{res.Tag.Name, res.Path, res.Tag.From.Name})
 			}
 		}
 	}
 
 	ftw := table.NewWriter()
-	ftw.AppendHeader(rowHeader)
+	ftw.AppendHeader(failureRowHeader)
 	ftw.AppendRows(failureTableRows)
 	ftw.SetIndexColumn(1)
 
 	stw := table.NewWriter()
-	stw.AppendHeader(rowHeader)
+	stw.AppendHeader(successRowHeader)
 	stw.AppendRows(successTableRows)
 	stw.SetIndexColumn(1)
 	return ftw, stw
