@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"strings"
 
 	"k8s.io/klog/v2"
 
@@ -53,6 +54,7 @@ func main() {
 	var parallelism = flag.Int("parallelism", 5, "how many pods to check at once")
 	var outputFormat = flag.String("output-format", "table", "output format (table, csv, markdown, html)")
 	var outputFile = flag.String("output-file", "", "write report to this file")
+	var components = flag.String("components", "", "scan a specific set of components")
 
 	flag.Parse()
 	if *help {
@@ -68,6 +70,7 @@ func main() {
 		Parallelism:  *parallelism,
 		OutputFormat: *outputFormat,
 		OutputFile:   *outputFile,
+		Components:    strings.Split(*components, ","),
 	}
 
 	klog.InitFlags(nil)
@@ -97,6 +100,7 @@ type Result struct {
 	Results *ScanResults
 }
 
+
 func run(ctx context.Context, config *Config, payload *release.ReleaseInfo) []*ScanResults {
 	var runs []*ScanResults
 
@@ -122,7 +126,22 @@ func run(ctx context.Context, config *Config, payload *release.ReleaseInfo) []*S
 		close(rx)
 	}()
 
+	contains := func(slice []string, item string) bool {
+	  for _, elem := range slice {
+	    if elem == item {
+		return true
+	    }
+	  }
+	  return false
+	}
+
 	for i, tag := range payload.References.Spec.Tags {
+		// scan only user specified components if provided
+		// on command line
+		if len(config.Components) > 0  &&
+			!contains(config.Components, tag.Name) {
+			continue
+		}
 		tag := tag
 		tx <- &Request{Tag: &tag}
 		if limit != 0 && int(i) == limit-1 {
