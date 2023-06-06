@@ -114,14 +114,14 @@ func isExecutable(ctx context.Context, path string) error {
 	return nil
 }
 
-func scanBinary(ctx context.Context, tag *v1.TagReference, path string) *ScanResult {
+func scanBinary(ctx context.Context, tag *v1.TagReference, mountPath string, path string) *ScanResult {
 	var allFn = validationFns["all"]
 	var goFn = validationFns["go"]
 	var exeFn = validationFns["exe"]
 
 	for _, fn := range allFn {
 		if err := fn(ctx, tag, path); err != nil {
-			return NewScanResult().SetBinaryPath(path).SetError(err)
+			return NewScanResult().SetBinaryPath(mountPath, path).SetError(err)
 		}
 	}
 
@@ -129,17 +129,17 @@ func scanBinary(ctx context.Context, tag *v1.TagReference, path string) *ScanRes
 	if isGoExecutable(ctx, path) == nil {
 		for _, fn := range goFn {
 			if err := fn(ctx, tag, path); err != nil {
-				return NewScanResult().SetTag(tag).SetBinaryPath(path).SetError(err)
+				return NewScanResult().SetTag(tag).SetBinaryPath(mountPath, path).SetError(err)
 			}
 		}
 	} else if isExecutable(ctx, path) == nil {
 		// is a regular binary
 		for _, fn := range exeFn {
 			if err := fn(ctx, tag, path); err != nil {
-				return NewScanResult().SetTag(tag).SetBinaryPath(path).SetError(err)
+				return NewScanResult().SetTag(tag).SetBinaryPath(mountPath, path).SetError(err)
 			}
 		}
 	}
 
-	return NewScanResult().SetTag(tag).SetBinaryPath(path).Success()
+	return NewScanResult().SetTag(tag).SetBinaryPath(mountPath, path).Success()
 }

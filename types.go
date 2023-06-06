@@ -1,7 +1,6 @@
 package main
 
 import (
-	"path/filepath"
 	"time"
 
 	v1 "github.com/openshift/api/image/v1"
@@ -48,8 +47,8 @@ func (r *ScanResult) SetError(err error) *ScanResult {
 	return r
 }
 
-func (r *ScanResult) SetBinaryPath(path string) *ScanResult {
-	r.Path = filepath.Base(path)
+func (r *ScanResult) SetBinaryPath(mountPath, path string) *ScanResult {
+	r.Path = stripMountPath(mountPath, path)
 	return r
 }
 

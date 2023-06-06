@@ -78,6 +78,8 @@ func main() {
 
 	klog.InitFlags(nil)
 
+	//validateApplicationDependencies()
+
 	apods, err := GetPods(&config)
 	if err != nil {
 		klog.Fatalf("could not get pods: %v", err)
@@ -92,6 +94,10 @@ func main() {
 	if err != nil || isFailed(results) {
 		os.Exit(1)
 	}
+}
+
+func validateApplicationDependencies() {
+	panic("unimplemented")
 }
 
 type Request struct {
@@ -265,9 +271,9 @@ func validateTag(ctx context.Context, tag *v1.TagReference) *ScanResults {
 		if mimetype.EqualsAny(mtype.String(), ignoredMimes...) {
 			return nil
 		}
-		printablePath := filepath.Base(path)
+		printablePath := stripMountPath(mountPath, path)
 		klog.InfoS("scanning tag", "tag", tag)
-		res := scanBinary(ctx, tag, path)
+		res := scanBinary(ctx, tag, mountPath, path)
 		if res.Error == nil {
 			klog.InfoS("scanning success", "image", image, "path", printablePath, "status", "success")
 		} else {
@@ -280,4 +286,8 @@ func validateTag(ctx context.Context, tag *v1.TagReference) *ScanResults {
 	}
 
 	return results
+}
+
+func stripMountPath(mountPath, path string) string {
+	return strings.TrimPrefix(path, mountPath)
 }
