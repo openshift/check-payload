@@ -31,6 +31,7 @@ type Config struct {
 	OutputFormat string
 	OutputFile   string
 	Components   []string
+	Verbose      bool
 }
 
 func NewScanResult() *ScanResult {

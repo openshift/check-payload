@@ -20,13 +20,6 @@ const (
 	go120magic = 0xfffffff1
 )
 
-// Print all function names defined in .gopclntab
-func printFuncs(symTable *gosym.Table) {
-	for _, f := range symTable.Funcs {
-		fmt.Printf("%s\n", f.Name)
-	}
-}
-
 // Select the magic number based on the Go version
 func magicNumber(fileName, goVersion string) []byte {
 	bs := make([]byte, 4)

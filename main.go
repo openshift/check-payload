@@ -55,6 +55,7 @@ func main() {
 	var outputFormat = flag.String("output-format", "table", "output format (table, csv, markdown, html)")
 	var outputFile = flag.String("output-file", "", "write report to this file")
 	var components = flag.String("components", "", "scan a specific set of components")
+	var verbose = flag.Bool("verbose", false, "verbose")
 
 	flag.Parse()
 	if *help {
@@ -70,6 +71,7 @@ func main() {
 		Parallelism:  *parallelism,
 		OutputFormat: *outputFormat,
 		OutputFile:   *outputFile,
+		Verbose:      *verbose,
 	}
 
 	if *components != "" {
