@@ -49,7 +49,7 @@ func validateGoVersion(ctx context.Context, tag *v1.TagReference, path string) e
 		return err
 	}
 
-	if !bytes.Contains(stdout.Bytes(), []byte("CGO_ENABLED")) || !bytes.Contains(stdout.Bytes(), []byte("ldflags")) {
+	if !bytes.Contains(stdout.Bytes(), []byte("CGO_ENABLED=0")) || !bytes.Contains(stdout.Bytes(), []byte("ldflags")) {
 		return fmt.Errorf("go: binary is not CGO_ENABLED or static with ldflags")
 	}
 
