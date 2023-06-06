@@ -22,8 +22,8 @@ type ValidationFn func(ctx context.Context, tag *v1.TagReference, path string) e
 
 var validationFns = map[string][]ValidationFn{
 	"go": {
-		validateGoSymbols,
 		validateGoVersion,
+		validateGoSymbols,
 	},
 	"exe": {
 		validateExe,
@@ -33,7 +33,7 @@ var validationFns = map[string][]ValidationFn{
 func validateGoSymbols(ctx context.Context, tag *v1.TagReference, path string) error {
 	symtable, err := readTable(path)
 	if err != nil {
-		return fmt.Errorf("go: expected symbols not found for %v: %v", filepath.Base(path), err)
+		return fmt.Errorf("go: could not read table for %v: %v", filepath.Base(path), err)
 	}
 	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
 		return fmt.Errorf("go: expected symbols not found for %v: %v", filepath.Base(path), err)
