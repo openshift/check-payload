@@ -9,9 +9,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 
 	"k8s.io/klog/v2"
 
@@ -70,7 +70,10 @@ func main() {
 		Parallelism:  *parallelism,
 		OutputFormat: *outputFormat,
 		OutputFile:   *outputFile,
-		Components:    strings.Split(*components, ","),
+	}
+
+	if *components != "" {
+		config.Components = strings.Split(*components, ",")
 	}
 
 	klog.InitFlags(nil)
@@ -100,7 +103,6 @@ type Result struct {
 	Results *ScanResults
 }
 
-
 func run(ctx context.Context, config *Config, payload *release.ReleaseInfo) []*ScanResults {
 	var runs []*ScanResults
 
@@ -127,19 +129,18 @@ func run(ctx context.Context, config *Config, payload *release.ReleaseInfo) []*S
 	}()
 
 	contains := func(slice []string, item string) bool {
-	  for _, elem := range slice {
-	    if elem == item {
-		return true
-	    }
-	  }
-	  return false
+		for _, elem := range slice {
+			if elem == item {
+				return true
+			}
+		}
+		return false
 	}
 
 	for i, tag := range payload.References.Spec.Tags {
 		// scan only user specified components if provided
 		// on command line
-		if len(config.Components) > 0  &&
-			!contains(config.Components, tag.Name) {
+		if len(config.Components) > 0 && !contains(config.Components, tag.Name) {
 			continue
 		}
 		tag := tag
