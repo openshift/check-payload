@@ -77,7 +77,7 @@ func renderFailures(results []*ScanResults) (failures table.Writer, successes ta
 			if res.Error != nil {
 				failureTableRows = append(failureTableRows, table.Row{res.Tag.Name, res.Path, res.Error, res.Tag.From.Name})
 			} else {
-				successTableRows = append(successTableRows, table.Row{res.Tag.Name, res.Path, res.Tag.From.Name})
+				successTableRows = append(successTableRows, table.Row{res.Tag.Name, res.Path, "", res.Tag.From.Name})
 			}
 		}
 	}
