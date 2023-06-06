@@ -49,10 +49,29 @@ func validateGoVersion(ctx context.Context, tag *v1.TagReference, path string) e
 		return err
 	}
 
-	if !bytes.Contains(stdout.Bytes(), []byte("CGO_ENABLED=0")) || !bytes.Contains(stdout.Bytes(), []byte("ldflags")) {
-		return fmt.Errorf("go: binary is not CGO_ENABLED or static with ldflags")
+	// check for CGO
+	if !bytes.Contains(stdout.Bytes(), []byte("CGO_ENABLED=1")) {
+		return fmt.Errorf("go: binary is not CGO_ENABLED")
 	}
 
+	// check for static go
+	if err := validateStaticGo(ctx, path); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateStaticGo(ctx context.Context, path string) error {
+	var stdout bytes.Buffer
+	cmd := exec.CommandContext(ctx, "file", "-s", path)
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	if !bytes.Contains(stdout.Bytes(), []byte("dynamically linked")) {
+		return fmt.Errorf("go: executable is statically linked")
+	}
 	return nil
 }
 
