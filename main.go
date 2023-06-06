@@ -111,21 +111,23 @@ func run(ctx context.Context, config *Config, payload *release.ReleaseInfo) []*S
 
 	tx := make(chan *Request, parallelism)
 	rx := make(chan *Result, parallelism)
-	var wg sync.WaitGroup
+	var wgThreads sync.WaitGroup
+	var wgRx sync.WaitGroup
 
-	wg.Add(config.Parallelism)
+	wgThreads.Add(config.Parallelism)
 	for i := 0; i < parallelism; i++ {
 		go func() {
 			scan(ctx, tx, rx)
-			wg.Done()
+			wgThreads.Done()
 		}()
 	}
 
+	wgRx.Add(1)
 	go func() {
 		for res := range rx {
 			runs = append(runs, res.Results)
 		}
-		close(rx)
+		wgRx.Done()
 	}()
 
 	contains := func(slice []string, item string) bool {
@@ -151,7 +153,9 @@ func run(ctx context.Context, config *Config, payload *release.ReleaseInfo) []*S
 	}
 
 	close(tx)
-	wg.Wait()
+	wgThreads.Wait()
+	close(rx)
+	wgRx.Wait()
 
 	return runs
 }
