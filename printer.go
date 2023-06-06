@@ -27,7 +27,7 @@ func printResults(cfg *Config, results []*ScanResults) error {
 	if cfg.Verbose {
 		fmt.Println("---- Success Report")
 		fmt.Println(successReport)
-		combinedReport += "\n\n ---- Success Report" + successReport
+		combinedReport += "\n\n ---- Success Report\n" + successReport
 	}
 
 	if cfg.OutputFile != "" {
