@@ -12,7 +12,7 @@ import (
 
 func podmanCreate(ctx context.Context, image string) (string, error) {
 	klog.InfoS("podman: create", "image", image)
-	stdout, _, err := runPodman(ctx, "image", image)
+	stdout, _, err := runPodman(ctx, "create", image)
 	if err != nil {
 		return "", err
 	}
