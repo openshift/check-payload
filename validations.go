@@ -167,12 +167,21 @@ func validateStringsOpenssl(ctx context.Context, path string) error {
 		return err
 	}
 
-	// should only find 1 libcrypto library linked in
-	if sslLibraryCount > 1 {
+	// should only find 1 libcrypto library linked in, there can be multiples so skip over the same ones
+	if sslLibraryCount > 1 && !isSliceEqual(invalidPaths, invalidPaths[0]) {
 		return fmt.Errorf("openssl: found %v libcrypto libraries (paths=%v)", sslLibraryCount, invalidPaths)
 	}
 
 	return nil
+}
+
+func isSliceEqual(list []string, comparison string) bool {
+	for _, a := range list {
+		if a != comparison {
+			return false
+		}
+	}
+	return true
 }
 
 func validateStaticGo(ctx context.Context, path string) error {
