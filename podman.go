@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -11,10 +12,8 @@ import (
 
 func podmanCreate(ctx context.Context, image string) (string, error) {
 	klog.InfoS("podman: create", "image", image)
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "podman", "create", image)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
+	stdout, _, err := runPodman(ctx, "image", image)
+	if err != nil {
 		return "", err
 	}
 	return strings.TrimSpace(stdout.String()), nil
@@ -22,8 +21,8 @@ func podmanCreate(ctx context.Context, image string) (string, error) {
 
 func podmanUnmount(ctx context.Context, id string) error {
 	klog.InfoS("podman: unmount", "id", id)
-	cmd := exec.CommandContext(ctx, "podman", "unmount", id)
-	if err := cmd.Run(); err != nil {
+	_, _, err := runPodman(ctx, "unmount", id)
+	if err != nil {
 		return err
 	}
 	return nil
@@ -31,10 +30,8 @@ func podmanUnmount(ctx context.Context, id string) error {
 
 func podmanMount(ctx context.Context, id string) (string, error) {
 	klog.InfoS("podman: mount", "id", id)
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "podman", "mount", id)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
+	stdout, _, err := runPodman(ctx, "mount", id)
+	if err != nil {
 		return "", err
 	}
 	return strings.TrimSpace(stdout.String()), nil
@@ -42,9 +39,23 @@ func podmanMount(ctx context.Context, id string) (string, error) {
 
 func podmanPull(ctx context.Context, image string) error {
 	klog.InfoS("podman: pull", "image", image)
-	cmd := exec.CommandContext(ctx, "podman", "pull", image)
-	if err := cmd.Run(); err != nil {
+	_, _, err := runPodman(ctx, "pull", image)
+	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func runPodman(ctx context.Context, args ...string) (bytes.Buffer, bytes.Buffer, error) {
+	klog.InfoS("podman", "args", args)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.CommandContext(ctx, "podman", args...)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return stdout, stderr, fmt.Errorf("podman error (args=%v) (stderr=%v) (error=%w)", args, stderr.String(), err)
+	}
+	return stdout, stderr, nil
+
 }

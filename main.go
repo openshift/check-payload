@@ -25,6 +25,15 @@ const (
 	defaultPayloadFilename = "payload.json"
 )
 
+var applicationDeps = []string{
+	"file",
+	"go",
+	"nm",
+	"oc",
+	"podman",
+	"readelf",
+}
+
 var ignoredMimes = []string{
 	"application/gzip",
 	"application/json",
@@ -83,7 +92,7 @@ func main() {
 
 	klog.InitFlags(nil)
 
-	//validateApplicationDependencies()
+	validateApplicationDependencies()
 
 	ctx, cancel := context.WithTimeout(context.Background(), *timeLimit)
 	defer cancel()
@@ -96,7 +105,11 @@ func main() {
 }
 
 func validateApplicationDependencies() {
-	panic("unimplemented")
+	for _, app := range applicationDeps {
+		if _, err := exec.LookPath(app); err != nil {
+			klog.Fatal("dependency application not found: %v", app)
+		}
+	}
 }
 
 type Request struct {
