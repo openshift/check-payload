@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"debug/elf"
+	"debug/gosym"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -40,10 +41,23 @@ func validateGoSymbols(ctx context.Context, tag *v1.TagReference, path string) e
 	if err != nil {
 		return fmt.Errorf("go: could not read table for %v: %v", filepath.Base(path), err)
 	}
+	// Skip if the golang binary is not using crypto
+	if !isUsingCryptoModule(symtable) {
+		return nil
+	}
 	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
 		return fmt.Errorf("go: expected symbols not found for %v: %v", filepath.Base(path), err)
 	}
 	return nil
+}
+
+func isUsingCryptoModule(symtable *gosym.Table) bool {
+	for _, fn := range symtable.Funcs {
+		if strings.Contains(fn.Name, "crypto") {
+			return true
+		}
+	}
+	return false
 }
 
 func validateGoLinux(ctx context.Context, tag *v1.TagReference, path string) error {
