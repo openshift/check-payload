@@ -24,8 +24,11 @@ type ValidationFn func(ctx context.Context, tag *v1.TagReference, path string) e
 
 var validationFns = map[string][]ValidationFn{
 	"go": {
-		validateGoVersion,
+		validateGoCgo,
+		validateGoNoOpenssl,
 		validateGoSymbols,
+		validateGoStatic,
+		validateGoOpenssl,
 	},
 	"exe": {
 		validateExe,
@@ -43,7 +46,22 @@ func validateGoSymbols(ctx context.Context, tag *v1.TagReference, path string) e
 	return nil
 }
 
-func validateGoVersion(ctx context.Context, tag *v1.TagReference, path string) error {
+func validateGoLinux(ctx context.Context, tag *v1.TagReference, path string) error {
+	var stdout bytes.Buffer
+	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	if bytes.Contains(stdout.Bytes(), []byte("GOOS=linux")) {
+		return nil
+	}
+
+	return fmt.Errorf("go: not a linux binary")
+}
+
+func validateGoCgo(ctx context.Context, tag *v1.TagReference, path string) error {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
 	cmd.Stdout = &stdout
@@ -58,22 +76,47 @@ func validateGoVersion(ctx context.Context, tag *v1.TagReference, path string) e
 		return fmt.Errorf("go: binary is not CGO_ENABLED")
 	}
 
+	return nil
+}
+
+func validateGoNoOpenssl(ctx context.Context, tag *v1.TagReference, path string) error {
+	var stdout bytes.Buffer
+	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
 	// verify no_openssl is not referenced
 	if bytes.Contains(stdout.Bytes(), []byte("no_openssl")) {
 		return fmt.Errorf("go: binary is no_openssl enabled")
 	}
 
-	// check for static go
-	if err := validateStaticGo(ctx, path); err != nil {
-		return err
-	}
-
-	// check for static go
-	if err := validateStringsOpenssl(ctx, path); err != nil {
-		return err
-	}
-
 	return nil
+}
+
+func validateGoStatic(ctx context.Context, tag *v1.TagReference, path string) error {
+	var stdout bytes.Buffer
+	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	// check for static go
+	return validateStaticGo(ctx, path)
+}
+
+func validateGoOpenssl(ctx context.Context, tag *v1.TagReference, path string) error {
+	var stdout bytes.Buffer
+	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	// check for openssl strings
+	return validateStringsOpenssl(ctx, path)
 }
 
 // scan the binary for multiple libcrypto libraries
@@ -179,6 +222,11 @@ func scanBinary(ctx context.Context, tag *v1.TagReference, mountPath string, pat
 	// is this a go executable
 	if isGoExecutable(ctx, path) == nil {
 		for _, fn := range goFn {
+			// make sure the binary is linux
+			if err := validateGoLinux(ctx, tag, path); err != nil {
+				// we only scan linux binaries so this is successful
+				return NewScanResult().SetTag(tag).SetBinaryPath(mountPath, path).Success()
+			}
 			if err := fn(ctx, tag, path); err != nil {
 				return NewScanResult().SetTag(tag).SetBinaryPath(mountPath, path).SetError(err)
 			}
