@@ -38,7 +38,7 @@ func podmanMount(ctx context.Context, id string) (string, error) {
 }
 
 func podmanPull(ctx context.Context, image string) error {
-	klog.InfoS("podman: pull", "pull", "image", image)
+	klog.InfoS("podman: pull", "image", image)
 	_, _, err := runPodman(ctx, "pull", image)
 	if err != nil {
 		return err

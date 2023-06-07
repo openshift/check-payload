@@ -32,6 +32,7 @@ var applicationDeps = []string{
 	"oc",
 	"podman",
 	"readelf",
+	"strings",
 }
 
 var ignoredMimes = []string{

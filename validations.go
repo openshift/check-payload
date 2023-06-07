@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"debug/elf"
@@ -9,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	v1 "github.com/openshift/api/image/v1"
 )
@@ -62,6 +64,53 @@ func validateGoVersion(ctx context.Context, tag *v1.TagReference, path string) e
 	// check for static go
 	if err := validateStaticGo(ctx, path); err != nil {
 		return err
+	}
+
+	// check for static go
+	if err := validateStringsOpenssl(ctx, path); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// scan the binary for multiple libcrypto libraries
+func validateStringsOpenssl(ctx context.Context, path string) error {
+	cmd := exec.CommandContext(ctx, "strings", path)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	sslLibraryCount := 0
+	var invalidPaths []string
+
+	scanner := bufio.NewScanner(stdout)
+	const cap int = 1 * 1024 * 1024
+	buf := make([]byte, cap)
+	scanner.Buffer(buf, cap)
+
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), "libcrypto") {
+			sslLibraryCount++
+			invalidPaths = append(invalidPaths, path)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	if err := cmd.Wait(); err != nil {
+		return err
+	}
+
+	// should only find 1 libcrypto library linked in
+	if sslLibraryCount > 1 {
+		return fmt.Errorf("openssl: found %v libcrypto libraries (paths=%v)", sslLibraryCount, invalidPaths)
 	}
 
 	return nil
