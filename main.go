@@ -18,6 +18,7 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	v1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/oc/pkg/cli/admin/release"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -46,15 +47,16 @@ var requiredGolangSymbols = []string{
 }
 
 func main() {
-	var help = flag.Bool("help", false, "show help")
-	var fromUrl = flag.String("url", "", "http URL to pull payload from")
-	var fromFile = flag.String("file", defaultPayloadFilename, "json file for payload")
-	var limit = flag.Int("limit", 0, "limit the number of pods scanned")
-	var timeLimit = flag.Duration("time-limit", 1*time.Hour, "limit running time")
-	var parallelism = flag.Int("parallelism", 5, "how many pods to check at once")
-	var outputFormat = flag.String("output-format", "table", "output format (table, csv, markdown, html)")
-	var outputFile = flag.String("output-file", "", "write report to this file")
+	var operatorImage = flag.String("operator-image", "", "only run scan on operator image")
 	var components = flag.String("components", "", "scan a specific set of components")
+	var fromFile = flag.String("file", defaultPayloadFilename, "json file for payload")
+	var fromUrl = flag.String("url", "", "http URL to pull payload from")
+	var help = flag.Bool("help", false, "show help")
+	var limit = flag.Int("limit", 0, "limit the number of pods scanned")
+	var outputFile = flag.String("output-file", "", "write report to this file")
+	var outputFormat = flag.String("output-format", "table", "output format (table, csv, markdown, html)")
+	var parallelism = flag.Int("parallelism", 5, "how many pods to check at once")
+	var timeLimit = flag.Duration("time-limit", 1*time.Hour, "limit running time")
 	var verbose = flag.Bool("verbose", false, "verbose")
 
 	flag.Parse()
@@ -64,14 +66,15 @@ func main() {
 	}
 
 	config := Config{
-		FromURL:      *fromUrl,
-		FromFile:     *fromFile,
-		Limit:        *limit,
-		TimeLimit:    *timeLimit,
-		Parallelism:  *parallelism,
-		OutputFormat: *outputFormat,
-		OutputFile:   *outputFile,
-		Verbose:      *verbose,
+		FromFile:      *fromFile,
+		FromURL:       *fromUrl,
+		Limit:         *limit,
+		OperatorImage: *operatorImage,
+		OutputFile:    *outputFile,
+		OutputFormat:  *outputFormat,
+		Parallelism:   *parallelism,
+		TimeLimit:     *timeLimit,
+		Verbose:       *verbose,
 	}
 
 	if *components != "" {
@@ -82,17 +85,11 @@ func main() {
 
 	//validateApplicationDependencies()
 
-	apods, err := GetPods(&config)
-	if err != nil {
-		klog.Fatalf("could not get pods: %v", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), *timeLimit)
 	defer cancel()
 
-	results := run(ctx, &config, apods)
-	err = printResults(&config, results)
-
+	results := run(ctx, &config)
+	err := printResults(&config, results)
 	if err != nil || isFailed(results) {
 		os.Exit(1)
 	}
@@ -111,18 +108,44 @@ type Result struct {
 	Results *ScanResults
 }
 
-func run(ctx context.Context, config *Config, payload *release.ReleaseInfo) []*ScanResults {
+func run(ctx context.Context, cfg *Config) []*ScanResults {
+	if cfg.OperatorImage != "" {
+		return runOperatorScan(ctx, cfg)
+	}
+	return runPayloadScan(ctx, cfg)
+}
+
+func runOperatorScan(ctx context.Context, cfg *Config) []*ScanResults {
+	tag := &v1.TagReference{
+		From: &corev1.ObjectReference{
+			Name: cfg.OperatorImage,
+		},
+	}
+
+	results := validateTag(ctx, tag)
+
+	var runs []*ScanResults
+	runs = append(runs, results)
+	return runs
+}
+
+func runPayloadScan(ctx context.Context, cfg *Config) []*ScanResults {
 	var runs []*ScanResults
 
-	parallelism := config.Parallelism
-	limit := config.Limit
+	payload, err := GetPayload(cfg)
+	if err != nil {
+		klog.Fatalf("could not get pods from payload: %v", err)
+	}
+
+	parallelism := cfg.Parallelism
+	limit := cfg.Limit
 
 	tx := make(chan *Request, parallelism)
 	rx := make(chan *Result, parallelism)
 	var wgThreads sync.WaitGroup
 	var wgRx sync.WaitGroup
 
-	wgThreads.Add(config.Parallelism)
+	wgThreads.Add(cfg.Parallelism)
 	for i := 0; i < parallelism; i++ {
 		go func() {
 			scan(ctx, tx, rx)
@@ -150,7 +173,7 @@ func run(ctx context.Context, config *Config, payload *release.ReleaseInfo) []*S
 	for i, tag := range payload.References.Spec.Tags {
 		// scan only user specified components if provided
 		// on command line
-		if len(config.Components) > 0 && !contains(config.Components, tag.Name) {
+		if len(cfg.Components) > 0 && !contains(cfg.Components, tag.Name) {
 			continue
 		}
 		tag := tag
@@ -190,7 +213,7 @@ func isFailed(results []*ScanResults) bool {
 	return false
 }
 
-func GetPods(config *Config) (*release.ReleaseInfo, error) {
+func GetPayload(config *Config) (*release.ReleaseInfo, error) {
 	var payload *release.ReleaseInfo
 	var err error
 	if config.FromURL != "" {
@@ -230,7 +253,7 @@ func ReadReleaseInfo(filename string) (*release.ReleaseInfo, error) {
 }
 
 func validateTag(ctx context.Context, tag *v1.TagReference) *ScanResults {
-	results := &ScanResults{}
+	results := NewScanResults()
 
 	image := tag.From.Name
 
@@ -285,7 +308,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference) *ScanResults {
 		} else {
 			klog.InfoS("scanning failed", "image", image, "path", printablePath, "error", res.Error, "status", "failed")
 		}
-		results.Items = append(results.Items, res)
+		results.Append(res)
 		return nil
 	}); err != nil {
 		return results

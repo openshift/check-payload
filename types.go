@@ -9,15 +9,16 @@ import (
 )
 
 type Config struct {
-	FromURL      string
-	FromFile     string
-	Limit        int
-	TimeLimit    time.Duration
-	Parallelism  int
-	OutputFormat string
-	OutputFile   string
-	Components   []string
-	Verbose      bool
+	Components    []string
+	FromFile      string
+	FromURL       string
+	Limit         int
+	OperatorImage string
+	OutputFile    string
+	OutputFormat  string
+	Parallelism   int
+	TimeLimit     time.Duration
+	Verbose       bool
 }
 
 type ArtifactPod struct {
@@ -35,8 +36,13 @@ type ScanResults struct {
 	Items []*ScanResult
 }
 
-func (sr *ScanResults) Append(result *ScanResult) {
+func NewScanResults() *ScanResults {
+	return &ScanResults{}
+}
+
+func (sr *ScanResults) Append(result *ScanResult) *ScanResults {
 	sr.Items = append(sr.Items, result)
+	return sr
 }
 
 func NewScanResult() *ScanResult {
