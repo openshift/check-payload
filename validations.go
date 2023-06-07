@@ -54,6 +54,11 @@ func validateGoVersion(ctx context.Context, tag *v1.TagReference, path string) e
 		return fmt.Errorf("go: binary is not CGO_ENABLED")
 	}
 
+	// verify no_openssl is not referenced
+	if bytes.Contains(stdout.Bytes(), []byte("no_openssl")) {
+		return fmt.Errorf("go: binary is no_openssl enabled")
+	}
+
 	// check for static go
 	if err := validateStaticGo(ctx, path); err != nil {
 		return err
