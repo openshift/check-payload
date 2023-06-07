@@ -51,8 +51,10 @@ func validateGoVersion(ctx context.Context, tag *v1.TagReference, path string) e
 		return err
 	}
 
+	skipCGOEnabledCheck := bytes.Contains(stdout.Bytes(), []byte("go1.16"))
+
 	// check for CGO
-	if !bytes.Contains(stdout.Bytes(), []byte("CGO_ENABLED=1")) {
+	if !skipCGOEnabledCheck && !bytes.Contains(stdout.Bytes(), []byte("CGO_ENABLED=1")) {
 		return fmt.Errorf("go: binary is not CGO_ENABLED")
 	}
 
@@ -96,7 +98,7 @@ func validateStringsOpenssl(ctx context.Context, path string) error {
 	for scanner.Scan() {
 		if strings.Contains(scanner.Text(), "libcrypto") {
 			sslLibraryCount++
-			invalidPaths = append(invalidPaths, path)
+			invalidPaths = append(invalidPaths, scanner.Text())
 		}
 	}
 

@@ -68,6 +68,7 @@ func main() {
 	var parallelism = flag.Int("parallelism", 5, "how many pods to check at once")
 	var timeLimit = flag.Duration("time-limit", 1*time.Hour, "limit running time")
 	var verbose = flag.Bool("verbose", false, "verbose")
+	var filter = flag.String("filter", "", "do not scan a specific directory")
 
 	flag.Parse()
 	if *help {
@@ -89,6 +90,9 @@ func main() {
 
 	if *components != "" {
 		config.Components = strings.Split(*components, ",")
+	}
+	if *filter != "" {
+		config.Filter = strings.Split(*filter, ",")
 	}
 
 	klog.InitFlags(nil)
@@ -136,7 +140,7 @@ func runOperatorScan(ctx context.Context, cfg *Config) []*ScanResults {
 		},
 	}
 
-	results := validateTag(ctx, tag)
+	results := validateTag(ctx, tag, cfg)
 
 	var runs []*ScanResults
 	runs = append(runs, results)
@@ -162,7 +166,7 @@ func runPayloadScan(ctx context.Context, cfg *Config) []*ScanResults {
 	wgThreads.Add(cfg.Parallelism)
 	for i := 0; i < parallelism; i++ {
 		go func() {
-			scan(ctx, tx, rx)
+			scan(ctx, cfg, tx, rx)
 			wgThreads.Done()
 		}()
 	}
@@ -205,14 +209,14 @@ func runPayloadScan(ctx context.Context, cfg *Config) []*ScanResults {
 	return runs
 }
 
-func scan(ctx context.Context, tx <-chan *Request, rx chan<- *Result) {
+func scan(ctx context.Context, cfg *Config, tx <-chan *Request, rx chan<- *Result) {
 	for req := range tx {
-		ValidateTag(ctx, req.Tag, rx)
+		ValidateTag(ctx, cfg, req.Tag, rx)
 	}
 }
 
-func ValidateTag(ctx context.Context, tag *v1.TagReference, rx chan<- *Result) {
-	result := validateTag(ctx, tag)
+func ValidateTag(ctx context.Context, cfg *Config, tag *v1.TagReference, rx chan<- *Result) {
+	result := validateTag(ctx, tag, cfg)
 	rx <- &Result{Results: result}
 }
 
@@ -266,7 +270,7 @@ func ReadReleaseInfo(filename string) (*release.ReleaseInfo, error) {
 	return releaseInfo, nil
 }
 
-func validateTag(ctx context.Context, tag *v1.TagReference) *ScanResults {
+func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanResults {
 	results := NewScanResults()
 
 	image := tag.From.Name
@@ -301,6 +305,10 @@ func validateTag(ctx context.Context, tag *v1.TagReference) *ScanResults {
 		if err != nil {
 			return err
 		}
+		printablePath := stripMountPath(mountPath, path)
+		if isPathFiltered(cfg.Filter, printablePath) {
+			return nil
+		}
 		if file.IsDir() {
 			return nil
 		}
@@ -314,8 +322,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference) *ScanResults {
 		if mimetype.EqualsAny(mtype.String(), ignoredMimes...) {
 			return nil
 		}
-		printablePath := stripMountPath(mountPath, path)
-		klog.InfoS("scanning tag", "tag", tag)
+		klog.InfoS("scanning path", "path", path)
 		res := scanBinary(ctx, tag, mountPath, path)
 		if res.Error == nil {
 			klog.InfoS("scanning success", "image", image, "path", printablePath, "status", "success")
@@ -329,6 +336,15 @@ func validateTag(ctx context.Context, tag *v1.TagReference) *ScanResults {
 	}
 
 	return results
+}
+
+func isPathFiltered(filterPaths []string, path string) bool {
+	for _, filter := range filterPaths {
+		if strings.HasPrefix(path, filter) {
+			return true
+		}
+	}
+	return false
 }
 
 func stripMountPath(mountPath, path string) string {

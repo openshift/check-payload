@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	Components    []string
+	Filter        []string
 	FromFile      string
 	FromURL       string
 	Limit         int
