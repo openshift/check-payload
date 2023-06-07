@@ -21,14 +21,23 @@ func printResults(cfg *Config, results []*ScanResults) error {
 	failureReport, successReport := generateReport(results, cfg)
 
 	var combinedReport string
-	fmt.Println("---- Failure Report")
-	fmt.Println(failureReport)
-	combinedReport = failureReport
+
+	failed := isFailed(results)
+	if failed {
+		fmt.Println("---- Failure Report")
+		fmt.Println(failureReport)
+		combinedReport = failureReport
+	}
 
 	if cfg.Verbose {
 		fmt.Println("---- Success Report")
 		fmt.Println(successReport)
 		combinedReport += "\n\n ---- Success Report\n" + successReport
+	}
+
+	if !failed {
+		combinedReport += "\n\n ---- Successful run\n"
+		fmt.Println("---- Successful run")
 	}
 
 	if cfg.OutputFile != "" {

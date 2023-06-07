@@ -21,7 +21,11 @@ var (
 	ErrNotExecutable = errors.New("not a regular executable")
 )
 
-type ValidationFn func(ctx context.Context, tag *v1.TagReference, path string) error
+type Baton struct {
+	GoNoCrypto bool
+}
+
+type ValidationFn func(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error
 
 var validationFns = map[string][]ValidationFn{
 	"go": {
@@ -36,13 +40,14 @@ var validationFns = map[string][]ValidationFn{
 	},
 }
 
-func validateGoSymbols(ctx context.Context, tag *v1.TagReference, path string) error {
+func validateGoSymbols(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
 	symtable, err := readTable(path)
 	if err != nil {
 		return fmt.Errorf("go: could not read table for %v: %v", filepath.Base(path), err)
 	}
 	// Skip if the golang binary is not using crypto
 	if !isUsingCryptoModule(symtable) {
+		baton.GoNoCrypto = true
 		return nil
 	}
 	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
@@ -75,7 +80,7 @@ func validateGoLinux(ctx context.Context, tag *v1.TagReference, path string) err
 	return fmt.Errorf("go: not a linux binary")
 }
 
-func validateGoCgo(ctx context.Context, tag *v1.TagReference, path string) error {
+func validateGoCgo(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
 	cmd.Stdout = &stdout
@@ -93,7 +98,7 @@ func validateGoCgo(ctx context.Context, tag *v1.TagReference, path string) error
 	return nil
 }
 
-func validateGoNoOpenssl(ctx context.Context, tag *v1.TagReference, path string) error {
+func validateGoNoOpenssl(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
 	cmd.Stdout = &stdout
@@ -109,7 +114,12 @@ func validateGoNoOpenssl(ctx context.Context, tag *v1.TagReference, path string)
 	return nil
 }
 
-func validateGoStatic(ctx context.Context, tag *v1.TagReference, path string) error {
+func validateGoStatic(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
+	// if the static golang binary does not contain crypto then skip
+	if baton.GoNoCrypto {
+		return nil
+	}
+
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
 	cmd.Stdout = &stdout
@@ -121,7 +131,7 @@ func validateGoStatic(ctx context.Context, tag *v1.TagReference, path string) er
 	return validateStaticGo(ctx, path)
 }
 
-func validateGoOpenssl(ctx context.Context, tag *v1.TagReference, path string) error {
+func validateGoOpenssl(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
 	cmd.Stdout = &stdout
@@ -201,7 +211,7 @@ func isDynamicallyLinked(ctx context.Context, path string) error {
 	return nil
 }
 
-func validateExe(ctx context.Context, _ *v1.TagReference, path string) error {
+func validateExe(ctx context.Context, _ *v1.TagReference, path string, baton *Baton) error {
 	return isDynamicallyLinked(ctx, path)
 }
 
@@ -236,8 +246,10 @@ func scanBinary(ctx context.Context, tag *v1.TagReference, mountPath string, pat
 	var goFn = validationFns["go"]
 	var exeFn = validationFns["exe"]
 
+	baton := &Baton{}
+
 	for _, fn := range allFn {
-		if err := fn(ctx, tag, path); err != nil {
+		if err := fn(ctx, tag, path, baton); err != nil {
 			return NewScanResult().SetBinaryPath(mountPath, path).SetError(err)
 		}
 	}
@@ -250,14 +262,14 @@ func scanBinary(ctx context.Context, tag *v1.TagReference, mountPath string, pat
 				// we only scan linux binaries so this is successful
 				return NewScanResult().SetTag(tag).SetBinaryPath(mountPath, path).Success()
 			}
-			if err := fn(ctx, tag, path); err != nil {
+			if err := fn(ctx, tag, path, baton); err != nil {
 				return NewScanResult().SetTag(tag).SetBinaryPath(mountPath, path).SetError(err)
 			}
 		}
 	} else if isExecutable(ctx, path) == nil {
 		// is a regular binary
 		for _, fn := range exeFn {
-			if err := fn(ctx, tag, path); err != nil {
+			if err := fn(ctx, tag, path, baton); err != nil {
 				return NewScanResult().SetTag(tag).SetBinaryPath(mountPath, path).SetError(err)
 			}
 		}
