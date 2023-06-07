@@ -236,24 +236,28 @@ func validateTag(ctx context.Context, tag *v1.TagReference) *ScanResults {
 
 	// pull
 	if err := podmanPull(ctx, image); err != nil {
-		results.Items = append(results.Items, NewScanResult().SetTag(tag).SetError(err))
+		results.Append(NewScanResult().SetTag(tag).SetError(err))
 		return results
 	}
 	// create
 	createID, err := podmanCreate(ctx, image)
 	if err != nil {
-		results.Items = append(results.Items, NewScanResult().SetTag(tag).SetError(err))
+		results.Append(NewScanResult().SetTag(tag).SetError(err))
 		return results
 	}
 	// mount
 	mountPath, err := podmanMount(ctx, createID)
 	if err != nil {
-		results.Items = append(results.Items, NewScanResult().SetTag(tag).SetError(err))
+		results.Append(NewScanResult().SetTag(tag).SetError(err))
 		return results
 	}
 	defer func() {
 		podmanUnmount(ctx, createID)
 	}()
+
+	// does the image contain openssl
+	opensslInfo := validateOpenssl(ctx, mountPath)
+	results.Append(NewScanResult().SetOpenssl(opensslInfo).SetTag(tag))
 
 	// business logic for scan
 	if err := filepath.WalkDir(mountPath, func(path string, file fs.DirEntry, err error) error {

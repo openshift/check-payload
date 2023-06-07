@@ -1,11 +1,24 @@
 package main
 
 import (
+	"errors"
 	"time"
 
 	v1 "github.com/openshift/api/image/v1"
 	corev1 "k8s.io/api/core/v1"
 )
+
+type Config struct {
+	FromURL      string
+	FromFile     string
+	Limit        int
+	TimeLimit    time.Duration
+	Parallelism  int
+	OutputFormat string
+	OutputFile   string
+	Components   []string
+	Verbose      bool
+}
 
 type ArtifactPod struct {
 	ApiVersion string       `json:"apiVersion"`
@@ -22,16 +35,8 @@ type ScanResults struct {
 	Items []*ScanResult
 }
 
-type Config struct {
-	FromURL      string
-	FromFile     string
-	Limit        int
-	TimeLimit    time.Duration
-	Parallelism  int
-	OutputFormat string
-	OutputFile   string
-	Components   []string
-	Verbose      bool
+func (sr *ScanResults) Append(result *ScanResult) {
+	sr.Items = append(sr.Items, result)
 }
 
 func NewScanResult() *ScanResult {
@@ -43,8 +48,23 @@ func (r *ScanResult) Success() *ScanResult {
 	return r
 }
 
+func (r *ScanResult) SetOpenssl(info OpensslInfo) *ScanResult {
+	if !info.Present {
+		r.SetError(errors.New("openssl library not present"))
+	} else if !info.FIPS {
+		r.SetError(errors.New("openssl library is missing FIPS support"))
+	}
+	r.Path = info.Path
+	return r
+}
+
 func (r *ScanResult) SetError(err error) *ScanResult {
 	r.Error = err
+	return r
+}
+
+func (r *ScanResult) SetPath(path string) *ScanResult {
+	r.Path = path
 	return r
 }
 
