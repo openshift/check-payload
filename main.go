@@ -35,6 +35,14 @@ var applicationDeps = []string{
 	"strings",
 }
 
+var applicationDepsNodeScan = []string{
+	"file",
+	"go",
+	"nm",
+	"readelf",
+	"strings",
+}
+
 var ignoredMimes = []string{
 	"application/gzip",
 	"application/json",
@@ -69,6 +77,7 @@ func main() {
 	var timeLimit = flag.Duration("time-limit", 1*time.Hour, "limit running time")
 	var verbose = flag.Bool("verbose", false, "verbose")
 	var filter = flag.String("filter", "", "do not scan a specific directory")
+	var nodeScan = flag.Bool("node-scan", false, "scan a node")
 
 	flag.Parse()
 	if *help {
@@ -80,6 +89,7 @@ func main() {
 		FromFile:      *fromFile,
 		FromURL:       *fromUrl,
 		Limit:         *limit,
+		NodeScan:      *nodeScan,
 		OperatorImage: *operatorImage,
 		OutputFile:    *outputFile,
 		OutputFormat:  *outputFormat,
@@ -97,7 +107,7 @@ func main() {
 
 	klog.InitFlags(nil)
 
-	validateApplicationDependencies()
+	validateApplicationDependencies(&config)
 
 	ctx, cancel := context.WithTimeout(context.Background(), *timeLimit)
 	defer cancel()
@@ -109,10 +119,15 @@ func main() {
 	}
 }
 
-func validateApplicationDependencies() {
-	for _, app := range applicationDeps {
+func validateApplicationDependencies(cfg *Config) {
+	deps := applicationDeps
+	if cfg.NodeScan {
+		deps = applicationDepsNodeScan
+	}
+
+	for _, app := range deps {
 		if _, err := exec.LookPath(app); err != nil {
-			klog.Fatal("dependency application not found: %v", app)
+			klog.Fatalf("dependency application not found: %v", app)
 		}
 	}
 }
@@ -129,6 +144,8 @@ type Result struct {
 func run(ctx context.Context, cfg *Config) []*ScanResults {
 	if cfg.OperatorImage != "" {
 		return runOperatorScan(ctx, cfg)
+	} else if cfg.NodeScan {
+		return runNodeScan(ctx, cfg)
 	}
 	return runPayloadScan(ctx, cfg)
 }
