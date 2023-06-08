@@ -31,6 +31,7 @@ type ArtifactPod struct {
 type ScanResult struct {
 	Tag   *v1.TagReference
 	Path  string
+	Skip  bool
 	Error error
 }
 
@@ -53,6 +54,11 @@ func NewScanResult() *ScanResult {
 
 func (r *ScanResult) Success() *ScanResult {
 	r.Error = nil
+	return r
+}
+
+func (r *ScanResult) Skipped() *ScanResult {
+	r.Skip = true
 	return r
 }
 

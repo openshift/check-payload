@@ -12,15 +12,28 @@ var (
 	colTitleExeName      = "Executable Name"
 	colTitlePassedFailed = "Status"
 	colTitleImage        = "Image"
-	colTitleUsingCrypto  = "Using Crypto"
 	failureRowHeader     = table.Row{colTitleTagName, colTitleExeName, colTitlePassedFailed, colTitleImage}
 	successRowHeader     = table.Row{colTitleTagName, colTitleExeName, colTitleImage}
 )
 
+var (
+	colTitleNodePath         = "Path"
+	colTitleNodePassedFailed = "Status"
+	colTitleNodeFrom         = "From"
+	failureNodeRowHeader     = table.Row{colTitleNodePath, colTitleNodePassedFailed, colTitleNodeFrom}
+	successNodeRowHeader     = table.Row{colTitleNodePath}
+)
+
 func printResults(cfg *Config, results []*ScanResults) error {
-	failureReport, successReport := generateReport(results, cfg)
+	var failureReport, successReport string
 
 	var combinedReport string
+
+	if cfg.NodeScan != "" {
+		failureReport, successReport = generateNodeScanReport(results, cfg)
+	} else {
+		failureReport, successReport = generateReport(results, cfg)
+	}
 
 	failed := isFailed(results)
 	if failed {
@@ -48,9 +61,40 @@ func printResults(cfg *Config, results []*ScanResults) error {
 	return nil
 }
 
-func generateReport(results []*ScanResults, cfg *Config) (string, string) {
-	ftw, stw := renderFailures(results)
+func generateNodeScanReport(results []*ScanResults, cfg *Config) (string, string) {
+	var failureTableRows []table.Row
+	var successTableRows []table.Row
 
+	for _, result := range results {
+		for _, res := range result.Items {
+			if res.Error != nil {
+				failureTableRows = append(failureTableRows, table.Row{res.Path, res.Error, res.Tag.From.Name})
+			} else {
+				successTableRows = append(successTableRows, table.Row{res.Path})
+			}
+		}
+	}
+
+	ftw := table.NewWriter()
+	ftw.AppendHeader(failureNodeRowHeader)
+	ftw.AppendRows(failureTableRows)
+	ftw.SetIndexColumn(1)
+
+	stw := table.NewWriter()
+	stw.AppendHeader(successNodeRowHeader)
+	stw.AppendRows(successTableRows)
+	stw.SetIndexColumn(1)
+
+	return generateOutputString(cfg, ftw, stw)
+}
+
+func generateReport(results []*ScanResults, cfg *Config) (string, string) {
+	ftw, stw := renderReport(results)
+	failureReport, successReport := generateOutputString(cfg, ftw, stw)
+	return failureReport, successReport
+}
+
+func generateOutputString(cfg *Config, ftw table.Writer, stw table.Writer) (string, string) {
 	var failureReport string
 	switch cfg.OutputFormat {
 	case "table":
@@ -74,11 +118,10 @@ func generateReport(results []*ScanResults, cfg *Config) (string, string) {
 	case "html":
 		successReport = stw.RenderHTML()
 	}
-
 	return failureReport, successReport
 }
 
-func renderFailures(results []*ScanResults) (failures table.Writer, successes table.Writer) {
+func renderReport(results []*ScanResults) (failures table.Writer, successes table.Writer) {
 	var failureTableRows []table.Row
 	var successTableRows []table.Row
 

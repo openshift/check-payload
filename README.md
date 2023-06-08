@@ -26,3 +26,10 @@ sudo ./check-payload \
 	-operator-image registry.ci.openshift.org/ocp-priv/4.11-art-assembly-art6883-3-priv@sha256:138b1b9ae11b0d3b5faafacd1b469ec8c20a234b387ae33cf007441fa5c5d567 \
    -filter /usr/lib/firmware,/usr/src/plugins,/usr/share/openshift,/usr/libexec/catatonit/catatonit,/usr/bin/pod
 ```
+
+# node scan
+
+```
+IMAGE=some.registry.location/check-payload
+podman  run --privileged -ti -v /:/myroot $IMAGE -node-scan /myroot
+```
