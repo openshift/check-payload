@@ -25,7 +25,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 		"/usr/lib/grub",
 	)
 	// business logic for scan
-	if err := filepath.WalkDir("/", func(path string, file fs.DirEntry, err error) error {
+	if err := filepath.WalkDir(cfg.NodeScan, func(path string, file fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -47,7 +47,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 		}
 		tag := &v1.TagReference{
 			From: &corev1.ObjectReference{
-				Name: "node",
+				Name: path,
 			},
 		}
 		klog.InfoS("scanning path", "path", path, "mtype", mtype.String())

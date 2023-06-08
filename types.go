@@ -14,7 +14,7 @@ type Config struct {
 	FromFile      string
 	FromURL       string
 	Limit         int
-	NodeScan      bool
+	NodeScan      string
 	OperatorImage string
 	OutputFile    string
 	OutputFormat  string

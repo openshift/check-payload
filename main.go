@@ -77,7 +77,7 @@ func main() {
 	var timeLimit = flag.Duration("time-limit", 1*time.Hour, "limit running time")
 	var verbose = flag.Bool("verbose", false, "verbose")
 	var filter = flag.String("filter", "", "do not scan a specific directory")
-	var nodeScan = flag.Bool("node-scan", false, "scan a node")
+	var nodeScan = flag.String("node-scan", "", "scan a node, pass / to scan the root or pass a path for a different start point")
 
 	flag.Parse()
 	if *help {
@@ -121,7 +121,7 @@ func main() {
 
 func validateApplicationDependencies(cfg *Config) {
 	deps := applicationDeps
-	if cfg.NodeScan {
+	if cfg.NodeScan != "" {
 		deps = applicationDepsNodeScan
 	}
 
@@ -144,7 +144,7 @@ type Result struct {
 func run(ctx context.Context, cfg *Config) []*ScanResults {
 	if cfg.OperatorImage != "" {
 		return runOperatorScan(ctx, cfg)
-	} else if cfg.NodeScan {
+	} else if cfg.NodeScan != "" {
 		return runNodeScan(ctx, cfg)
 	}
 	return runPayloadScan(ctx, cfg)
