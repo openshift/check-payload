@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	v1 "github.com/openshift/api/image/v1"
 )
 
@@ -88,7 +89,22 @@ func validateGoCgo(ctx context.Context, tag *v1.TagReference, path string, baton
 		return err
 	}
 
-	skipCGOEnabledCheck := bytes.Contains(stdout.Bytes(), []byte("go1.16"))
+	golangVersionRegexp := regexp.MustCompile(`go(\d.\d\d)`)
+	matches := golangVersionRegexp.FindAllStringSubmatch(stdout.String(), -1)
+	if len(matches) == 0 {
+		return fmt.Errorf("go: could not find compiler version in binary")
+	}
+
+	// skip CGO_ENABLED testing if version is < 1.18
+	v, err := semver.NewVersion(matches[0][1])
+	if err != nil {
+		return fmt.Errorf("go: error creating semver version: %w", err)
+	}
+	c, err := semver.NewConstraint("< 1.18")
+	if err != nil {
+		return fmt.Errorf("go: error creating semver constraint: %w", err)
+	}
+	skipCGOEnabledCheck := c.Check(v)
 
 	// check for CGO
 	if !skipCGOEnabledCheck && !bytes.Contains(stdout.Bytes(), []byte("CGO_ENABLED=1")) {

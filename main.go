@@ -40,6 +40,7 @@ var applicationDepsNodeScan = []string{
 	"go",
 	"nm",
 	"readelf",
+	"rpm",
 	"strings",
 }
 

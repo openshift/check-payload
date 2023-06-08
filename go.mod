@@ -3,9 +3,13 @@ module github.com/rphillips/check-payload
 go 1.19
 
 require (
+	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/jedib0t/go-pretty/v6 v6.4.6
+	github.com/openshift/api v0.0.0-20230120195050-6ba31fa438f2
+	github.com/openshift/oc v0.0.0-alpha.0.0.20230323133703-92b1a3d0e5d0
 	k8s.io/api v0.26.1
+	k8s.io/klog/v2 v2.90.1
 )
 
 require (
@@ -78,10 +82,8 @@ require (
 	github.com/opencontainers/image-spec v1.0.3-0.20220114050600-8b9d41f48198 // indirect
 	github.com/opencontainers/runc v1.1.3 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 // indirect
-	github.com/openshift/api v0.0.0-20230120195050-6ba31fa438f2 // indirect
 	github.com/openshift/client-go v0.0.0-20230120202327-72f107311084 // indirect
 	github.com/openshift/library-go v0.0.0-20230227140230-39892725eed1 // indirect
-	github.com/openshift/oc v0.0.0-alpha.0.0.20230323133703-92b1a3d0e5d0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
@@ -114,8 +116,6 @@ require (
 	k8s.io/cli-runtime v0.26.1 // indirect
 	k8s.io/client-go v0.26.1 // indirect
 	k8s.io/component-base v0.26.1 // indirect
-	k8s.io/klog v1.0.0 // indirect
-	k8s.io/klog/v2 v2.90.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	k8s.io/kubectl v0.26.1 // indirect
 	k8s.io/utils v0.0.0-20230209194617-a36077c30491 // indirect
