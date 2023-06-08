@@ -11,4 +11,4 @@ FROM fedora:38
 RUN dnf install -y binutils go file
 COPY --from=builder /check-payload /check-payload
 
-ENTRYPOINT [/check-payload]
+ENTRYPOINT ["/check-payload"]
