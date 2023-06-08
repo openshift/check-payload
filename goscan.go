@@ -70,7 +70,12 @@ func readTable(fileName string) (*gosym.Table, error) {
 
 	section := exe.Section(sectionLabel)
 	if section == nil {
-		return nil, fmt.Errorf("could not read section .gopclntab from %s ", fileName)
+		// binary may be built with -pie
+		sectionLabel = ".data.rel.ro"
+		section = exe.Section(sectionLabel)
+		if section == nil {
+			return nil, fmt.Errorf("could not read section .gopclntab from %s ", fileName)
+		}
 	}
 	tableData, err := section.Data()
 	if err != nil {
