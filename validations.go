@@ -23,13 +23,16 @@ var (
 )
 
 type Baton struct {
-	GoNoCrypto bool
+	GoNoCrypto        bool
+	GoVersion         string
+	GoVersionDetailed []byte
 }
 
 type ValidationFn func(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error
 
 var validationFns = map[string][]ValidationFn{
 	"go": {
+		validateGoVersion,
 		validateGoCgo,
 		validateGoNoOpenssl,
 		validateGoSymbols,
@@ -39,6 +42,24 @@ var validationFns = map[string][]ValidationFn{
 	"exe": {
 		validateExe,
 	},
+}
+
+func validateGoVersion(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
+	var stdout bytes.Buffer
+	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	golangVersionRegexp := regexp.MustCompile(`go(\d.\d\d)`)
+	matches := golangVersionRegexp.FindAllStringSubmatch(stdout.String(), -1)
+	if len(matches) == 0 {
+		return fmt.Errorf("go: could not find compiler version in binary")
+	}
+	baton.GoVersion = matches[0][1]
+	baton.GoVersionDetailed = stdout.Bytes()
+	return nil
 }
 
 func validateGoSymbols(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
@@ -51,8 +72,24 @@ func validateGoSymbols(ctx context.Context, tag *v1.TagReference, path string, b
 		baton.GoNoCrypto = true
 		return nil
 	}
+
+	v, err := semver.NewVersion(baton.GoVersion)
+	if err != nil {
+		return fmt.Errorf("go: error creating semver version: %w", err)
+	}
+	c, err := semver.NewConstraint("< 1.18")
+	if err != nil {
+		return fmt.Errorf("go: error creating semver constraint: %w", err)
+	}
+
+	// if go is less than 1.18 then use the alternate symbol table
+	requiredGolangSymbols := requiredGolangSymbolsGreaterThan1_18
+	if c.Check(v) {
+		requiredGolangSymbols = requiredGolangSymbolsLessThan1_18
+	}
+
 	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
-		return fmt.Errorf("go: expected symbols not found for %v: %v", filepath.Base(path), err)
+		return fmt.Errorf("go: expected symbols (%v) not found for %v: %v", requiredGolangSymbols, filepath.Base(path), err)
 	}
 	return nil
 }
@@ -82,51 +119,18 @@ func validateGoLinux(ctx context.Context, tag *v1.TagReference, path string) err
 }
 
 func validateGoCgo(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	golangVersionRegexp := regexp.MustCompile(`go(\d.\d\d)`)
-	matches := golangVersionRegexp.FindAllStringSubmatch(stdout.String(), -1)
-	if len(matches) == 0 {
-		return fmt.Errorf("go: could not find compiler version in binary")
-	}
-
-	// skip CGO_ENABLED testing if version is < 1.18
-	v, err := semver.NewVersion(matches[0][1])
-	if err != nil {
-		return fmt.Errorf("go: error creating semver version: %w", err)
-	}
-	c, err := semver.NewConstraint("< 1.18")
-	if err != nil {
-		return fmt.Errorf("go: error creating semver constraint: %w", err)
-	}
-	skipCGOEnabledCheck := c.Check(v)
-
 	// check for CGO
-	if !skipCGOEnabledCheck && !bytes.Contains(stdout.Bytes(), []byte("CGO_ENABLED=1")) {
+	if !bytes.Contains(baton.GoVersionDetailed, []byte("CGO_ENABLED=1")) {
 		return fmt.Errorf("go: binary is not CGO_ENABLED")
 	}
-
 	return nil
 }
 
 func validateGoNoOpenssl(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
 	// verify no_openssl is not referenced
-	if bytes.Contains(stdout.Bytes(), []byte("no_openssl")) {
+	if bytes.Contains(baton.GoVersionDetailed, []byte("no_openssl")) {
 		return fmt.Errorf("go: binary is no_openssl enabled")
 	}
-
 	return nil
 }
 
@@ -136,25 +140,11 @@ func validateGoStatic(ctx context.Context, tag *v1.TagReference, path string, ba
 		return nil
 	}
 
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
 	// check for static go
 	return validateStaticGo(ctx, path)
 }
 
 func validateGoOpenssl(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
 	// check for openssl strings
 	return validateStringsOpenssl(ctx, path)
 }
