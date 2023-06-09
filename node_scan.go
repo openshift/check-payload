@@ -23,6 +23,14 @@ func NewTag(name string) *v1.TagReference {
 	}
 }
 
+func isSymlink(path string) (bool, error) {
+	fileinfo, err := os.Lstat(path)
+	if err != nil {
+		return false, err
+	}
+	return fileinfo.Mode()&os.ModeSymlink != 0, nil
+}
+
 func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 	var runs []*ScanResults
 	results := NewScanResults()
@@ -45,6 +53,15 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 		}
 		for _, path := range files {
 			if isPathFiltered(cfg.Filter, path) {
+				continue
+			}
+			symlink, err := isSymlink(path)
+			if err != nil {
+				res := NewScanResult().SetTag(tag).SetPath(path).SetError(err)
+				results.Append(res)
+				continue
+			}
+			if symlink {
 				continue
 			}
 			path = filepath.Join(cfg.NodeScan, path)
