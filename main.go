@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -15,6 +16,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/carlmjohnson/versioninfo"
 	"github.com/gabriel-vasile/mimetype"
 	v1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/oc/pkg/cli/admin/release"
@@ -83,11 +85,16 @@ func main() {
 	var verbose = flag.Bool("verbose", false, "verbose")
 	var filter = flag.String("filter", "", "do not scan a specific directory")
 	var nodeScan = flag.String("node-scan", "", "scan a node, pass / to scan the root or pass a path for a different start point")
-	//versioninfo.AddFlag(nil)
+	var version = flag.Bool("version", false, "print version")
 
 	flag.Parse()
 	if *help {
 		flag.Usage()
+		os.Exit(0)
+	}
+	if *version {
+		fmt.Println("Version:", versioninfo.Version)
+		fmt.Println("Revision:", versioninfo.Revision)
 		os.Exit(0)
 	}
 
