@@ -104,7 +104,6 @@ func isUsingCryptoModule(symtable *gosym.Table) bool {
 }
 
 func validateGoLinux(ctx context.Context, tag *v1.TagReference, path string) error {
-	fmt.Printf("validateGoLinux")
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
 	cmd.Stdout = &stdout
@@ -140,9 +139,22 @@ func validateGoCgo(ctx context.Context, tag *v1.TagReference, path string, baton
 }
 
 func validateGoNoOpenssl(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
-	// verify no_openssl is not referenced
-	if bytes.Contains(baton.GoVersionDetailed, []byte("no_openssl")) {
-		return fmt.Errorf("go: binary is no_openssl enabled")
+	invalidTags := []string{
+		"no_openssl", // verify no_openssl is not referenced
+	}
+
+	golangTagsRegexp := regexp.MustCompile(`-tags=(.*)\n`)
+	matches := golangTagsRegexp.FindAllSubmatch(baton.GoVersionDetailed, -1)
+	if matches == nil {
+		return nil
+	}
+	tags := strings.Split(string(matches[0][1]), ",")
+	for _, tag := range tags {
+		for _, itag := range invalidTags {
+			if tag == itag {
+				return fmt.Errorf("go: binary has invalid tag %v enabled", itag)
+			}
+		}
 	}
 	return nil
 }
