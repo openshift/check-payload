@@ -104,6 +104,7 @@ func isUsingCryptoModule(symtable *gosym.Table) bool {
 }
 
 func validateGoLinux(ctx context.Context, tag *v1.TagReference, path string) error {
+	fmt.Printf("validateGoLinux")
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
 	cmd.Stdout = &stdout
@@ -112,6 +113,18 @@ func validateGoLinux(ctx context.Context, tag *v1.TagReference, path string) err
 	}
 
 	if bytes.Contains(stdout.Bytes(), []byte("GOOS=linux")) {
+		return nil
+	}
+
+	stdout.Reset()
+
+	cmd = exec.CommandContext(ctx, "file", path)
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	if bytes.Contains(stdout.Bytes(), []byte("ELF")) {
 		return nil
 	}
 
