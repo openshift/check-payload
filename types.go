@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/carlmjohnson/versioninfo"
 	v1 "github.com/openshift/api/image/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
@@ -37,7 +38,8 @@ func (c *Config) Log() {
 		"output_format", c.OutputFormat,
 		"parallelism", c.Parallelism,
 		"time_limit", c.TimeLimit,
-		"Verbose", c.Verbose,
+		"verbose", c.Verbose,
+		"version", versioninfo.Revision,
 	)
 }
 
