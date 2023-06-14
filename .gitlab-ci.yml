@@ -9,6 +9,9 @@
 
 image: golang:latest
 
+only:
+  - tags
+
 stages:
   - build
 
