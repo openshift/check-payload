@@ -35,7 +35,7 @@ release_job:
     assets:
       links:
         - name: "check-payload"
-          url: 'https://gitlab.cee.redhat.com/rphillip/check-payload/-/jobs/${GE_JOB_ID}/artifacts/file/check-payload'  
+          url: 'https://gitlab.cee.redhat.com/rphillip/check-payload/-/jobs/${CI_JOB_ID}/artifacts/file/check-payload'               
   tags:
     - docker
     - shared
