@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
+	mapset "github.com/deckarep/golang-set/v2"
 	v1 "github.com/openshift/api/image/v1"
 )
 
@@ -34,7 +35,7 @@ var validationFns = map[string][]ValidationFn{
 	"go": {
 		validateGoVersion,
 		validateGoCgo,
-		validateGoNoOpenssl,
+		validateGoTags,
 		validateGoSymbols,
 		validateGoStatic,
 		validateGoOpenssl,
@@ -149,9 +150,20 @@ func validateGoCgo(ctx context.Context, tag *v1.TagReference, path string, baton
 	return nil
 }
 
-func validateGoNoOpenssl(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
-	invalidTags := []string{
-		"no_openssl", // verify no_openssl is not referenced
+func validateGoTags(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
+	invalidTagsSet := mapset.NewSet[string]("no_openssl")
+	expectedTagsSet := mapset.NewSet[string]("strictfipsruntime")
+
+	v, err := semver.NewVersion(baton.GoVersion)
+	if err != nil {
+		return fmt.Errorf("go: error creating semver version: %w", err)
+	}
+	c, err := semver.NewConstraint("<= 1.17")
+	if err != nil {
+		return fmt.Errorf("go: error creating semver constraint: %w", err)
+	}
+	if c.Check(v) {
+		return nil
 	}
 
 	golangTagsRegexp := regexp.MustCompile(`-tags=(.*)\n`)
@@ -159,14 +171,23 @@ func validateGoNoOpenssl(ctx context.Context, tag *v1.TagReference, path string,
 	if matches == nil {
 		return nil
 	}
+
 	tags := strings.Split(string(matches[0][1]), ",")
-	for _, tag := range tags {
-		for _, itag := range invalidTags {
-			if tag == itag {
-				return fmt.Errorf("go: binary has invalid tag %v enabled", itag)
-			}
-		}
+	if len(tags) == 0 {
+		return nil
 	}
+
+	// check for invalid tags
+	binaryTags := mapset.NewSet[string](tags...)
+	if set := binaryTags.Intersect(invalidTagsSet); set.Cardinality() > 0 {
+		return fmt.Errorf("go: binary has invalid tag %v enabled", set.ToSlice())
+	}
+
+	// check for required tags
+	if set := binaryTags.Intersect(expectedTagsSet); set.Cardinality() == 0 {
+		return fmt.Errorf("go: binary does not contain required tag(s) %v", expectedTagsSet.ToSlice())
+	}
+
 	return nil
 }
 
