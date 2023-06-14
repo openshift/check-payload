@@ -13,6 +13,3 @@ compile:
   only:
     - tags
 
-job:
-  tags:
-    - shared
