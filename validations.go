@@ -131,7 +131,18 @@ func validateGoLinux(ctx context.Context, tag *v1.TagReference, path string) err
 }
 
 func validateGoCgo(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
-	// check for CGO
+	v, err := semver.NewVersion(baton.GoVersion)
+	if err != nil {
+		return fmt.Errorf("go: error creating semver version: %w", err)
+	}
+	c, err := semver.NewConstraint("< 1.17")
+	if err != nil {
+		return fmt.Errorf("go: error creating semver constraint: %w", err)
+	}
+	if c.Check(v) {
+		return nil
+	}
+
 	if !bytes.Contains(baton.GoVersionDetailed, []byte("CGO_ENABLED=1")) {
 		return fmt.Errorf("go: binary is not CGO_ENABLED")
 	}
