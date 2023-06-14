@@ -6,21 +6,39 @@ import (
 
 	v1 "github.com/openshift/api/image/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/klog/v2"
 )
 
 type Config struct {
-	Components    []string
-	Filter        []string
-	FromFile      string
-	FromURL       string
-	Limit         int
-	NodeScan      string
-	OperatorImage string
-	OutputFile    string
-	OutputFormat  string
-	Parallelism   int
-	TimeLimit     time.Duration
-	Verbose       bool
+	Components    []string      `json:"components"`
+	Filter        []string      `json:"filter"`
+	FromFile      string        `json:"from_file"`
+	FromURL       string        `json:"from_url"`
+	Limit         int           `json:"limit"`
+	NodeScan      string        `json:"node_scan"`
+	OperatorImage string        `json:"operator_image"`
+	OutputFile    string        `json:"output_file"`
+	OutputFormat  string        `json:"output_format"`
+	Parallelism   int           `json:"parallelism"`
+	TimeLimit     time.Duration `json:"time_limit"`
+	Verbose       bool          `json:"verbose"`
+}
+
+func (c *Config) Log() {
+	klog.InfoS("using config",
+		"components", c.Components,
+		"filter", c.Filter,
+		"from_file", c.FromFile,
+		"from_url", c.FromURL,
+		"limit", c.Limit,
+		"node_scan", c.NodeScan,
+		"operator_image", c.OperatorImage,
+		"output_file", c.OutputFile,
+		"output_format", c.OutputFormat,
+		"parallelism", c.Parallelism,
+		"time_limit", c.TimeLimit,
+		"Verbose", c.Verbose,
+	)
 }
 
 type ArtifactPod struct {
