@@ -19,3 +19,7 @@ compile:
   artifacts:
     paths:
       - check-payload
+
+job:
+  tags:
+    - shared
