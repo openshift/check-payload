@@ -40,7 +40,7 @@ type Result struct {
 	Results *ScanResults
 }
 
-func run(ctx context.Context, cfg *Config) []*ScanResults {
+func Run(ctx context.Context, cfg *Config) []*ScanResults {
 	if cfg.OperatorImage != "" {
 		return runOperatorScan(ctx, cfg)
 	} else if cfg.NodeScan != "" {

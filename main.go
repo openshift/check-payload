@@ -117,7 +117,7 @@ func main() {
 
 	config.Log()
 
-	results := run(ctx, &config)
+	results := Run(ctx, &config)
 	err := printResults(&config, results)
 	if err != nil || isFailed(results) {
 		os.Exit(1)
