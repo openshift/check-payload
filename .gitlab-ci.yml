@@ -12,4 +12,7 @@ compile:
       - check-payload
   only:
     - tags
+  tags:
+    - docker
+    - shared
 
