@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
+	github.com/carlmjohnson/versioninfo v0.22.4
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/openshift/api v0.0.0-20230120195050-6ba31fa438f2
@@ -21,7 +22,6 @@ require (
 	github.com/aws/aws-sdk-go v1.44.44 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/carlmjohnson/versioninfo v0.22.4 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/containerd/cgroups v1.0.3 // indirect
