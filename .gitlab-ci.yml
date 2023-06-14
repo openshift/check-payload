@@ -7,12 +7,16 @@ stages:
 compile:
   stage: build
   script:
+    - echo $CI_JOB_ID
+    - echo GE_JOB_ID=$CI_JOB_ID >> generate_executables.env
     - make
   artifacts:
     paths:
       - check-payload
+    reports:    
+      dotenv: generate_executables.env
   only:
-    - tags
+    - tags  
   tags:
     - docker
     - shared
@@ -22,6 +26,9 @@ release_job:
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   rules:
     - if: $CI_COMMIT_TAG
+  needs:
+    - job: build
+      artifacts: true
   before_script:
     - apk --no-cache add openssl ca-certificates
     - mkdir -p /usr/local/share/ca-certificates/extra
@@ -35,7 +42,7 @@ release_job:
     assets:
       links:
         - name: "check-payload"
-          url: 'https://gitlab.cee.redhat.com/rphillip/check-payload/-/jobs/${CI_JOB_ID}/artifacts/file/check-payload'               
+          url: 'https://gitlab.cee.redhat.com/rphillip/check-payload/-/jobs/${GE_JOB_ID}/artifacts/file/check-payload'               
   tags:
     - docker
     - shared
