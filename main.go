@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"k8s.io/klog/v2"
-
-	"github.com/carlmjohnson/versioninfo"
 )
 
 const (
@@ -61,6 +59,8 @@ var requiredGolangSymbolsLessThan1_18 = []string{
 	"x_cgo_init",
 }
 
+var Commit string
+
 func main() {
 	var operatorImage = flag.String("operator-image", "", "only run scan on operator image")
 	var components = flag.String("components", "", "scan a specific set of components")
@@ -83,8 +83,7 @@ func main() {
 		os.Exit(0)
 	}
 	if *version {
-		fmt.Println("Version:", versioninfo.Version)
-		fmt.Println("Revision:", versioninfo.Revision)
+		fmt.Println(Commit)
 		os.Exit(0)
 	}
 
