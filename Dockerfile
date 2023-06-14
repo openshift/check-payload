@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY go.mod go.sum ./
 RUN go mod download
-copy *.go ./
+COPY *.go ./
 RUN CGO_ENABLED=0 go build -o /check-payload
 
 FROM fedora:38
