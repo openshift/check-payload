@@ -22,16 +22,20 @@ release_job:
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   rules:
     - if: $CI_COMMIT_TAG
+  before_script:
+    - apk --no-cache add openssl ca-certificates
+    - mkdir -p /usr/local/share/ca-certificates/extra
+    - openssl s_client -connect ${CI_SERVER_HOST}:${CI_SERVER_PORT} -servername ${CI_SERVER_HOST} -showcerts </dev/null 2>/dev/null | sed -e '/-----BEGIN/,/-----END/!d' | tee "/usr/local/share/ca-certificates/${CI_SERVER_HOST}.crt" >/dev/null
+    - update-ca-certificates
   script:
-    - echo "Creating release"
-    - release-cli --insecure-https create --name 'Release $TAG' --tag-name '$TAG' 
+    - echo "Creating release"  
   release:                          
     tag_name: '$CI_COMMIT_TAG'
     description: '$CI_COMMIT_TAG'
     assets:
       links:
         - name: "check-payload"
-          url: 'https://gitlab.cee.redhat.com/rphillip/check-payload/cw/-/jobs/${GE_JOB_ID}/artifacts/file/check-payload'
+          url: 'https://gitlab.cee.redhat.com/rphillip/check-payload/-/jobs/${GE_JOB_ID}/artifacts/file/check-payload'  
   tags:
     - docker
     - shared
