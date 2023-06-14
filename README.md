@@ -1,5 +1,11 @@
 # check-payload
 
+## Releases
+
+Release can be found on this [page](https://gitlab.cee.redhat.com/rphillip/check-payload/-/releases). There a Linux asset for download.
+
+## About
+
 This application checks an OpenShift release payload or an operator image for FIPS enabled binaries.
 
 ## build
