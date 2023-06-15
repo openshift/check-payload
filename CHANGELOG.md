@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.0.4] - 2023-06-15
+
+### Documentation
+
+- Add release information blurb
+
+### Miscellaneous Tasks
+
+- Use upstream golang image and remove port
+
+### Performance
+
+- Disable cgo... allows for slightly smaller binary
+
+## [1.0.3] - 2023-06-14
+
+### Miscellaneous Tasks
+
+- first gitlab pipeline release
+
 ## [1.0.2] - 2023-06-14
 
 ### Miscellaneous Tasks
