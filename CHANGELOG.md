@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.6] - 2023-06-15
+
+### Documentation
+
+- Add build-locale-archive to the ignore list
+
+### Features
+
+- Check for _cgo_init (fixes 4.10)
+
 ## [1.0.5] - 2023-06-15
 
 ### Features
