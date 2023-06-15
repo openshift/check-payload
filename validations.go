@@ -136,7 +136,7 @@ func validateGoCgo(ctx context.Context, tag *v1.TagReference, path string, baton
 	if err != nil {
 		return fmt.Errorf("go: error creating semver version: %w", err)
 	}
-	c, err := semver.NewConstraint("< 1.17")
+	c, err := semver.NewConstraint("<= 1.17")
 	if err != nil {
 		return fmt.Errorf("go: error creating semver constraint: %w", err)
 	}
