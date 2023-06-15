@@ -50,13 +50,9 @@ var ignoredMimes = []string{
 	"text/x-python",
 }
 
-var requiredGolangSymbolsGreaterThan1_18 = []string{
+var requiredGolangSymbols = []string{
 	"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 	"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
-}
-
-var requiredGolangSymbolsLessThan1_18 = []string{
-	"x_cgo_init",
 }
 
 var Commit string

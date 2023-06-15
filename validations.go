@@ -35,6 +35,7 @@ var validationFns = map[string][]ValidationFn{
 	"go": {
 		validateGoVersion,
 		validateGoCgo,
+		validateGoCGOInit,
 		validateGoTags,
 		validateGoSymbols,
 		validateGoStatic,
@@ -82,11 +83,8 @@ func validateGoSymbols(ctx context.Context, tag *v1.TagReference, path string, b
 	if err != nil {
 		return fmt.Errorf("go: error creating semver constraint: %w", err)
 	}
-
-	// if go is less than 1.18 then use the alternate symbol table
-	requiredGolangSymbols := requiredGolangSymbolsGreaterThan1_18
 	if c.Check(v) {
-		requiredGolangSymbols = requiredGolangSymbolsLessThan1_18
+		return nil
 	}
 
 	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
@@ -204,6 +202,48 @@ func validateGoStatic(ctx context.Context, tag *v1.TagReference, path string, ba
 func validateGoOpenssl(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
 	// check for openssl strings
 	return validateStringsOpenssl(ctx, path)
+}
+
+func validateGoCGOInit(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
+	cmd := exec.CommandContext(ctx, "strings", path)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	cgoInitFound := false
+
+	scanner := bufio.NewScanner(stdout)
+	const cap int = 1 * 1024 * 1024
+	buf := make([]byte, cap)
+	scanner.Buffer(buf, cap)
+
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), "cgo_init") {
+			cgoInitFound = true
+			cmd.Cancel()
+			break
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	if err := cmd.Wait(); err != nil {
+		if !strings.Contains(err.Error(), "signal: killed") {
+			return err
+		}
+	}
+
+	if !cgoInitFound {
+		return fmt.Errorf("x_cgo_init: not found")
+	}
+
+	return nil
 }
 
 // scan the binary for multiple libcrypto libraries
