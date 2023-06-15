@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.5] - 2023-06-15
+
+### Features
+
+- Ignore CGO_ENABLED for golang <= 1.17 (fixes 4.10)
+
+### Build
+
+- Add latest to changelog generation
+
 ## [1.0.4] - 2023-06-15
 
 ### Documentation
