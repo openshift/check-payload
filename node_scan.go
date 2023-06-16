@@ -51,11 +51,11 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 			results.Append(res)
 			continue
 		}
-		for _, path := range files {
-			if isPathFiltered(cfg.FilterPaths, path) {
+		for _, innerPath := range files {
+			if isPathFiltered(cfg.FilterPaths, innerPath) {
 				continue
 			}
-			path = filepath.Join(cfg.NodeScan, path)
+			path := filepath.Join(cfg.NodeScan, innerPath)
 			fileInfo, err := os.Stat(path)
 			if err != nil {
 				// some files are stripped from an rhcos image
@@ -84,7 +84,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 				continue
 			}
 			klog.InfoS("scanning path", "path", path, "mtype", mtype.String())
-			res := scanBinary(ctx, "node", tag, cfg.NodeScan, path)
+			res := scanBinary(ctx, "node", tag, cfg.NodeScan, innerPath)
 			if res.Error == nil {
 				klog.InfoS("scanning node success", "path", path, "status", "success")
 			} else {

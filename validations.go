@@ -344,14 +344,15 @@ func isExecutable(ctx context.Context, path string) error {
 	return nil
 }
 
-func scanBinary(ctx context.Context, operator string, tag *v1.TagReference, mountPath string, path string) *ScanResult {
+func scanBinary(ctx context.Context, operator string, tag *v1.TagReference, topDir, innerPath string) *ScanResult {
 	allFn := validationFns["all"]
 	goFn := validationFns["go"]
 	exeFn := validationFns["exe"]
 
 	baton := &Baton{}
-	res := NewScanResult().SetOperator(operator).SetTag(tag).SetBinaryPath(mountPath, path)
+	res := NewScanResult().SetOperator(operator).SetTag(tag).SetPath(innerPath)
 
+	path := filepath.Join(topDir, innerPath)
 	for _, fn := range allFn {
 		if err := fn(ctx, tag, path, baton); err != nil {
 			return res.SetError(err)

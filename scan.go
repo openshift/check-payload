@@ -228,8 +228,8 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		if err != nil {
 			return err
 		}
-		printablePath := stripMountPath(mountPath, path)
-		if isPathFiltered(cfg.FilterPaths, printablePath) {
+		innerPath := stripMountPath(mountPath, path)
+		if isPathFiltered(cfg.FilterPaths, innerPath) {
 			return nil
 		}
 		if file.IsDir() {
@@ -248,9 +248,9 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		klog.InfoS("scanning path", "path", path)
 		res := scanBinary(ctx, component, tag, mountPath, path)
 		if res.Error == nil {
-			klog.InfoS("scanning success", "image", image, "path", printablePath, "status", "success")
+			klog.InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
 		} else {
-			klog.InfoS("scanning failed", "image", image, "path", printablePath, "error", res.Error, "status", "failed")
+			klog.InfoS("scanning failed", "image", image, "path", innerPath, "error", res.Error, "status", "failed")
 		}
 		results.Append(res)
 		return nil

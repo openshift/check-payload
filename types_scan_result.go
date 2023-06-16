@@ -45,11 +45,6 @@ func (r *ScanResult) SetPath(path string) *ScanResult {
 	return r
 }
 
-func (r *ScanResult) SetBinaryPath(mountPath, path string) *ScanResult {
-	r.Path = stripMountPath(mountPath, path)
-	return r
-}
-
 func (r *ScanResult) SetTag(tag *v1.TagReference) *ScanResult {
 	r.Tag = tag
 	return r
