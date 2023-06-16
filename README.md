@@ -25,11 +25,11 @@ go build
    -filter /usr/lib/firmware,/usr/src/plugins,/usr/share/openshift,/usr/libexec/catatonit/catatonit,/usr/bin/pod,/usr/bin/tini-static,/usr/bin/cpb,/usr/sbin/build-locale-archive
 ```
 
-## run against an operator image
+## run against an container or operator image
 
 ```sh
 sudo ./check-payload \
-   -operator-image registry.ci.openshift.org/ocp-priv/4.11-art-assembly-art6883-3-priv@sha256:138b1b9ae11b0d3b5faafacd1b469ec8c20a234b387ae33cf007441fa5c5d567 \
+   -container-image registry.ci.openshift.org/ocp-priv/4.11-art-assembly-art6883-3-priv@sha256:138b1b9ae11b0d3b5faafacd1b469ec8c20a234b387ae33cf007441fa5c5d567 \
    -filter /usr/lib/firmware,/usr/src/plugins,/usr/share/openshift,/usr/libexec/catatonit/catatonit,/usr/bin/pod,/usr/bin/tini-static,/usr/bin/cpb,/usr/sbin/build-locale-archive
 ```
 
