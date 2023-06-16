@@ -84,7 +84,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 				continue
 			}
 			klog.InfoS("scanning path", "path", path, "mtype", mtype.String())
-			res := scanBinary(ctx, tag, cfg.NodeScan, path)
+			res := scanBinary(ctx, "node", tag, cfg.NodeScan, path)
 			if res.Error == nil {
 				klog.InfoS("scanning node success", "path", path, "status", "success")
 			} else {

@@ -10,6 +10,11 @@ func NewScanResult() *ScanResult {
 	return &ScanResult{}
 }
 
+func (r *ScanResult) SetOperator(operator string) *ScanResult {
+	r.OperatorName = operator
+	return r
+}
+
 func (r *ScanResult) Success() *ScanResult {
 	r.Error = nil
 	return r

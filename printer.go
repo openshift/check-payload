@@ -8,12 +8,13 @@ import (
 )
 
 var (
+	colTitleOperatorName = "Operator Name"
 	colTitleTagName      = "Tag Name"
 	colTitleExeName      = "Executable Name"
 	colTitlePassedFailed = "Status"
 	colTitleImage        = "Image"
-	failureRowHeader     = table.Row{colTitleTagName, colTitleExeName, colTitlePassedFailed, colTitleImage}
-	successRowHeader     = table.Row{colTitleTagName, colTitleExeName, colTitleImage}
+	failureRowHeader     = table.Row{colTitleOperatorName, colTitleExeName, colTitlePassedFailed, colTitleImage}
+	successRowHeader     = table.Row{colTitleOperatorName, colTitleExeName, colTitleImage}
 )
 
 var (
@@ -128,9 +129,9 @@ func renderReport(results []*ScanResults) (failures table.Writer, successes tabl
 	for _, result := range results {
 		for _, res := range result.Items {
 			if res.Error != nil {
-				failureTableRows = append(failureTableRows, table.Row{res.Tag.Name, res.Path, res.Error, res.Tag.From.Name})
+				failureTableRows = append(failureTableRows, table.Row{res.OperatorName, res.Tag.Name, res.Path, res.Error, res.Tag.From.Name})
 			} else {
-				successTableRows = append(successTableRows, table.Row{res.Tag.Name, res.Path, res.Tag.From.Name})
+				successTableRows = append(successTableRows, table.Row{res.OperatorName, res.Tag.Name, res.Path, res.Tag.From.Name})
 			}
 		}
 	}

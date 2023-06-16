@@ -41,7 +41,7 @@ type Result struct {
 }
 
 func Run(ctx context.Context, cfg *Config) []*ScanResults {
-	if cfg.OperatorImage != "" {
+	if cfg.ContainerImage != "" {
 		return runOperatorScan(ctx, cfg)
 	} else if cfg.NodeScan != "" {
 		return runNodeScan(ctx, cfg)
@@ -52,7 +52,7 @@ func Run(ctx context.Context, cfg *Config) []*ScanResults {
 func runOperatorScan(ctx context.Context, cfg *Config) []*ScanResults {
 	tag := &v1.TagReference{
 		From: &corev1.ObjectReference{
-			Name: cfg.OperatorImage,
+			Name: cfg.ContainerImage,
 		},
 	}
 
@@ -208,6 +208,11 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		results.Append(NewScanResult().SetTag(tag).SetError(err))
 		return results
 	}
+	// get openshift component
+	component, _ := getOpenshiftComponentFromImage(ctx, image)
+	if component != "" {
+		klog.Infof("found operator", "component", component)
+	}
 	defer func() {
 		podmanUnmount(ctx, createID)
 	}()
@@ -239,7 +244,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 			return nil
 		}
 		klog.InfoS("scanning path", "path", path)
-		res := scanBinary(ctx, tag, mountPath, path)
+		res := scanBinary(ctx, component, tag, mountPath, path)
 		if res.Error == nil {
 			klog.InfoS("scanning success", "image", image, "path", printablePath, "status", "success")
 		} else {

@@ -13,7 +13,7 @@ func (c *Config) Log() {
 		"from_url", c.FromURL,
 		"limit", c.Limit,
 		"node_scan", c.NodeScan,
-		"operator_image", c.OperatorImage,
+		"container_image", c.ContainerImage,
 		"output_file", c.OutputFile,
 		"output_format", c.OutputFormat,
 		"parallelism", c.Parallelism,
