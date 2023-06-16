@@ -1,0 +1,19 @@
+filter_paths = [
+	# directories
+	"/usr/lib/firmware",
+	"/usr/src/plugins",
+	"/usr/share/openshift",
+
+	# executables
+
+	### static binaries, no crypto
+	"/usr/bin/cdi-containerimage-server",
+	"/usr/bin/cpb",
+	"/usr/bin/pinns",
+	"/usr/bin/pod",
+	"/usr/bin/tini-static",
+	"/usr/libexec/catatonit/catatonit",
+	"/usr/sbin/build-locale-archive",
+]
+
+filter_images = [ ]

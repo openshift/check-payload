@@ -8,7 +8,8 @@ import (
 func (c *Config) Log() {
 	klog.InfoS("using config",
 		"components", c.Components,
-		"filter", c.Filter,
+		"filter_paths", c.FilterPaths,
+		"filter_images", c.FilterImages,
 		"from_file", c.FromFile,
 		"from_url", c.FromURL,
 		"limit", c.Limit,

@@ -9,7 +9,6 @@ import (
 
 var (
 	colTitleOperatorName = "Operator Name"
-	colTitleTagName      = "Tag Name"
 	colTitleExeName      = "Executable Name"
 	colTitlePassedFailed = "Status"
 	colTitleImage        = "Image"

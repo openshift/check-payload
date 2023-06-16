@@ -2,18 +2,24 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"flag"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"k8s.io/klog/v2"
 )
 
 const (
 	defaultPayloadFilename = "payload.json"
+	defaultConfigFile      = "config.toml"
 )
+
+//go:embed config.toml
+var embeddedConfig string
 
 var applicationDeps = []string{
 	"file",
@@ -60,6 +66,8 @@ var Commit string
 func main() {
 	var containerImage = flag.String("container-image", "", "only run scan on operator image")
 	var components = flag.String("components", "", "scan a specific set of components")
+	var configFile = flag.String("config", defaultConfigFile, "use config file")
+	var filterImages = flag.String("filter-images", "", "filter images")
 	var fromFile = flag.String("file", defaultPayloadFilename, "json file for payload")
 	var fromUrl = flag.String("url", "", "http URL to pull payload from")
 	var help = flag.Bool("help", false, "show help")
@@ -85,6 +93,7 @@ func main() {
 	}
 
 	config := Config{
+		ConfigFile:     *configFile,
 		FromFile:       *fromFile,
 		FromURL:        *fromUrl,
 		InsecurePull:   *insecurePull,
@@ -101,8 +110,28 @@ func main() {
 	if *components != "" {
 		config.Components = strings.Split(*components, ",")
 	}
+
+	if *filterImages != "" {
+		config.FilterImages = strings.Split(*filterImages, ",")
+	}
+
+	if *configFile != "" {
+		var tomlData string
+		if filterFileData, err := os.ReadFile(*configFile); err != nil {
+			klog.Info("using embedded config")
+			tomlData = embeddedConfig
+		} else {
+			klog.Infof("using provided config: %v", *configFile)
+			tomlData = string(filterFileData)
+		}
+		_, err := toml.Decode(tomlData, &config)
+		if err != nil {
+			klog.Fatalf("error parsing toml: %v", err)
+		}
+	}
+
 	if *filter != "" {
-		config.Filter = strings.Split(*filter, ",")
+		config.FilterPaths = append(config.FilterPaths, strings.Split(*filter, ",")...)
 	}
 
 	klog.InitFlags(nil)

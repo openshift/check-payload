@@ -8,8 +8,11 @@ import (
 )
 
 type Config struct {
-	Components              []string      `json:"components"`
-	Filter                  []string      `json:"filter"`
+	ConfigFile              string        `json:"config_file"`
+	Components              []string      `json:"components" toml:"components"`
+	FilterPaths             []string      `json:"filter_paths" toml:"filter_paths"`
+	FilterImages            []string      `json:"filter_images" toml:"filter_images"`
+	FilterFile              string        `json:"filter_file"`
 	FromFile                string        `json:"from_file"`
 	FromURL                 string        `json:"from_url"`
 	InsecurePull            bool          `json:"insecure_pull"`
@@ -39,4 +42,9 @@ type ScanResult struct {
 
 type ScanResults struct {
 	Items []*ScanResult
+}
+
+type FilterFile struct {
+	FilterPaths  []string
+	FilterImages []string
 }

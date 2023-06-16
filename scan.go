@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -196,6 +197,15 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 
 	image := tag.From.Name
 
+	// skip over ignored images
+	for _, ignoredImage := range cfg.FilterImages {
+		if ignoredImage == image {
+			klog.InfoS("Ignoring image", "image", image)
+			results.Append(NewScanResult().SetTag(tag).Success())
+			return results
+		}
+	}
+
 	// pull
 	if err := podmanPull(ctx, image, cfg.InsecurePull); err != nil {
 		results.Append(NewScanResult().SetTag(tag).SetError(err))
@@ -232,7 +242,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 			return err
 		}
 		printablePath := stripMountPath(mountPath, path)
-		if isPathFiltered(cfg.Filter, printablePath) {
+		if isPathFiltered(cfg.FilterPaths, printablePath) {
 			return nil
 		}
 		if file.IsDir() {
