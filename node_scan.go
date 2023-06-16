@@ -28,12 +28,6 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 	results := NewScanResults()
 	runs = append(runs, results)
 	klog.Info("scanning node")
-	cfg.FilterPaths = append(cfg.FilterPaths,
-		"/lib/modules",
-		"/usr/lib/firmware",
-		"/usr/lib/grub",
-		"/usr/lib/.build-id",
-	)
 	rpms, _ := getAllRPMs(ctx, cfg)
 	for _, rpm := range rpms {
 		tag := NewTag(rpm)
@@ -44,7 +38,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 			continue
 		}
 		for _, innerPath := range files {
-			if isPathFiltered(cfg.FilterPaths, innerPath) {
+			if cfg.IgnoreFile(innerPath) || cfg.IgnoreDirPrefix(innerPath) {
 				continue
 			}
 			path := filepath.Join(cfg.NodeScan, innerPath)

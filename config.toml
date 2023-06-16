@@ -1,11 +1,22 @@
-filter_paths = [
-	# directories
+# List of directories to ignore. This is a prefix match,
+# i.e. everything under a matched directory is ignored.
+filter_dirs = [
+	"/lib/firmware",
+	"/lib/modules",
+	"/usr/lib/.build-id",
 	"/usr/lib/firmware",
-	"/usr/src/plugins",
+	"/usr/lib/grub",
+	"/usr/lib/modules",
+	"/usr/share/app-info",
+	"/usr/share/doc",
+	"/usr/share/fonts",
+	"/usr/share/icons",
 	"/usr/share/openshift",
+	"/usr/src/plugins",
+]
 
-	# executables
-
+# List of files to ignore. This is a strict match.
+filter_files = [
 	### static binaries, no crypto
 	"/usr/bin/cdi-containerimage-server",
 	"/usr/bin/cpb",
@@ -16,4 +27,5 @@ filter_paths = [
 	"/usr/sbin/build-locale-archive",
 ]
 
+# List of images to ignore.
 filter_images = [ ]

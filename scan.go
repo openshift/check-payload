@@ -229,13 +229,16 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 			return err
 		}
 		innerPath := stripMountPath(mountPath, path)
-		if isPathFiltered(cfg.FilterPaths, innerPath) {
-			return nil
-		}
 		if file.IsDir() {
+			if cfg.IgnoreDir(innerPath) {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		if !file.Type().IsRegular() {
+			return nil
+		}
+		if cfg.IgnoreFile(innerPath) {
 			return nil
 		}
 		mtype, err := mimetype.DetectFile(path)
@@ -259,15 +262,6 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 	}
 
 	return results
-}
-
-func isPathFiltered(filterPaths []string, path string) bool {
-	for _, filter := range filterPaths {
-		if strings.HasPrefix(path, filter) {
-			return true
-		}
-	}
-	return false
 }
 
 func stripMountPath(mountPath, path string) string {
