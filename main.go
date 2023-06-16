@@ -105,7 +105,9 @@ func main() {
 
 	klog.InitFlags(nil)
 
-	validateApplicationDependencies(&config)
+	if err := validateApplicationDependencies(&config); err != nil {
+		klog.Fatalf("%+v", err)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), *timeLimit)
 	defer cancel()
