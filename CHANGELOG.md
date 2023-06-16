@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.8] - 2023-06-16
+
+### Features
+
+- Ignore removed file from node scan
+
 ## [1.0.7] - 2023-06-16
 
 ### Documentation
