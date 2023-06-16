@@ -46,6 +46,16 @@ func podmanPull(ctx context.Context, image string) error {
 	return nil
 }
 
+func podmanInspect(ctx context.Context, image string, args ...string) (string, error) {
+	klog.InfoS("podman: inspect", "image", image)
+	cmdArgs := append([]string{"inspect", image}, args...)
+	stdout, _, err := runPodman(ctx, cmdArgs...)
+	if err != nil {
+		return "", err
+	}
+	return stdout.String(), nil
+}
+
 func runPodman(ctx context.Context, args ...string) (bytes.Buffer, bytes.Buffer, error) {
 	klog.InfoS("podman", "args", args)
 	var stdout bytes.Buffer
@@ -58,4 +68,12 @@ func runPodman(ctx context.Context, args ...string) (bytes.Buffer, bytes.Buffer,
 	}
 	return stdout, stderr, nil
 
+}
+
+func getOpenshiftComponentFromImage(ctx context.Context, image string) (string, error) {
+	component, err := podmanInspect(ctx, image, "--format", "{{index  .Config.Labels \"com.redhat.component\" }}")
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(component), err
 }

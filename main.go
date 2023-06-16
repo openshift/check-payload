@@ -58,7 +58,7 @@ var requiredGolangSymbols = []string{
 var Commit string
 
 func main() {
-	var operatorImage = flag.String("operator-image", "", "only run scan on operator image")
+	var containerImage = flag.String("container-image", "", "only run scan on operator image")
 	var components = flag.String("components", "", "scan a specific set of components")
 	var fromFile = flag.String("file", defaultPayloadFilename, "json file for payload")
 	var fromUrl = flag.String("url", "", "http URL to pull payload from")
@@ -84,16 +84,16 @@ func main() {
 	}
 
 	config := Config{
-		FromFile:      *fromFile,
-		FromURL:       *fromUrl,
-		Limit:         *limit,
-		NodeScan:      *nodeScan,
-		OperatorImage: *operatorImage,
-		OutputFile:    *outputFile,
-		OutputFormat:  *outputFormat,
-		Parallelism:   *parallelism,
-		TimeLimit:     *timeLimit,
-		Verbose:       *verbose,
+		FromFile:       *fromFile,
+		FromURL:        *fromUrl,
+		Limit:          *limit,
+		NodeScan:       *nodeScan,
+		ContainerImage: *containerImage,
+		OutputFile:     *outputFile,
+		OutputFormat:   *outputFormat,
+		Parallelism:    *parallelism,
+		TimeLimit:      *timeLimit,
+		Verbose:        *verbose,
 	}
 
 	if *components != "" {

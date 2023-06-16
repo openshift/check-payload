@@ -8,18 +8,19 @@ import (
 )
 
 type Config struct {
-	Components    []string      `json:"components"`
-	Filter        []string      `json:"filter"`
-	FromFile      string        `json:"from_file"`
-	FromURL       string        `json:"from_url"`
-	Limit         int           `json:"limit"`
-	NodeScan      string        `json:"node_scan"`
-	OperatorImage string        `json:"operator_image"`
-	OutputFile    string        `json:"output_file"`
-	OutputFormat  string        `json:"output_format"`
-	Parallelism   int           `json:"parallelism"`
-	TimeLimit     time.Duration `json:"time_limit"`
-	Verbose       bool          `json:"verbose"`
+	Components              []string      `json:"components"`
+	Filter                  []string      `json:"filter"`
+	FromFile                string        `json:"from_file"`
+	FromURL                 string        `json:"from_url"`
+	Limit                   int           `json:"limit"`
+	NodeScan                string        `json:"node_scan"`
+	ContainerImageComponent string        `json:"container_image_component"`
+	ContainerImage          string        `json:"container_image"`
+	OutputFile              string        `json:"output_file"`
+	OutputFormat            string        `json:"output_format"`
+	Parallelism             int           `json:"parallelism"`
+	TimeLimit               time.Duration `json:"time_limit"`
+	Verbose                 bool          `json:"verbose"`
 }
 
 type ArtifactPod struct {
@@ -28,10 +29,11 @@ type ArtifactPod struct {
 }
 
 type ScanResult struct {
-	Tag   *v1.TagReference
-	Path  string
-	Skip  bool
-	Error error
+	OperatorName string
+	Tag          *v1.TagReference
+	Path         string
+	Skip         bool
+	Error        error
 }
 
 type ScanResults struct {
