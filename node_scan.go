@@ -23,14 +23,6 @@ func NewTag(name string) *v1.TagReference {
 	}
 }
 
-func isSymlink(path string) (bool, error) {
-	fileinfo, err := os.Lstat(path)
-	if err != nil {
-		return false, err
-	}
-	return fileinfo.Mode()&os.ModeSymlink != 0, nil
-}
-
 func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 	var runs []*ScanResults
 	results := NewScanResults()
@@ -56,7 +48,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 				continue
 			}
 			path := filepath.Join(cfg.NodeScan, innerPath)
-			fileInfo, err := os.Stat(path)
+			fileInfo, err := os.Lstat(path)
 			if err != nil {
 				// some files are stripped from an rhcos image
 				continue
@@ -64,13 +56,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 			if fileInfo.IsDir() {
 				continue
 			}
-			symlink, err := isSymlink(path)
-			if err != nil {
-				res := NewScanResult().SetTag(tag).SetPath(path).SetError(err)
-				results.Append(res)
-				continue
-			}
-			if symlink {
+			if fileInfo.Mode()&os.ModeSymlink != 0 {
 				continue
 			}
 			tag = NewTag(path)
