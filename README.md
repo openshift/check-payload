@@ -37,5 +37,5 @@ sudo ./check-payload \
 
 ```sh
 IMAGE=some.registry.location/check-payload
-podman  run --privileged -ti -v /:/myroot $IMAGE -node-scan /myroot
+podman  run --privileged -ti -v /:/myroot $IMAGE -node-scan /myroot -filter /usr/lib/firmware,/usr/src/plugins,/usr/share/openshift,/usr/libexec/catatonit/catatonit,/usr/bin/pod,/usr/bin/tini-static,/usr/bin/cpb,/usr/sbin/build-locale-archive
 ```
