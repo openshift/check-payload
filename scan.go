@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -14,11 +15,13 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	v1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/oc/pkg/cli/admin/release"
+	"go.uber.org/multierr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 )
 
-func validateApplicationDependencies(cfg *Config) {
+func validateApplicationDependencies(cfg *Config) error {
+	var multiErr error
 	deps := applicationDeps
 	if cfg.NodeScan != "" {
 		deps = applicationDepsNodeScan
@@ -26,9 +29,11 @@ func validateApplicationDependencies(cfg *Config) {
 
 	for _, app := range deps {
 		if _, err := exec.LookPath(app); err != nil {
-			klog.Fatalf("dependency application not found: %v", app)
+			multierr.AppendInto(&multiErr, fmt.Errorf("executable not found: %v", app))
 		}
 	}
+
+	return multiErr
 }
 
 type Request struct {
