@@ -9,7 +9,6 @@ import (
 
 var (
 	colTitleOperatorName = "Operator Name"
-	colTitleTagName      = "Tag Name"
 	colTitleExeName      = "Executable Name"
 	colTitlePassedFailed = "Status"
 	colTitleImage        = "Image"
@@ -55,7 +54,7 @@ func printResults(cfg *Config, results []*ScanResults) error {
 	}
 
 	if cfg.OutputFile != "" {
-		if err := os.WriteFile(cfg.OutputFile, []byte(combinedReport), 0770); err != nil {
+		if err := os.WriteFile(cfg.OutputFile, []byte(combinedReport), 0777); err != nil {
 			return fmt.Errorf("could not write file %v : %v", cfg.OutputFile, err)
 		}
 	}

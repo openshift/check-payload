@@ -3,6 +3,7 @@ module github.com/rphillips/check-payload
 go 1.19
 
 require (
+	github.com/BurntSushi/toml v1.3.2
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/carlmjohnson/versioninfo v0.22.4
 	github.com/deckarep/golang-set/v2 v2.3.0
@@ -17,7 +18,6 @@ require (
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
-	github.com/BurntSushi/toml v1.2.0 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Microsoft/hcsshim v0.9.3 // indirect
