@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.7] - 2023-06-16
+
+### Documentation
+
+- Update readme
+
+### Features
+
+- Add multierror to capture all dependent binaries
+- Add operator detection
+
 ## [1.0.6] - 2023-06-15
 
 ### Documentation
