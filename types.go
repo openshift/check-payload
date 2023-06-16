@@ -12,6 +12,7 @@ type Config struct {
 	Filter                  []string      `json:"filter"`
 	FromFile                string        `json:"from_file"`
 	FromURL                 string        `json:"from_url"`
+	InsecurePull            bool          `json:"insecure_pull"`
 	Limit                   int           `json:"limit"`
 	NodeScan                string        `json:"node_scan"`
 	ContainerImageComponent string        `json:"container_image_component"`
