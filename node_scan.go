@@ -55,6 +55,15 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 			if isPathFiltered(cfg.Filter, path) {
 				continue
 			}
+			path = filepath.Join(cfg.NodeScan, path)
+			fileInfo, err := os.Stat(path)
+			if err != nil {
+				// some files are stripped from an rhcos image
+				continue
+			}
+			if fileInfo.IsDir() {
+				continue
+			}
 			symlink, err := isSymlink(path)
 			if err != nil {
 				res := NewScanResult().SetTag(tag).SetPath(path).SetError(err)
@@ -64,16 +73,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 			if symlink {
 				continue
 			}
-			path = filepath.Join(cfg.NodeScan, path)
 			tag = NewTag(path)
-			fileInfo, err := os.Stat(path)
-			if err != nil {
-				// some files are stripped from an rhcos image
-				continue
-			}
-			if fileInfo.IsDir() {
-				continue
-			}
 			mtype, err := mimetype.DetectFile(path)
 			if err != nil {
 				res := NewScanResult().SetTag(tag).SetPath(path).SetError(err)
