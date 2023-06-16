@@ -72,6 +72,7 @@ func main() {
 	var filter = flag.String("filter", "", "do not scan a specific directory")
 	var nodeScan = flag.String("node-scan", "", "scan a node, pass / to scan the root or pass a path for a different start point")
 	var version = flag.Bool("version", false, "print version")
+	var insecurePull = flag.Bool("insecure-pull", false, "allow for insecure podman pulls")
 
 	flag.Parse()
 	if *help {
@@ -86,6 +87,7 @@ func main() {
 	config := Config{
 		FromFile:       *fromFile,
 		FromURL:        *fromUrl,
+		InsecurePull:   *insecurePull,
 		Limit:          *limit,
 		NodeScan:       *nodeScan,
 		ContainerImage: *containerImage,

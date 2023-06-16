@@ -37,9 +37,15 @@ func podmanMount(ctx context.Context, id string) (string, error) {
 	return strings.TrimSpace(stdout.String()), nil
 }
 
-func podmanPull(ctx context.Context, image string) error {
-	klog.InfoS("podman: pull", "image", image)
-	_, _, err := runPodman(ctx, "pull", image)
+func podmanPull(ctx context.Context, image string, insecure bool) error {
+	klog.InfoS("podman: pull", "image", image, "insecure", insecure)
+	args := []string{"pull"}
+	if insecure {
+		args = append(args, "--tls-verify=false")
+	}
+	args = append(args, image)
+
+	_, _, err := runPodman(ctx, args...)
 	if err != nil {
 		return err
 	}
