@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/jedib0t/go-pretty/v6/table"
+	"k8s.io/klog/v2"
 )
 
 var (
@@ -24,7 +25,7 @@ var (
 	successNodeRowHeader     = table.Row{colTitleNodePath}
 )
 
-func printResults(cfg *Config, results []*ScanResults) error {
+func printResults(cfg *Config, results []*ScanResults) {
 	var failureReport, successReport string
 
 	var combinedReport string
@@ -55,10 +56,9 @@ func printResults(cfg *Config, results []*ScanResults) error {
 
 	if cfg.OutputFile != "" {
 		if err := os.WriteFile(cfg.OutputFile, []byte(combinedReport), 0777); err != nil {
-			return fmt.Errorf("could not write file %v : %v", cfg.OutputFile, err)
+			klog.Errorf("could not write file: %v", err)
 		}
 	}
-	return nil
 }
 
 func generateNodeScanReport(results []*ScanResults, cfg *Config) (string, string) {
