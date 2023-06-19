@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.9] - 2023-06-19
+
+### Bug Fixes
+
+- Should use 777 permissions
+
+### Documentation
+
+- Document filter for node scan
+- Document pinns
+
+### Features
+
+- Add insecure pull option
+- Add embedded ignore list and config file
+
 ## [1.0.8] - 2023-06-16
 
 ### Features
