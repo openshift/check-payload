@@ -23,25 +23,11 @@ func NewTag(name string) *v1.TagReference {
 	}
 }
 
-func isSymlink(path string) (bool, error) {
-	fileinfo, err := os.Lstat(path)
-	if err != nil {
-		return false, err
-	}
-	return fileinfo.Mode()&os.ModeSymlink != 0, nil
-}
-
 func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 	var runs []*ScanResults
 	results := NewScanResults()
 	runs = append(runs, results)
 	klog.Info("scanning node")
-	cfg.FilterPaths = append(cfg.FilterPaths,
-		"/lib/modules",
-		"/usr/lib/firmware",
-		"/usr/lib/grub",
-		"/usr/lib/.build-id",
-	)
 	rpms, _ := getAllRPMs(ctx, cfg)
 	for _, rpm := range rpms {
 		tag := NewTag(rpm)
@@ -51,12 +37,12 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 			results.Append(res)
 			continue
 		}
-		for _, path := range files {
-			if isPathFiltered(cfg.FilterPaths, path) {
+		for _, innerPath := range files {
+			if cfg.IgnoreFile(innerPath) || cfg.IgnoreDirPrefix(innerPath) {
 				continue
 			}
-			path = filepath.Join(cfg.NodeScan, path)
-			fileInfo, err := os.Stat(path)
+			path := filepath.Join(cfg.NodeScan, innerPath)
+			fileInfo, err := os.Lstat(path)
 			if err != nil {
 				// some files are stripped from an rhcos image
 				continue
@@ -64,13 +50,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 			if fileInfo.IsDir() {
 				continue
 			}
-			symlink, err := isSymlink(path)
-			if err != nil {
-				res := NewScanResult().SetTag(tag).SetPath(path).SetError(err)
-				results.Append(res)
-				continue
-			}
-			if symlink {
+			if fileInfo.Mode()&os.ModeSymlink != 0 {
 				continue
 			}
 			tag = NewTag(path)
@@ -84,7 +64,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 				continue
 			}
 			klog.InfoS("scanning path", "path", path, "mtype", mtype.String())
-			res := scanBinary(ctx, "node", tag, cfg.NodeScan, path)
+			res := scanBinary(ctx, "node", tag, cfg.NodeScan, innerPath)
 			if res.Error == nil {
 				klog.InfoS("scanning node success", "path", path, "status", "success")
 			} else {

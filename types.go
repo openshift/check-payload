@@ -10,7 +10,8 @@ import (
 type Config struct {
 	ConfigFile              string        `json:"config_file"`
 	Components              []string      `json:"components" toml:"components"`
-	FilterPaths             []string      `json:"filter_paths" toml:"filter_paths"`
+	FilterFiles             []string      `json:"filter_files" toml:"filter_files"`
+	FilterDirs              []string      `json:"filter_dirs" toml:"filter_dirs"`
 	FilterImages            []string      `json:"filter_images" toml:"filter_images"`
 	FilterFile              string        `json:"filter_file"`
 	FromFile                string        `json:"from_file"`
@@ -42,9 +43,4 @@ type ScanResult struct {
 
 type ScanResults struct {
 	Items []*ScanResult
-}
-
-type FilterFile struct {
-	FilterPaths  []string
-	FilterImages []string
 }

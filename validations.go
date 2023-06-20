@@ -344,16 +344,18 @@ func isExecutable(ctx context.Context, path string) error {
 	return nil
 }
 
-func scanBinary(ctx context.Context, operator string, tag *v1.TagReference, mountPath string, path string) *ScanResult {
-	var allFn = validationFns["all"]
-	var goFn = validationFns["go"]
-	var exeFn = validationFns["exe"]
+func scanBinary(ctx context.Context, operator string, tag *v1.TagReference, topDir, innerPath string) *ScanResult {
+	allFn := validationFns["all"]
+	goFn := validationFns["go"]
+	exeFn := validationFns["exe"]
 
 	baton := &Baton{}
+	res := NewScanResult().SetOperator(operator).SetTag(tag).SetPath(innerPath)
 
+	path := filepath.Join(topDir, innerPath)
 	for _, fn := range allFn {
 		if err := fn(ctx, tag, path, baton); err != nil {
-			return NewScanResult().SetOperator(operator).SetBinaryPath(mountPath, path).SetError(err)
+			return res.SetError(err)
 		}
 	}
 
@@ -363,20 +365,20 @@ func scanBinary(ctx context.Context, operator string, tag *v1.TagReference, moun
 			// make sure the binary is linux
 			if err := validateGoLinux(ctx, tag, path); err != nil {
 				// we only scan linux binaries so this is successful
-				return NewScanResult().SetOperator(operator).SetTag(tag).SetBinaryPath(mountPath, path).Success()
+				return res.Success()
 			}
 			if err := fn(ctx, tag, path, baton); err != nil {
-				return NewScanResult().SetOperator(operator).SetTag(tag).SetBinaryPath(mountPath, path).SetError(err)
+				return res.SetError(err)
 			}
 		}
 	} else if isExecutable(ctx, path) == nil {
 		// is a regular binary
 		for _, fn := range exeFn {
 			if err := fn(ctx, tag, path, baton); err != nil {
-				return NewScanResult().SetOperator(operator).SetTag(tag).SetBinaryPath(mountPath, path).SetError(err)
+				return res.SetError(err)
 			}
 		}
 	}
 
-	return NewScanResult().SetOperator(operator).SetTag(tag).SetBinaryPath(mountPath, path).Success()
+	return res.Success()
 }

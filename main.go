@@ -63,17 +63,18 @@ var requiredGolangSymbols = []string{
 
 var Commit string
 
-var configFile string
-var parallelism int
-var outputFile string
-var outputFormat string
-var filterPaths []string
-var filterImages []string
-var components []string
-var insecurePull bool
-var verbose bool
-var limit int
-var timeLimit time.Duration
+var (
+	configFile                            string
+	parallelism                           int
+	outputFile                            string
+	outputFormat                          string
+	filterFiles, filterDirs, filterImages []string
+	components                            []string
+	insecurePull                          bool
+	verbose                               bool
+	limit                                 int
+	timeLimit                             time.Duration
+)
 
 func main() {
 	var config Config
@@ -101,7 +102,8 @@ func main() {
 			if err := getConfig(cmd, &config); err != nil {
 				return err
 			}
-			config.FilterPaths = append(config.FilterPaths, filterPaths...)
+			config.FilterFiles = append(config.FilterFiles, filterFiles...)
+			config.FilterDirs = append(config.FilterDirs, filterDirs...)
 			config.FilterImages = append(config.FilterImages, filterImages...)
 			config.Parallelism = parallelism
 			config.InsecurePull = insecurePull
@@ -120,7 +122,8 @@ func main() {
 			return nil
 		},
 	}
-	scanCmd.PersistentFlags().StringSliceVar(&filterPaths, "filter", nil, "")
+	scanCmd.PersistentFlags().StringSliceVar(&filterFiles, "filter-files", nil, "")
+	scanCmd.PersistentFlags().StringSliceVar(&filterDirs, "filter-dirs", nil, "")
 	scanCmd.PersistentFlags().StringSliceVar(&filterImages, "filter-images", nil, "")
 	scanCmd.PersistentFlags().StringSliceVar(&components, "components", nil, "")
 	scanCmd.PersistentFlags().BoolVar(&insecurePull, "insecure-pull", false, "use insecure pull")
