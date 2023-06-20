@@ -249,7 +249,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 			return nil
 		}
 		klog.InfoS("scanning path", "path", path)
-		res := scanBinary(ctx, component, tag, mountPath, path)
+		res := scanBinary(ctx, component, tag, mountPath, innerPath)
 		if res.Error == nil {
 			klog.InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
 		} else {
