@@ -17,13 +17,13 @@ Filter are now contained within the config.toml file.
 ```sh
 git clone https://gitlab.cee.redhat.com/rphillip/check-payload.git
 cd check-payload
-go build
+make
 ```
 
 ## run against an OpenShift release payload
 
 ```sh
- sudo ./check-payload \
+ sudo ./check-payload scan payload \
    -url quay.io/openshift-release-dev/ocp-release:4.11.0-assembly.art6883.4 \
    -output-file report.txt
 ```
@@ -31,13 +31,13 @@ go build
 ## run against an container or operator image
 
 ```sh
-sudo ./check-payload \
-   -container-image registry.ci.openshift.org/ocp-priv/4.11-art-assembly-art6883-3-priv@sha256:138b1b9ae11b0d3b5faafacd1b469ec8c20a234b387ae33cf007441fa5c5d567
+sudo ./check-payload scan operator \
+  --spec registry.ci.openshift.org/ocp-priv/4.11-art-assembly-art6883-3-priv@sha256:138b1b9ae11b0d3b5faafacd1b469ec8c20a234b387ae33cf007441fa5c5d567
 ```
 
 ## node scan
 
 ```sh
 IMAGE=some.registry.location/check-payload
-podman  run --privileged -ti -v /:/myroot $IMAGE -node-scan /myroot
+podman  run --privileged -ti -v /:/myroot $IMAGE scan node --root /myroot
 ```
