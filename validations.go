@@ -8,6 +8,7 @@ import (
 	"debug/gosym"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -24,6 +25,7 @@ var (
 )
 
 type Baton struct {
+	TopDir            string
 	GoNoCrypto        bool
 	GoVersion         string
 	GoVersionDetailed []byte
@@ -201,7 +203,7 @@ func validateGoStatic(ctx context.Context, tag *v1.TagReference, path string, ba
 
 func validateGoOpenssl(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
 	// check for openssl strings
-	return validateStringsOpenssl(ctx, path)
+	return validateStringsOpenssl(ctx, path, baton)
 }
 
 func validateGoCGOInit(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
@@ -247,7 +249,7 @@ func validateGoCGOInit(ctx context.Context, tag *v1.TagReference, path string, b
 }
 
 // scan the binary for multiple libcrypto libraries
-func validateStringsOpenssl(ctx context.Context, path string) error {
+func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) error {
 	cmd := exec.CommandContext(ctx, "strings", path)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -257,8 +259,9 @@ func validateStringsOpenssl(ctx context.Context, path string) error {
 		return err
 	}
 
-	sslLibraryCount := 0
-	var invalidPaths []string
+	libcryptoVersion := ""
+	cryptoRegexp := regexp.MustCompile(`libcrypto.so.(\d+)`)
+	cryptoCount := 0
 
 	scanner := bufio.NewScanner(stdout)
 	const cap int = 1 * 1024 * 1024
@@ -266,9 +269,14 @@ func validateStringsOpenssl(ctx context.Context, path string) error {
 	scanner.Buffer(buf, cap)
 
 	for scanner.Scan() {
-		if strings.Contains(scanner.Text(), "libcrypto") {
-			sslLibraryCount++
-			invalidPaths = append(invalidPaths, scanner.Text())
+		text := scanner.Text()
+		if strings.Contains(text, "libcrypto") {
+			matches := cryptoRegexp.FindAllStringSubmatch(text, -1)
+			if len(matches) == 0 {
+				continue
+			}
+			libcryptoVersion = matches[0][0]
+			cryptoCount++
 		}
 	}
 
@@ -280,21 +288,22 @@ func validateStringsOpenssl(ctx context.Context, path string) error {
 		return err
 	}
 
+	if libcryptoVersion == "" {
+		return fmt.Errorf("openssl: did not find libcrypto libraries")
+	}
+
 	// should only find 1 libcrypto library linked in, there can be multiples so skip over the same ones
-	if sslLibraryCount > 1 && !isSliceEqual(invalidPaths, invalidPaths[0]) {
-		return fmt.Errorf("openssl: found %v libcrypto libraries (paths=%v)", sslLibraryCount, invalidPaths)
+	if cryptoCount > 1 {
+		return fmt.Errorf("openssl: found too many crypto libraries (count=%v)", cryptoCount)
+	}
+
+	// check for openssl library within container image
+	opensslInnerPath := filepath.Join(baton.TopDir, "usr", "lib64", libcryptoVersion)
+	if _, err := os.Lstat(opensslInnerPath); err != nil {
+		return fmt.Errorf("could not find dependent openssl version %v within container image", libcryptoVersion)
 	}
 
 	return nil
-}
-
-func isSliceEqual(list []string, comparison string) bool {
-	for _, a := range list {
-		if a != comparison {
-			return false
-		}
-	}
-	return true
 }
 
 func validateStaticGo(ctx context.Context, path string) error {
@@ -349,7 +358,7 @@ func scanBinary(ctx context.Context, operator string, tag *v1.TagReference, topD
 	goFn := validationFns["go"]
 	exeFn := validationFns["exe"]
 
-	baton := &Baton{}
+	baton := &Baton{TopDir: topDir}
 	res := NewScanResult().SetOperator(operator).SetTag(tag).SetPath(innerPath)
 
 	path := filepath.Join(topDir, innerPath)
