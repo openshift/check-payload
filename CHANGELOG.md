@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.0.2] - 2023-06-20
+
+### Features
+
+- Split filter-paths into dirs and files
+- Scan for dependent openssl library within container
+
+### Miscellaneous Tasks
+
+- Go mod tidy
+
+### RunNodeScan
+
+- Faster symlink detection
+
+### ScanBinary
+
+- Less repetitions
+- Pass topDir and innerPath
+
 ## [2.0.0] - 2023-06-20
 
 ### Features
