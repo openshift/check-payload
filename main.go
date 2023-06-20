@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	_ "embed"
-	"flag"
+	"errors"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 )
 
@@ -63,91 +63,159 @@ var requiredGolangSymbols = []string{
 
 var Commit string
 
+var configFile string
+var parallelism int
+var outputFile string
+var outputFormat string
+var filterPaths []string
+var filterImages []string
+var components []string
+var insecurePull bool
+var verbose bool
+var limit int
+var timeLimit time.Duration
+
 func main() {
-	var containerImage = flag.String("container-image", "", "only run scan on operator image")
-	var components = flag.String("components", "", "scan a specific set of components")
-	var configFile = flag.String("config", defaultConfigFile, "use config file")
-	var filterImages = flag.String("filter-images", "", "filter images")
-	var fromFile = flag.String("file", defaultPayloadFilename, "json file for payload")
-	var fromUrl = flag.String("url", "", "http URL to pull payload from")
-	var help = flag.Bool("help", false, "show help")
-	var limit = flag.Int("limit", 0, "limit the number of pods scanned")
-	var outputFile = flag.String("output-file", "", "write report to this file")
-	var outputFormat = flag.String("output-format", "table", "output format (table, csv, markdown, html)")
-	var parallelism = flag.Int("parallelism", 5, "how many pods to check at once")
-	var timeLimit = flag.Duration("time-limit", 1*time.Hour, "limit running time")
-	var verbose = flag.Bool("verbose", false, "verbose")
-	var filter = flag.String("filter", "", "do not scan a specific directory")
-	var nodeScan = flag.String("node-scan", "", "scan a node, pass / to scan the root or pass a path for a different start point")
-	var version = flag.Bool("version", false, "print version")
-	var insecurePull = flag.Bool("insecure-pull", false, "allow for insecure podman pulls")
+	var config Config
+	var results []*ScanResults
 
-	flag.Parse()
-	if *help {
-		flag.Usage()
-		os.Exit(0)
+	rootCmd := cobra.Command{
+		Use: "check-payload",
 	}
-	if *version {
-		fmt.Println(Commit)
-		os.Exit(0)
+	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", defaultConfigFile, "use config file")
+	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "verbose")
+
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print the version",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Println(Commit)
+			return nil
+		},
 	}
 
-	config := Config{
-		ConfigFile:     *configFile,
-		FromFile:       *fromFile,
-		FromURL:        *fromUrl,
-		InsecurePull:   *insecurePull,
-		Limit:          *limit,
-		NodeScan:       *nodeScan,
-		ContainerImage: *containerImage,
-		OutputFile:     *outputFile,
-		OutputFormat:   *outputFormat,
-		Parallelism:    *parallelism,
-		TimeLimit:      *timeLimit,
-		Verbose:        *verbose,
+	scanCmd := &cobra.Command{
+		Use:   "scan",
+		Short: "Run a scan",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := getConfig(cmd, &config); err != nil {
+				return err
+			}
+			config.FilterPaths = append(config.FilterPaths, filterPaths...)
+			config.FilterImages = append(config.FilterImages, filterImages...)
+			config.Parallelism = parallelism
+			config.InsecurePull = insecurePull
+			config.OutputFile = outputFile
+			config.OutputFormat = outputFormat
+			config.Limit = limit
+			config.TimeLimit = timeLimit
+			config.Log()
+			return nil
+		},
+		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+			printResults(&config, results)
+			if isFailed(results) {
+				return fmt.Errorf("run failed")
+			}
+			return nil
+		},
 	}
+	scanCmd.PersistentFlags().StringSliceVar(&filterPaths, "filter", nil, "")
+	scanCmd.PersistentFlags().StringSliceVar(&filterImages, "filter-images", nil, "")
+	scanCmd.PersistentFlags().StringSliceVar(&components, "components", nil, "")
+	scanCmd.PersistentFlags().BoolVar(&insecurePull, "insecure-pull", false, "use insecure pull")
+	scanCmd.PersistentFlags().IntVar(&limit, "limit", -1, "limit the number of pods scanned")
+	scanCmd.PersistentFlags().IntVar(&parallelism, "parallelism", 5, "how many pods to check at once")
+	scanCmd.PersistentFlags().StringVar(&outputFile, "output-file", "", "write report to file")
+	scanCmd.PersistentFlags().StringVar(&outputFormat, "output-format", "table", "output format (table, csv, markdown, html)")
+	scanCmd.PersistentFlags().DurationVar(&timeLimit, "time-limit", 1*time.Hour, "limit running time")
 
-	if *components != "" {
-		config.Components = strings.Split(*components, ",")
+	scanPayload := &cobra.Command{
+		Use:          "payload [image pull spec]",
+		SilenceUsage: true,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return validateApplicationDependencies(applicationDeps)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
+			defer cancel()
+			config.FromURL, _ = cmd.Flags().GetString("url")
+			config.FromFile, _ = cmd.Flags().GetString("file")
+			results = runPayloadScan(ctx, &config)
+			return nil
+		},
 	}
+	scanPayload.Flags().String("url", "", "payload url")
+	scanPayload.Flags().String("file", "", "payload from json file")
+	scanPayload.MarkFlagsMutuallyExclusive("url", "file")
 
-	if *filterImages != "" {
-		config.FilterImages = strings.Split(*filterImages, ",")
+	scanNode := &cobra.Command{
+		Use:          "node [--root /myroot]",
+		SilenceUsage: true,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return validateApplicationDependencies(applicationDepsNodeScan)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
+			defer cancel()
+			config.NodeScan, _ = cmd.Flags().GetString("root")
+			if err := validateApplicationDependencies(applicationDepsNodeScan); err != nil {
+				return err
+			}
+			results = runNodeScan(ctx, &config)
+			return nil
+		},
 	}
+	scanNode.Flags().String("root", "", "root path to scan")
+	scanNode.MarkFlagRequired("root")
 
-	if *configFile != "" {
-		var tomlData string
-		if filterFileData, err := os.ReadFile(*configFile); err != nil {
-			klog.Info("using embedded config")
-			tomlData = embeddedConfig
-		} else {
-			klog.Infof("using provided config: %v", *configFile)
-			tomlData = string(filterFileData)
-		}
-		_, err := toml.Decode(tomlData, &config)
-		if err != nil {
-			klog.Fatalf("error parsing toml: %v", err)
-		}
+	scanImage := &cobra.Command{
+		Use:          "image [image pull spec]",
+		Aliases:      []string{"operator"},
+		SilenceUsage: true,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return validateApplicationDependencies(applicationDeps)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
+			defer cancel()
+			config.ContainerImage, _ = cmd.Flags().GetString("spec")
+			results = runOperatorScan(ctx, &config)
+			return nil
+		},
 	}
+	scanImage.Flags().String("spec", "", "payload url")
+	scanImage.MarkFlagRequired("spec")
 
-	if *filter != "" {
-		config.FilterPaths = append(config.FilterPaths, strings.Split(*filter, ",")...)
-	}
+	scanCmd.AddCommand(scanPayload)
+	scanCmd.AddCommand(scanNode)
+	scanCmd.AddCommand(scanImage)
+
+	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(scanCmd)
 
 	klog.InitFlags(nil)
-
-	if err := validateApplicationDependencies(&config); err != nil {
-		klog.Fatalf("%+v", err)
+	if err := rootCmd.Execute(); err != nil {
+		klog.Fatal(err)
 	}
+}
 
-	ctx, cancel := context.WithTimeout(context.Background(), *timeLimit)
-	defer cancel()
-
-	config.Log()
-
-	results := Run(ctx, &config)
-	err := printResults(&config, results)
-	if err != nil || isFailed(results) {
-		os.Exit(1)
+func getConfig(cmd *cobra.Command, config *Config) error {
+	var tomlData string
+	configFileName, _ := cmd.PersistentFlags().GetString("config")
+	if filterFileData, err := os.ReadFile(configFileName); err != nil {
+		if !errors.Is(err, os.ErrNotExist) || cmd.PersistentFlags().Changed("config") {
+			return err
+		}
+		klog.Info("using embedded config")
+		tomlData = embeddedConfig
+	} else {
+		klog.Infof("using provided config: %v", configFileName)
+		tomlData = string(filterFileData)
 	}
+	_, err := toml.Decode(tomlData, &config)
+	if err != nil {
+		return fmt.Errorf("error parsing toml: %v", err)
+	}
+	return nil
 }

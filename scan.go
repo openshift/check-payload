@@ -21,16 +21,12 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func validateApplicationDependencies(cfg *Config) error {
+func validateApplicationDependencies(apps []string) error {
 	var multiErr error
-	deps := applicationDeps
-	if cfg.NodeScan != "" {
-		deps = applicationDepsNodeScan
-	}
 
-	for _, app := range deps {
+	for _, app := range apps {
 		if _, err := exec.LookPath(app); err != nil {
-			multierr.AppendInto(&multiErr, fmt.Errorf("executable not found: %v", app))
+			multierr.AppendInto(&multiErr, fmt.Errorf("executable not found: %v", err))
 		}
 	}
 
@@ -44,15 +40,6 @@ type Request struct {
 type Result struct {
 	Tag     *v1.TagReference
 	Results *ScanResults
-}
-
-func Run(ctx context.Context, cfg *Config) []*ScanResults {
-	if cfg.ContainerImage != "" {
-		return runOperatorScan(ctx, cfg)
-	} else if cfg.NodeScan != "" {
-		return runNodeScan(ctx, cfg)
-	}
-	return runPayloadScan(ctx, cfg)
 }
 
 func runOperatorScan(ctx context.Context, cfg *Config) []*ScanResults {
@@ -118,7 +105,7 @@ func runPayloadScan(ctx context.Context, cfg *Config) []*ScanResults {
 		}
 		tag := tag
 		tx <- &Request{Tag: &tag}
-		if limit != 0 && int(i) == limit-1 {
+		if limit > 0 && int(i) == limit-1 {
 			break
 		}
 	}
