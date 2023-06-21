@@ -10,11 +10,12 @@ import (
 
 var (
 	colTitleOperatorName = "Operator Name"
+	colTitleTagName      = "Tag Name"
 	colTitleExeName      = "Executable Name"
 	colTitlePassedFailed = "Status"
 	colTitleImage        = "Image"
-	failureRowHeader     = table.Row{colTitleOperatorName, colTitleExeName, colTitlePassedFailed, colTitleImage}
-	successRowHeader     = table.Row{colTitleOperatorName, colTitleExeName, colTitleImage}
+	failureRowHeader     = table.Row{colTitleOperatorName, colTitleTagName, colTitleExeName, colTitlePassedFailed, colTitleImage}
+	successRowHeader     = table.Row{colTitleOperatorName, colTitleTagName, colTitleExeName, colTitleImage}
 )
 
 var (
