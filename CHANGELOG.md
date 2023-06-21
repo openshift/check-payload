@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.5] - 2023-06-21
+
+### Bug Fixes
+
+- Remove scanner and use buffer directly to prevent 'token too long' errors
+
 ## [2.0.4] - 2023-06-21
 
 ### Bug Fixes
