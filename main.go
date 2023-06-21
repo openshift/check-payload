@@ -148,8 +148,8 @@ func main() {
 			return nil
 		},
 	}
-	scanPayload.Flags().String("url", "", "payload url")
-	scanPayload.Flags().String("file", "", "payload from json file")
+	scanPayload.Flags().StringP("url", "u", "", "payload url")
+	scanPayload.Flags().StringP("file", "f", "", "payload from json file")
 	scanPayload.MarkFlagsMutuallyExclusive("url", "file")
 
 	scanNode := &cobra.Command{
