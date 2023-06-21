@@ -260,7 +260,7 @@ func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) erro
 	}
 
 	libcryptoVersion := ""
-	cryptoRegexp := regexp.MustCompile(`libcrypto.so.(\d+)`)
+	cryptoRegexp := regexp.MustCompile(`libcrypto.so(\.?\d+)*`)
 	cryptoCount := 0
 
 	scanner := bufio.NewScanner(stdout)
