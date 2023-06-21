@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.3] - 2023-06-21
+
+### Bug Fixes
+
+- Fix libcrypto regex
+
 ## [2.0.2] - 2023-06-20
 
 ### Features
