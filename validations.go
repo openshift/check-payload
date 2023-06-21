@@ -1,13 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"debug/elf"
 	"debug/gosym"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -217,22 +217,22 @@ func validateGoCGOInit(ctx context.Context, tag *v1.TagReference, path string, b
 	}
 
 	cgoInitFound := false
-
-	scanner := bufio.NewScanner(stdout)
 	const cap int = 1 * 1024 * 1024
 	buf := make([]byte, cap)
-	scanner.Buffer(buf, cap)
 
-	for scanner.Scan() {
-		if strings.Contains(scanner.Text(), "cgo_init") {
+	for {
+		n, err := stdout.Read(buf)
+		if err != nil && err != io.EOF {
+			break
+		}
+		if n == 0 || err == io.EOF {
+			break
+		}
+		if bytes.Contains(buf, []byte("cgo_init")) {
 			cgoInitFound = true
 			cmd.Cancel()
 			break
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
 	}
 
 	if err := cmd.Wait(); err != nil {
@@ -263,28 +263,28 @@ func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) erro
 	cryptoRegexp := regexp.MustCompile(`libcrypto.so(\.?\d+)*`)
 	haveMultipleLibcrypto := false
 
-	scanner := bufio.NewScanner(stdout)
 	const cap int = 1 * 1024 * 1024
 	buf := make([]byte, cap)
-	scanner.Buffer(buf, cap)
 
-	for scanner.Scan() {
-		text := scanner.Text()
-		if strings.Contains(text, "libcrypto") {
-			matches := cryptoRegexp.FindAllStringSubmatch(text, -1)
+	for {
+		n, err := stdout.Read(buf)
+		if err != nil && err != io.EOF {
+			break
+		}
+		if n == 0 || err == io.EOF {
+			break
+		}
+		if bytes.Contains(buf, []byte("libcrypto")) {
+			matches := cryptoRegexp.FindAllSubmatch(buf, -1)
 			if len(matches) == 0 {
 				continue
 			}
-			if libcryptoVersion != "" && libcryptoVersion != matches[0][0] {
+			if libcryptoVersion != "" && libcryptoVersion != string(matches[0][0]) {
 				// Have different libcrypto versions in the same binary.
 				haveMultipleLibcrypto = true
 			}
-			libcryptoVersion = matches[0][0]
+			libcryptoVersion = string(matches[0][0])
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
 	}
 
 	if err := cmd.Wait(); err != nil {
