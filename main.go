@@ -111,6 +111,7 @@ func main() {
 			config.OutputFormat = outputFormat
 			config.Limit = limit
 			config.TimeLimit = timeLimit
+			config.Verbose = verbose
 			config.Log()
 			return nil
 		},
