@@ -261,7 +261,7 @@ func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) erro
 
 	libcryptoVersion := ""
 	cryptoRegexp := regexp.MustCompile(`libcrypto.so(\.?\d+)*`)
-	cryptoCount := 0
+	haveMultipleLibcrypto := false
 
 	scanner := bufio.NewScanner(stdout)
 	const cap int = 1 * 1024 * 1024
@@ -275,8 +275,11 @@ func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) erro
 			if len(matches) == 0 {
 				continue
 			}
+			if libcryptoVersion != "" && libcryptoVersion != matches[0][0] {
+				// Have different libcrypto versions in the same binary.
+				haveMultipleLibcrypto = true
+			}
 			libcryptoVersion = matches[0][0]
-			cryptoCount++
 		}
 	}
 
@@ -292,9 +295,8 @@ func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) erro
 		return fmt.Errorf("openssl: did not find libcrypto libraries")
 	}
 
-	// should only find 1 libcrypto library linked in, there can be multiples so skip over the same ones
-	if cryptoCount > 1 {
-		return fmt.Errorf("openssl: found too many crypto libraries (count=%v)", cryptoCount)
+	if haveMultipleLibcrypto {
+		return errors.New("openssl: found multiple different libcrypto versions")
 	}
 
 	// check for openssl library within container image
