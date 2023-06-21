@@ -347,16 +347,21 @@ func isGoExecutable(ctx context.Context, path string) error {
 	return ErrNotGolangExe
 }
 
-func isExecutable(ctx context.Context, path string) error {
+// isElfExe checks if path is an ELF executable (which most probably means
+// it is a Linux binary).
+func isElfExe(path string) (bool, error) {
 	exe, err := elf.Open(path)
 	if err != nil {
-		return err
+		var elfErr *elf.FormatError
+		if errors.As(err, &elfErr) || err == io.EOF {
+			// Not an ELF.
+			return false, nil
+		}
+		// Error accessing the file.
+		return false, err
 	}
 	defer exe.Close()
-	if exe.Type != elf.ET_EXEC {
-		return ErrNotExecutable
-	}
-	return nil
+	return exe.Type == elf.ET_EXEC, nil
 }
 
 func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagReference, topDir, innerPath string) *ScanResult {
@@ -368,6 +373,16 @@ func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagR
 	res := NewScanResult().SetComponent(component).SetTag(tag).SetPath(innerPath)
 
 	path := filepath.Join(topDir, innerPath)
+
+	// We are only interested in Linux binaries.
+	elf, err := isElfExe(path)
+	if err != nil {
+		return res.SetError(err)
+	}
+	if !elf {
+		return res.Skipped()
+	}
+
 	for _, fn := range allFn {
 		if err := fn(ctx, tag, path, baton); err != nil {
 			return res.SetError(err)
@@ -386,7 +401,7 @@ func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagR
 				return res.SetError(err)
 			}
 		}
-	} else if isExecutable(ctx, path) == nil {
+	} else {
 		// is a regular binary
 		for _, fn := range exeFn {
 			if err := fn(ctx, tag, path, baton); err != nil {

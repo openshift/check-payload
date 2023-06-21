@@ -250,6 +250,10 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		}
 		klog.V(1).InfoS("scanning path", "path", path)
 		res := scanBinary(ctx, component, tag, mountPath, innerPath)
+		if res.Skip {
+			// Do not add skipped binaries to results.
+			return nil
+		}
 		if res.Error == nil {
 			klog.V(1).InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
 		} else {
