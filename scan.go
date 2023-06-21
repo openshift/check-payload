@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gabriel-vasile/mimetype"
 	v1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/oc/pkg/cli/admin/release"
 	"go.uber.org/multierr"
@@ -239,13 +238,6 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 			return nil
 		}
 		if cfg.IgnoreFile(innerPath) {
-			return nil
-		}
-		mtype, err := mimetype.DetectFile(path)
-		if err != nil {
-			return err
-		}
-		if mimetype.EqualsAny(mtype.String(), ignoredMimes...) {
 			return nil
 		}
 		klog.V(1).InfoS("scanning path", "path", path)

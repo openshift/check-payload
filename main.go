@@ -42,22 +42,6 @@ var applicationDepsNodeScan = []string{
 	"strings",
 }
 
-var ignoredMimes = []string{
-	"application/gzip",
-	"application/json",
-	"application/octet-stream",
-	"application/tzif",
-	"application/vnd.sqlite3",
-	"application/x-sharedlib",
-	"application/zip",
-	"text/csv",
-	"text/html",
-	"text/plain",
-	"text/tab-separated-values",
-	"text/xml",
-	"text/x-python",
-}
-
 var requiredGolangSymbols = []string{
 	"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 	"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
