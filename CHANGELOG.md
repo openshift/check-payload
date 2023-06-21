@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.0.4] - 2023-06-21
+
+### Bug Fixes
+
+- Fix verbose option
+
+### Documentation
+
+- Fix readme
+
+### Features
+
+- Add -u and -f short commands
+
+### Podman
+
+- Simplify logging
+
 ## [2.0.3] - 2023-06-21
 
 ### Bug Fixes
