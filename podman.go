@@ -58,7 +58,7 @@ func podmanInspect(ctx context.Context, image string, args ...string) (string, e
 }
 
 func runPodman(ctx context.Context, args ...string) (bytes.Buffer, bytes.Buffer, error) {
-	klog.InfoS("podman "+args[0], "args", args[1:])
+	klog.V(1).InfoS("podman "+args[0], "args", args[1:])
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "podman", args...)
