@@ -104,33 +104,6 @@ func isUsingCryptoModule(symtable *gosym.Table) bool {
 	return false
 }
 
-func validateGoLinux(ctx context.Context, tag *v1.TagReference, path string) error {
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	if bytes.Contains(stdout.Bytes(), []byte("GOOS=linux")) {
-		return nil
-	}
-
-	stdout.Reset()
-
-	cmd = exec.CommandContext(ctx, "file", path)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	if bytes.Contains(stdout.Bytes(), []byte("ELF")) {
-		return nil
-	}
-
-	return fmt.Errorf("go: not a linux binary")
-}
-
 func validateGoCgo(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
 	v, err := semver.NewVersion(baton.GoVersion)
 	if err != nil {
@@ -392,11 +365,6 @@ func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagR
 	// is this a go executable
 	if isGoExecutable(ctx, path) == nil {
 		for _, fn := range goFn {
-			// make sure the binary is linux
-			if err := validateGoLinux(ctx, tag, path); err != nil {
-				// we only scan linux binaries so this is successful
-				return res.Success()
-			}
 			if err := fn(ctx, tag, path, baton); err != nil {
 				return res.SetError(err)
 			}
