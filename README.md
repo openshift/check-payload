@@ -24,8 +24,8 @@ make
 
 ```sh
  sudo ./check-payload scan payload \
-   -url quay.io/openshift-release-dev/ocp-release:4.11.0-assembly.art6883.4 \
-   -output-file report.txt
+   --url quay.io/openshift-release-dev/ocp-release:4.11.0-assembly.art6883.4 \
+   --output-file report.txt
 ```
 
 ## run against an container or operator image
