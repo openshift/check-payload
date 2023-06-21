@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -198,7 +199,11 @@ func main() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(scanCmd)
 
-	klog.InitFlags(nil)
+	// Add klog flags.
+	klogFlags := flag.NewFlagSet("", flag.ExitOnError)
+	klog.InitFlags(klogFlags)
+	rootCmd.PersistentFlags().AddGoFlagSet(klogFlags)
+
 	if err := rootCmd.Execute(); err != nil {
 		klog.Fatal(err)
 	}
