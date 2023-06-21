@@ -11,7 +11,6 @@ import (
 )
 
 func podmanCreate(ctx context.Context, image string) (string, error) {
-	klog.InfoS("podman: create", "image", image)
 	stdout, _, err := runPodman(ctx, "create", image)
 	if err != nil {
 		return "", err
@@ -20,7 +19,6 @@ func podmanCreate(ctx context.Context, image string) (string, error) {
 }
 
 func podmanUnmount(ctx context.Context, id string) error {
-	klog.InfoS("podman: unmount", "id", id)
 	_, _, err := runPodman(ctx, "unmount", id)
 	if err != nil {
 		return err
@@ -29,7 +27,6 @@ func podmanUnmount(ctx context.Context, id string) error {
 }
 
 func podmanMount(ctx context.Context, id string) (string, error) {
-	klog.InfoS("podman: mount", "id", id)
 	stdout, _, err := runPodman(ctx, "mount", id)
 	if err != nil {
 		return "", err
@@ -38,7 +35,6 @@ func podmanMount(ctx context.Context, id string) (string, error) {
 }
 
 func podmanPull(ctx context.Context, image string, insecure bool) error {
-	klog.InfoS("podman: pull", "image", image, "insecure", insecure)
 	args := []string{"pull"}
 	if insecure {
 		args = append(args, "--tls-verify=false")
@@ -53,7 +49,6 @@ func podmanPull(ctx context.Context, image string, insecure bool) error {
 }
 
 func podmanInspect(ctx context.Context, image string, args ...string) (string, error) {
-	klog.InfoS("podman: inspect", "image", image)
 	cmdArgs := append([]string{"inspect", image}, args...)
 	stdout, _, err := runPodman(ctx, cmdArgs...)
 	if err != nil {
@@ -63,7 +58,7 @@ func podmanInspect(ctx context.Context, image string, args ...string) (string, e
 }
 
 func runPodman(ctx context.Context, args ...string) (bytes.Buffer, bytes.Buffer, error) {
-	klog.InfoS("podman", "args", args)
+	klog.V(1).InfoS("podman "+args[0], "args", args[1:])
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "podman", args...)
@@ -73,7 +68,6 @@ func runPodman(ctx context.Context, args ...string) (bytes.Buffer, bytes.Buffer,
 		return stdout, stderr, fmt.Errorf("podman error (args=%v) (stderr=%v) (error=%w)", args, stderr.String(), err)
 	}
 	return stdout, stderr, nil
-
 }
 
 func getOpenshiftComponentFromImage(ctx context.Context, image string) (string, error) {

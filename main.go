@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -83,7 +84,6 @@ func main() {
 	rootCmd := cobra.Command{
 		Use: "check-payload",
 	}
-	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", defaultConfigFile, "use config file")
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "verbose")
 
 	versionCmd := &cobra.Command{
@@ -99,7 +99,7 @@ func main() {
 		Use:   "scan",
 		Short: "Run a scan",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := getConfig(cmd, &config); err != nil {
+			if err := getConfig(&config); err != nil {
 				return err
 			}
 			config.FilterFiles = append(config.FilterFiles, filterFiles...)
@@ -123,6 +123,7 @@ func main() {
 			return nil
 		},
 	}
+	scanCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "use toml config file (default: "+defaultConfigFile+")")
 	scanCmd.PersistentFlags().StringSliceVar(&filterFiles, "filter-files", nil, "")
 	scanCmd.PersistentFlags().StringSliceVar(&filterDirs, "filter-dirs", nil, "")
 	scanCmd.PersistentFlags().StringSliceVar(&filterImages, "filter-images", nil, "")
@@ -198,28 +199,36 @@ func main() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(scanCmd)
 
-	klog.InitFlags(nil)
+	// Add klog flags.
+	klogFlags := flag.NewFlagSet("", flag.ExitOnError)
+	klog.InitFlags(klogFlags)
+	rootCmd.PersistentFlags().AddGoFlagSet(klogFlags)
+
 	if err := rootCmd.Execute(); err != nil {
 		klog.Fatal(err)
 	}
 }
 
-func getConfig(cmd *cobra.Command, config *Config) error {
-	var tomlData string
-	configFileName, _ := cmd.PersistentFlags().GetString("config")
-	if filterFileData, err := os.ReadFile(configFileName); err != nil {
-		if !errors.Is(err, os.ErrNotExist) || cmd.PersistentFlags().Changed("config") {
-			return err
-		}
+func getConfig(config *Config) error {
+	file := configFile
+	if file == "" {
+		file = defaultConfigFile
+	}
+	_, err := toml.DecodeFile(file, &config)
+	if err == nil {
+		klog.Infof("using config file: %v", file)
+		return nil
+	}
+	// When --config is not specified and defaultConfigFile is not found,
+	// fall back to embedded config.
+	if errors.Is(err, os.ErrNotExist) && configFile == "" {
 		klog.Info("using embedded config")
-		tomlData = embeddedConfig
-	} else {
-		klog.Infof("using provided config: %v", configFileName)
-		tomlData = string(filterFileData)
+		_, err = toml.Decode(string(embeddedConfig), &config)
+		if err != nil { // Should never happen.
+			panic("invalid embedded config: " + err.Error())
+		}
+		return nil
 	}
-	_, err := toml.Decode(tomlData, &config)
-	if err != nil {
-		return fmt.Errorf("error parsing toml: %v", err)
-	}
-	return nil
+	// Otherwise, error out.
+	return fmt.Errorf("can't parse config file %q: %w", file, err)
 }

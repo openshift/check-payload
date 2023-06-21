@@ -248,10 +248,10 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		if mimetype.EqualsAny(mtype.String(), ignoredMimes...) {
 			return nil
 		}
-		klog.InfoS("scanning path", "path", path)
+		klog.V(1).InfoS("scanning path", "path", path)
 		res := scanBinary(ctx, component, tag, mountPath, innerPath)
 		if res.Error == nil {
-			klog.InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
+			klog.V(1).InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
 		} else {
 			klog.InfoS("scanning failed", "image", image, "path", innerPath, "error", res.Error, "status", "failed")
 		}
