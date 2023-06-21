@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.0.6] - 2023-06-21
+
+### Bug Fixes
+
+- Add dumb-init to the filter list
+
+### Printer
+
+- Fix missing header column
+
 ## [2.0.5] - 2023-06-21
 
 ### Bug Fixes
