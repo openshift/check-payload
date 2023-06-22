@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/pprof"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -41,22 +42,6 @@ var applicationDepsNodeScan = []string{
 	"strings",
 }
 
-var ignoredMimes = []string{
-	"application/gzip",
-	"application/json",
-	"application/octet-stream",
-	"application/tzif",
-	"application/vnd.sqlite3",
-	"application/x-sharedlib",
-	"application/zip",
-	"text/csv",
-	"text/html",
-	"text/plain",
-	"text/tab-separated-values",
-	"text/xml",
-	"text/x-python",
-}
-
 var requiredGolangSymbols = []string{
 	"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 	"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
@@ -75,6 +60,7 @@ var (
 	verbose                               bool
 	limit                                 int
 	timeLimit                             time.Duration
+	cpuProfile                            string
 )
 
 func main() {
@@ -115,9 +101,23 @@ func main() {
 			config.Verbose = verbose
 			config.Log()
 			klog.InfoS("scan", "version", Commit)
+
+			if cpuProfile != "" {
+				f, err := os.Create(cpuProfile)
+				if err != nil {
+					return err
+				}
+				klog.Info("collecting CPU profile data to ", cpuProfile)
+				pprof.StartCPUProfile(f)
+			}
+
 			return nil
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+			if cpuProfile != "" {
+				pprof.StopCPUProfile()
+				klog.Info("CPU profile saved to ", cpuProfile)
+			}
 			printResults(&config, results)
 			if isFailed(results) {
 				return errors.New("run failed")
@@ -136,6 +136,7 @@ func main() {
 	scanCmd.PersistentFlags().StringVar(&outputFile, "output-file", "", "write report to file")
 	scanCmd.PersistentFlags().StringVar(&outputFormat, "output-format", "table", "output format (table, csv, markdown, html)")
 	scanCmd.PersistentFlags().DurationVar(&timeLimit, "time-limit", 1*time.Hour, "limit running time")
+	scanCmd.PersistentFlags().StringVar(&cpuProfile, "cpuprofile", "", "write CPU profile to file")
 
 	scanPayload := &cobra.Command{
 		Use:          "payload [image pull spec]",

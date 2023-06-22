@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/gabriel-vasile/mimetype"
 	v1 "github.com/openshift/api/image/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
@@ -28,6 +27,9 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 	results := NewScanResults()
 	runs = append(runs, results)
 	klog.Info("scanning node")
+	component := &OpenshiftComponent{
+		Component: "node",
+	}
 	rpms, _ := getAllRPMs(ctx, cfg)
 	for _, rpm := range rpms {
 		tag := NewTag(rpm)
@@ -54,22 +56,14 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 				continue
 			}
 			tag = NewTag(path)
-			mtype, err := mimetype.DetectFile(path)
-			if err != nil {
-				res := NewScanResult().SetTag(tag).SetPath(path).SetError(err)
-				results.Append(res)
-				continue
-			}
-			if mimetype.EqualsAny(mtype.String(), ignoredMimes...) {
-				continue
-			}
-			klog.InfoS("scanning path", "path", path, "mtype", mtype.String())
-			component := &OpenshiftComponent{
-				Component: "node",
-			}
+			klog.V(1).InfoS("scanning path", "path", path)
 			res := scanBinary(ctx, component, tag, cfg.NodeScan, innerPath)
+			if res.Skip {
+				// Do not add skipped binaries to results.
+				continue
+			}
 			if res.Error == nil {
-				klog.InfoS("scanning node success", "path", path, "status", "success")
+				klog.V(1).InfoS("scanning node success", "path", path, "status", "success")
 			} else {
 				klog.InfoS("scanning node failed", "path", path, "error", res.Error, "status", "failed")
 			}
