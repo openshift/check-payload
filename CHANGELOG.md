@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.7] - 2023-06-22
+
+### Bug Fixes
+
+- Cleanup and print operator components
+- If there is no crypto then skip openssl test
+
 ## [2.0.6] - 2023-06-21
 
 ### Bug Fixes
