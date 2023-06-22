@@ -13,7 +13,10 @@ import (
 func podmanCreate(ctx context.Context, image string) (string, error) {
 	stdout, _, err := runPodman(ctx, "create", image)
 	if err != nil {
-		return "", err
+		stdout, _, err = runPodman(ctx, "create", "--entrypoint", "/bin/sh", image)
+		if err != nil {
+			return "", err
+		}
 	}
 	return strings.TrimSpace(stdout.String()), nil
 }
