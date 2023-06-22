@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.10] - 2023-06-22
+
+### Features
+
+- Add more binaries to filter list: grpc_health_probe
+
 ## [2.0.9] - 2023-06-22
 
 ### Bug Fixes
