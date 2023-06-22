@@ -53,7 +53,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 				continue
 			}
 			tag = NewTag(path)
-			klog.InfoS("scanning path", "path", path)
+			klog.V(1).InfoS("scanning path", "path", path)
 			component := &OpenshiftComponent{
 				Component: "node",
 			}
@@ -63,7 +63,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 				continue
 			}
 			if res.Error == nil {
-				klog.InfoS("scanning node success", "path", path, "status", "success")
+				klog.V(1).InfoS("scanning node success", "path", path, "status", "success")
 			} else {
 				klog.InfoS("scanning node failed", "path", path, "error", res.Error, "status", "failed")
 			}
