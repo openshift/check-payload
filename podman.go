@@ -10,10 +10,24 @@ import (
 	"k8s.io/klog/v2"
 )
 
+var alternateEntryPoints = []string{
+	"/bin/sh",
+	"/bin/bash",
+	"/usr/bin/bash",
+}
+
 func podmanCreate(ctx context.Context, image string) (string, error) {
 	stdout, _, err := runPodman(ctx, "create", image)
 	if err != nil {
-		return "", err
+		for _, entryPoint := range alternateEntryPoints {
+			stdout, _, err = runPodman(ctx, "create", "--entrypoint", entryPoint, image)
+			if err == nil {
+				break
+			}
+		}
+		if err != nil {
+			return "", err
+		}
 	}
 	return strings.TrimSpace(stdout.String()), nil
 }
