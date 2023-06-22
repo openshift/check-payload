@@ -18,6 +18,7 @@ filter_dirs = [
 # List of files to ignore. This is a strict match.
 filter_files = [
   ### static binaries, no crypto
+  "/usr/bin/grpc_health_probe",
   "/usr/bin/cdi-containerimage-server",
   "/usr/bin/dumb-init", # https://github.com/Yelp/dumb-init
   "/app/bin/dumb-init", # https://github.com/Yelp/dumb-init
