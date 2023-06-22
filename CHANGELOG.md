@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.8] - 2023-06-22
+
+### Features
+
+- Add more binaries to filter list: glibc_post_upgrade, ldconfig, sln
+
 ## [2.0.7] - 2023-06-22
 
 ### Bug Fixes
