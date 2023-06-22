@@ -27,6 +27,9 @@ filter_files = [
   "/usr/bin/tini-static",
   "/usr/libexec/catatonit/catatonit",
   "/usr/sbin/build-locale-archive",
+  "/usr/sbin/glibc_post_upgrade.x86_64",
+  "/usr/sbin/ldconfig",
+  "/usr/sbin/sln",
 ]
 
 # List of images to ignore.
