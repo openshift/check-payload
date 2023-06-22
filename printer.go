@@ -56,7 +56,7 @@ func printResults(cfg *Config, results []*ScanResults) {
 	}
 
 	if cfg.OutputFile != "" {
-		if err := os.WriteFile(cfg.OutputFile, []byte(combinedReport), 0777); err != nil {
+		if err := os.WriteFile(cfg.OutputFile, []byte(combinedReport), 0o777); err != nil {
 			klog.Errorf("could not write file: %v", err)
 		}
 	}
@@ -122,16 +122,26 @@ func generateOutputString(cfg *Config, ftw table.Writer, stw table.Writer) (stri
 	return failureReport, successReport
 }
 
+func getComponent(res *ScanResult) *OpenshiftComponent {
+	if res.Component != nil {
+		return res.Component
+	}
+	return &OpenshiftComponent{
+		Component: "<unknown>",
+	}
+}
+
 func renderReport(results []*ScanResults) (failures table.Writer, successes table.Writer) {
 	var failureTableRows []table.Row
 	var successTableRows []table.Row
 
 	for _, result := range results {
 		for _, res := range result.Items {
+			component := getComponent(res)
 			if res.Error != nil {
-				failureTableRows = append(failureTableRows, table.Row{res.OperatorName, res.Tag.Name, res.Path, res.Error, res.Tag.From.Name})
+				failureTableRows = append(failureTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Error, res.Tag.From.Name})
 			} else {
-				successTableRows = append(successTableRows, table.Row{res.OperatorName, res.Tag.Name, res.Path, res.Tag.From.Name})
+				successTableRows = append(successTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Tag.From.Name})
 			}
 		}
 	}

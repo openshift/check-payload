@@ -212,8 +212,8 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 	}
 	// get openshift component
 	component, _ := getOpenshiftComponentFromImage(ctx, image)
-	if component != "" {
-		klog.InfoS("found operator", "component", component)
+	if component != nil {
+		klog.InfoS("found operator", "component", component.Component, "source_location", component.SourceLocation, "maintainer_component", component.MaintainerComponent)
 	}
 	defer func() {
 		podmanUnmount(ctx, createID)

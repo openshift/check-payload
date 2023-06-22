@@ -34,13 +34,19 @@ type ArtifactPod struct {
 }
 
 type ScanResult struct {
-	OperatorName string
-	Tag          *v1.TagReference
-	Path         string
-	Skip         bool
-	Error        error
+	Component *OpenshiftComponent
+	Tag       *v1.TagReference
+	Path      string
+	Skip      bool
+	Error     error
 }
 
 type ScanResults struct {
 	Items []*ScanResult
+}
+
+type OpenshiftComponent struct {
+	Component           string `json:"component"`
+	SourceLocation      string `json:"source_location"`
+	MaintainerComponent string `json:"maintainer_component"`
 }
