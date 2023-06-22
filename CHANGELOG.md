@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.0.9] - 2023-06-22
+
+### Bug Fixes
+
+- Cleanup container
+
+### Features
+
+- Use backup entrypoint /bin/sh
+- Allow for alternate entrypoints
+- Add CPU profiling
+
+### ScanBinary
+
+- Check for ELF binary first
+
+### ValidateGoLinux
+
+- Remove
+
 ## [2.0.8] - 2023-06-22
 
 ### Features
