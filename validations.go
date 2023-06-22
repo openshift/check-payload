@@ -202,6 +202,10 @@ func validateGoStatic(ctx context.Context, tag *v1.TagReference, path string, ba
 }
 
 func validateGoOpenssl(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
+	// if there is no crypto then skip openssl test
+	if baton.GoNoCrypto {
+		return nil
+	}
 	// check for openssl strings
 	return validateStringsOpenssl(ctx, path, baton)
 }
