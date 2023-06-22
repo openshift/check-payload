@@ -204,6 +204,9 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		results.Append(NewScanResult().SetTag(tag).SetError(err))
 		return results
 	}
+	defer func() {
+		podmanContainerRm(ctx, createID)
+	}()
 	// mount
 	mountPath, err := podmanMount(ctx, createID)
 	if err != nil {
