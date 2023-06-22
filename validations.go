@@ -292,7 +292,7 @@ func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) erro
 	}
 
 	if libcryptoVersion == "" {
-		return fmt.Errorf("openssl: did not find libcrypto libraries")
+		return fmt.Errorf("openssl: did not find libcrypto library within binary")
 	}
 
 	if haveMultipleLibcrypto {
@@ -355,13 +355,13 @@ func isExecutable(ctx context.Context, path string) error {
 	return nil
 }
 
-func scanBinary(ctx context.Context, operator string, tag *v1.TagReference, topDir, innerPath string) *ScanResult {
+func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagReference, topDir, innerPath string) *ScanResult {
 	allFn := validationFns["all"]
 	goFn := validationFns["go"]
 	exeFn := validationFns["exe"]
 
 	baton := &Baton{TopDir: topDir}
-	res := NewScanResult().SetOperator(operator).SetTag(tag).SetPath(innerPath)
+	res := NewScanResult().SetComponent(component).SetTag(tag).SetPath(innerPath)
 
 	path := filepath.Join(topDir, innerPath)
 	for _, fn := range allFn {

@@ -82,7 +82,8 @@ func main() {
 	var results []*ScanResults
 
 	rootCmd := cobra.Command{
-		Use: "check-payload",
+		Use:           "check-payload",
+		SilenceErrors: true,
 	}
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "verbose")
 
@@ -113,12 +114,13 @@ func main() {
 			config.TimeLimit = timeLimit
 			config.Verbose = verbose
 			config.Log()
+			klog.InfoS("scan", "version", Commit)
 			return nil
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
 			printResults(&config, results)
 			if isFailed(results) {
-				return fmt.Errorf("run failed")
+				return errors.New("run failed")
 			}
 			return nil
 		},
@@ -164,9 +166,6 @@ func main() {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			config.NodeScan, _ = cmd.Flags().GetString("root")
-			if err := validateApplicationDependencies(applicationDepsNodeScan); err != nil {
-				return err
-			}
 			results = runNodeScan(ctx, &config)
 			return nil
 		},
@@ -205,7 +204,7 @@ func main() {
 	rootCmd.PersistentFlags().AddGoFlagSet(klogFlags)
 
 	if err := rootCmd.Execute(); err != nil {
-		klog.Fatal(err)
+		klog.Fatalf("Error: %v\n", err)
 	}
 }
 

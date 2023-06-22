@@ -10,8 +10,8 @@ func NewScanResult() *ScanResult {
 	return &ScanResult{}
 }
 
-func (r *ScanResult) SetOperator(operator string) *ScanResult {
-	r.OperatorName = operator
+func (r *ScanResult) SetComponent(component *OpenshiftComponent) *ScanResult {
+	r.Component = component
 	return r
 }
 
