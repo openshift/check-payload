@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.0.11] - 2023-06-23
+
+### Features
+
+- Add more binaries to filter list: grpc_health_probe
+- Add support for supplying pull spec config file
+
+## [2.0.11] - 2023-06-23
+
+### Features
+
+- Add more binaries to filter list: grpc_health_probe
+- 2.0.10 release
+
 ## [2.0.10] - 2023-06-22
 
 ### Features
