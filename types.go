@@ -24,6 +24,7 @@ type Config struct {
 	OutputFile              string        `json:"output_file"`
 	OutputFormat            string        `json:"output_format"`
 	Parallelism             int           `json:"parallelism"`
+	PullSecret              string        `json:"pull_secret"`
 	TimeLimit               time.Duration `json:"time_limit"`
 	Verbose                 bool          `json:"verbose"`
 }

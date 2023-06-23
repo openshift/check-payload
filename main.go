@@ -53,6 +53,7 @@ var (
 	configFile                            string
 	parallelism                           int
 	outputFile                            string
+	pullSecretFile                        string
 	outputFormat                          string
 	filterFiles, filterDirs, filterImages []string
 	components                            []string
@@ -96,6 +97,7 @@ func main() {
 			config.InsecurePull = insecurePull
 			config.OutputFile = outputFile
 			config.OutputFormat = outputFormat
+			config.PullSecret = pullSecretFile
 			config.Limit = limit
 			config.TimeLimit = timeLimit
 			config.Verbose = verbose
@@ -135,6 +137,7 @@ func main() {
 	scanCmd.PersistentFlags().IntVar(&parallelism, "parallelism", 5, "how many pods to check at once")
 	scanCmd.PersistentFlags().StringVar(&outputFile, "output-file", "", "write report to file")
 	scanCmd.PersistentFlags().StringVar(&outputFormat, "output-format", "table", "output format (table, csv, markdown, html)")
+	scanCmd.PersistentFlags().StringVar(&pullSecretFile, "pull-secret", "", "pull secret to use for pulling images")
 	scanCmd.PersistentFlags().DurationVar(&timeLimit, "time-limit", 1*time.Hour, "limit running time")
 	scanCmd.PersistentFlags().StringVar(&cpuProfile, "cpuprofile", "", "write CPU profile to file")
 

@@ -143,18 +143,24 @@ func GetPayload(config *Config) (*release.ReleaseInfo, error) {
 	var payload *release.ReleaseInfo
 	var err error
 	if config.FromURL != "" {
-		payload, err = DownloadReleaseInfo(config.FromURL)
+		payload, err = DownloadReleaseInfo(config.FromURL, config.PullSecret)
 	} else {
 		payload, err = ReadReleaseInfo(config.FromFile)
 	}
 	return payload, err
 }
 
-func DownloadReleaseInfo(url string) (*release.ReleaseInfo, error) {
+func DownloadReleaseInfo(url string, pullSecret string) (*release.ReleaseInfo, error) {
 	// oc adm release info  --output json --pullspecs
 	klog.InfoS("oc adm release info", "url", url)
+	var cmd *exec.Cmd
 	var stdout bytes.Buffer
-	cmd := exec.CommandContext(context.Background(), "oc", "adm", "release", "info", "--output", "json", "--pullspecs", url)
+	if pullSecret != "" {
+		cmd = exec.CommandContext(context.Background(), "oc", "adm", "release", "-a", pullSecret, "info", "--output", "json", "--pullspecs", url)
+	} else {
+		cmd = exec.CommandContext(context.Background(), "oc", "adm", "release", "info", "--output", "json", "--pullspecs", url)
+	}
+
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
 		return nil, err
