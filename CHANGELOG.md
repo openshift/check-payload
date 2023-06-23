@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.12] - 2023-06-23
+
+### Bug Fixes
+
+- Fix openssl detection
+
 ## [2.0.11] - 2023-06-23
 
 ### Features
