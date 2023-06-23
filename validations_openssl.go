@@ -61,7 +61,7 @@ func validateOpenssl(ctx context.Context, mountPath string) OpensslInfo {
 	}
 
 	info.Present = true
-	info.FIPS = bytes.Contains(stdout.Bytes(), []byte("FIPS_mode"))
+	info.FIPS = bytes.Contains(stdout.Bytes(), []byte("FIPS_mode")) || bytes.Contains(stdout.Bytes(), []byte("fips_mode"))
 
 	return info
 }
