@@ -227,7 +227,7 @@ func validateGoCGOInit(ctx context.Context, tag *v1.TagReference, path string, b
 
 // scan the binary for multiple libcrypto libraries
 func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) error {
-	cmd := exec.CommandContext(ctx, "strings", path)
+	cmd := exec.CommandContext(ctx, "strings", path, "-w")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err
@@ -251,17 +251,15 @@ func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) erro
 		if n == 0 || err == io.EOF {
 			break
 		}
-		if bytes.Contains(buf, []byte("libcrypto")) {
-			matches := cryptoRegexp.FindAllSubmatch(buf, -1)
-			if len(matches) == 0 {
-				continue
-			}
-			if libcryptoVersion != "" && libcryptoVersion != string(matches[0][0]) {
-				// Have different libcrypto versions in the same binary.
-				haveMultipleLibcrypto = true
-			}
-			libcryptoVersion = string(matches[0][0])
+		matches := cryptoRegexp.FindAllSubmatch(buf, -1)
+		if len(matches) == 0 {
+			continue
 		}
+		if libcryptoVersion != "" && libcryptoVersion != string(matches[0][0]) {
+			// Have different libcrypto versions in the same binary.
+			haveMultipleLibcrypto = true
+		}
+		libcryptoVersion = string(matches[0][0])
 	}
 
 	if err := cmd.Wait(); err != nil {
