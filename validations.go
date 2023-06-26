@@ -200,7 +200,7 @@ func validateGoCGOInit(ctx context.Context, tag *v1.TagReference, path string, b
 	for {
 		n, err := stream.Read(buf)
 		if err != nil && err != io.EOF {
-			break
+			return err
 		}
 		if n == 0 || err == io.EOF {
 			break
@@ -237,13 +237,10 @@ func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) erro
 
 	for {
 		n, err := stream.Read(buf)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
+		if err != nil && err != io.EOF {
 			return err
 		}
-		if n == 0 {
+		if n == 0 || err == io.EOF {
 			break
 		}
 
