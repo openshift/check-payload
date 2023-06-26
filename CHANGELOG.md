@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.15] - 2023-06-26
+
+### Bug Fixes
+
+- Fix openssl detection
+- Check for fips_mode
+
 ## [2.0.14] - 2023-06-26
 
 ### Bug Fixes
