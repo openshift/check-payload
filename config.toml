@@ -13,6 +13,7 @@ filter_dirs = [
   "/usr/share/icons",
   "/usr/share/openshift",
   "/usr/src/plugins",
+  "/rootfs/sysroot",
 ]
 
 # List of files to ignore. This is a strict match.
