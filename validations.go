@@ -91,7 +91,7 @@ func validateGoSymbols(ctx context.Context, tag *v1.TagReference, path string, b
 	}
 
 	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
-		return fmt.Errorf("go: expected symbols (%v) not found for %v: %v", requiredGolangSymbols, filepath.Base(path), err)
+		return fmt.Errorf("go: expected symbols not found for %v: %v", filepath.Base(path), err)
 	}
 	return nil
 }
