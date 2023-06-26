@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.13] - 2023-06-26
+
+### Bug Fixes
+
+- Fix openssl detection
+- Check for fips_mode
+
+### Features
+
+- Add more binaries to filter list: grpc_health_probe
+- 2.0.10 release
+- 2.0.11 release
+- 2.0.12 release
+- Add /usr/local/bin/catatonit
+- Add sysroot ignore
+- Use rootfs
+
 ## [2.0.12] - 2023-06-23
 
 ### Bug Fixes
