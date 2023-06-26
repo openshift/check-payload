@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.14] - 2023-06-26
+
+### Bug Fixes
+
+- Use file open instead of strings
+
 ## [2.0.13] - 2023-06-26
 
 ### Bug Fixes
