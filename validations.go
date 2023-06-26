@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"debug/elf"
@@ -184,21 +185,20 @@ func validateGoOpenssl(ctx context.Context, tag *v1.TagReference, path string, b
 }
 
 func validateGoCGOInit(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
-	cmd := exec.CommandContext(ctx, "strings", path)
-	stdout, err := cmd.StdoutPipe()
+	f, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	if err := cmd.Start(); err != nil {
-		return err
-	}
+	defer f.Close()
+
+	stream := bufio.NewReader(f)
 
 	cgoInitFound := false
 	const cap int = 1 * 1024 * 1024
 	buf := make([]byte, cap)
 
 	for {
-		n, err := stdout.Read(buf)
+		n, err := stream.Read(buf)
 		if err != nil && err != io.EOF {
 			break
 		}
@@ -207,14 +207,7 @@ func validateGoCGOInit(ctx context.Context, tag *v1.TagReference, path string, b
 		}
 		if bytes.Contains(buf, []byte("cgo_init")) {
 			cgoInitFound = true
-			cmd.Cancel()
 			break
-		}
-	}
-
-	if err := cmd.Wait(); err != nil {
-		if !strings.Contains(err.Error(), "signal: killed") {
-			return err
 		}
 	}
 
@@ -227,14 +220,13 @@ func validateGoCGOInit(ctx context.Context, tag *v1.TagReference, path string, b
 
 // scan the binary for multiple libcrypto libraries
 func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) error {
-	cmd := exec.CommandContext(ctx, "strings", path, "-w")
-	stdout, err := cmd.StdoutPipe()
+	f, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	if err := cmd.Start(); err != nil {
-		return err
-	}
+	defer f.Close()
+
+	stream := bufio.NewReader(f)
 
 	libcryptoVersion := ""
 	cryptoRegexp := regexp.MustCompile(`libcrypto.so(\.?\d+)*`)
@@ -244,26 +236,30 @@ func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) erro
 	buf := make([]byte, cap)
 
 	for {
-		n, err := stdout.Read(buf)
-		if err != nil && err != io.EOF {
+		n, err := stream.Read(buf)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+		if n == 0 {
 			break
 		}
-		if n == 0 || err == io.EOF {
-			break
-		}
+
 		matches := cryptoRegexp.FindAllSubmatch(buf, -1)
 		if len(matches) == 0 {
 			continue
 		}
-		if libcryptoVersion != "" && libcryptoVersion != string(matches[0][0]) {
+		binaryLibcryptoVersion := string(matches[0][0])
+		if binaryLibcryptoVersion == "" {
+			continue
+		}
+		if libcryptoVersion != "" && libcryptoVersion != binaryLibcryptoVersion {
 			// Have different libcrypto versions in the same binary.
 			haveMultipleLibcrypto = true
 		}
 		libcryptoVersion = string(matches[0][0])
-	}
-
-	if err := cmd.Wait(); err != nil {
-		return err
 	}
 
 	if libcryptoVersion == "" {
