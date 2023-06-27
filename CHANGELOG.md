@@ -1,135 +1,123 @@
 # Changelog
 
-## [2.0.15] - 2023-06-26
+## [0.2.15] - 2023-06-26
 
 ### Bug Fixes
 
-- Fix openssl detection
-- Check for fips_mode
+- Add rhel9 fips symbol
 
-## [2.0.14] - 2023-06-26
+### Features
+- Add `sysroot` to filtered directories list
+
+## [0.2.14] - 2023-06-26
 
 ### Bug Fixes
 
 - Use file open instead of strings
 
-## [2.0.13] - 2023-06-26
+### Features
+
+- Add `/usr/src/multus-cni/rhel7/bin/multus` to filter list
+
+## [0.2.13] - 2023-06-26
 
 ### Bug Fixes
 
-- Fix openssl detection
-- Check for fips_mode
+- Check for `fips_mode`
 
 ### Features
 
-- Add more binaries to filter list: grpc_health_probe
-- 2.0.10 release
-- 2.0.11 release
-- 2.0.12 release
-- Add /usr/local/bin/catatonit
-- Add sysroot ignore
+- Add more binaries to filter list: `/usr/local/bin/catatonit`
 - Use rootfs
 
-## [2.0.12] - 2023-06-23
+## [0.2.12] - 2023-06-23
 
 ### Bug Fixes
 
 - Fix openssl detection
 
-## [2.0.11] - 2023-06-23
+## [0.2.11] - 2023-06-23
 
 ### Features
 
-- Add more binaries to filter list: grpc_health_probe
-- Add support for supplying pull spec config file
+- Support specifying pull secret for oc adm release info
 
-## [2.0.11] - 2023-06-23
-
-### Features
-
-- Add more binaries to filter list: grpc_health_probe
-- 2.0.10 release
-
-## [2.0.10] - 2023-06-22
+## [0.2.10] - 2023-06-22
 
 ### Features
 
-- Add more binaries to filter list: grpc_health_probe
+- Add more binaries to filter list: `grpc_health_probe`
 
-## [2.0.9] - 2023-06-22
+## [0.2.9] - 2023-06-22
 
 ### Bug Fixes
 
-- Cleanup container
+- Podman: cleanup container
+- Improve memory usage for `node_scan`
 
 ### Features
 
 - Use backup entrypoint /bin/sh
 - Allow for alternate entrypoints
 - Add CPU profiling
+- ScanBinary: check for ELF binary first
+- ValidateGoLinux: remove
+- Remove mime type check
+- Make logging less verbose by default for `node_scan`
 
-### ScanBinary
-
-- Check for ELF binary first
-
-### ValidateGoLinux
-
-- Remove
-
-## [2.0.8] - 2023-06-22
+## [0.2.8] - 2023-06-22
 
 ### Features
 
-- Add more binaries to filter list: glibc_post_upgrade, ldconfig, sln
+- Add more binaries to filter list: `glibc_post_upgrade`, `ldconfig`, `sln`
 
-## [2.0.7] - 2023-06-22
+## [0.2.7] - 2023-06-22
 
 ### Bug Fixes
 
 - Cleanup and print operator components
 - If there is no crypto then skip openssl test
 
-## [2.0.6] - 2023-06-21
+## [0.2.6] - 2023-06-21
 
 ### Bug Fixes
 
-- Add dumb-init to the filter list
-
-### Printer
-
+- Add `dumb-init` to the filter list
 - Fix missing header column
 
-## [2.0.5] - 2023-06-21
+## [0.2.5] - 2023-06-21
 
 ### Bug Fixes
 
 - Remove scanner and use buffer directly to prevent 'token too long' errors
 
-## [2.0.4] - 2023-06-21
-
-### Bug Fixes
-
-- Fix verbose option
+## [0.2.4] - 2023-06-21
 
 ### Documentation
 
 - Fix readme
 
+### Fixes
+
+- Fix `--verbose` option
+- Fix parsing `--config`
+- Fix bogus "found too many crypto libraries"
+
 ### Features
 
-- Add -u and -f short commands
-
-### Podman
-
+- Add `-u` and `-f` short commands
+- Wire the klog flags
 - Simplify logging
+- Make logging less verbose by default
+- Podman: simplify logging
 
-## [2.0.3] - 2023-06-21
+## [0.2.3] - 2023-06-21
 
 ### Bug Fixes
 
 - Fix libcrypto regex
 
-## [2.0.2] - 2023-06-20
+## [0.2.2] - 2023-06-20
 
 ### Features
 
@@ -140,22 +128,25 @@
 
 - Go mod tidy
 
-### RunNodeScan
+### Performance
 
-- Faster symlink detection
+- runNodeScan: Faster symlink detection
+- scanBinary: Less repetitions
+- scanBinary: pass topDir and innerPath
 
-### ScanBinary
+## [0.2.1] - 2023-06-20
 
-- Less repetitions
-- Pass topDir and innerPath
+### Documentation
 
-## [2.0.0] - 2023-06-20
+- Update readme
+
+## [0.2.0] - 2023-06-20
 
 ### Features
 
 - Add cobra commandline control
 
-## [1.0.9] - 2023-06-19
+## [0.1.9] - 2023-06-19
 
 ### Bug Fixes
 
@@ -171,13 +162,13 @@
 - Add insecure pull option
 - Add embedded ignore list and config file
 
-## [1.0.8] - 2023-06-16
+## [0.1.8] - 2023-06-16
 
 ### Features
 
 - Ignore removed file from node scan
 
-## [1.0.7] - 2023-06-16
+## [0.1.7] - 2023-06-16
 
 ### Documentation
 
@@ -188,27 +179,24 @@
 - Add multierror to capture all dependent binaries
 - Add operator detection
 
-## [1.0.6] - 2023-06-15
+## [0.1.6] - 2023-06-15
 
-### Documentation
+### Features
 
 - Add build-locale-archive to the ignore list
+- Check for `_cgo_init` (fixes 4.10)
+
+## [0.1.5] - 2023-06-15
 
 ### Features
 
-- Check for _cgo_init (fixes 4.10)
-
-## [1.0.5] - 2023-06-15
-
-### Features
-
-- Ignore CGO_ENABLED for golang <= 1.17 (fixes 4.10)
+- Ignore `CGO_ENABLED` for golang <= 1.17 (fixes 4.10)
 
 ### Build
 
 - Add latest to changelog generation
 
-## [1.0.4] - 2023-06-15
+## [0.1.4] - 2023-06-15
 
 ### Documentation
 
@@ -222,26 +210,34 @@
 
 - Disable cgo... allows for slightly smaller binary
 
-## [1.0.3] - 2023-06-14
+## [0.1.3] - 2023-06-14
 
 ### Miscellaneous Tasks
 
 - first gitlab pipeline release
 
-## [1.0.2] - 2023-06-14
+## [0.1.2] - 2023-06-14
 
 ### Miscellaneous Tasks
 
 - Use git describe for version info
-- Artifact build only on tags
-- Update .gitlab-ci.yml file
-- Use git describe for version info
 
-## [1.0.1] - 2023-06-14
+## [0.1.1] - 2023-06-14
+
+### Documentation
+
+- Add release and changelog
 
 ### Features
 
-- Skip CGO_ENABLED check on go versions < 1.17
-- Ignore tini-static
+- Skip `CGO_ENABLED` check on go versions < 1.17
+- Ignore `tini-static`
 - Add golang tags validation
 
+### Build
+
+- Add Makefile
+
+### Fixes
+
+- Fix markdown lint
