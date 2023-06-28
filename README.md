@@ -12,7 +12,7 @@ This application checks an OpenShift release payload or an operator image for FI
 
 Filter are now contained within the config.toml file.
 
-## build
+## Build
 
 ```sh
 git clone https://gitlab.cee.redhat.com/rphillip/check-payload.git
@@ -20,7 +20,13 @@ cd check-payload
 make
 ```
 
-## run against an OpenShift release payload
+## Run
+
+### Prerequisities
+* podman should be installed on the node.
+* podman should be configured with pull secrets for the images to be scanned.
+
+### Scan an OpenShift release payload
 
 ```sh
  sudo ./check-payload scan payload \
@@ -28,14 +34,14 @@ make
    --output-file report.txt
 ```
 
-## run against an container or operator image
+### Scan a container or operator image
 
 ```sh
 sudo ./check-payload scan operator \
   --spec registry.ci.openshift.org/ocp-priv/4.11-art-assembly-art6883-3-priv@sha256:138b1b9ae11b0d3b5faafacd1b469ec8c20a234b387ae33cf007441fa5c5d567
 ```
 
-## node scan
+### Scan a node
 
 ```sh
 IMAGE=some.registry.location/check-payload
