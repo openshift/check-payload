@@ -103,7 +103,7 @@ func runPayloadScan(ctx context.Context, cfg *Config) []*ScanResults {
 		}
 		tag := tag
 		tx <- &Request{Tag: &tag}
-		if limit > 0 && int(i) == limit-1 {
+		if limit > 0 && i == limit-1 {
 			break
 		}
 	}
@@ -177,7 +177,7 @@ func ReadReleaseInfo(filename string) (*release.ReleaseInfo, error) {
 		return nil, err
 	}
 	releaseInfo := &release.ReleaseInfo{}
-	if err := json.Unmarshal([]byte(data), releaseInfo); err != nil {
+	if err := json.Unmarshal(data, releaseInfo); err != nil {
 		return nil, err
 	}
 	return releaseInfo, nil

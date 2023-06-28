@@ -228,7 +228,7 @@ func getConfig(config *Config) error {
 	// fall back to embedded config.
 	if errors.Is(err, os.ErrNotExist) && configFile == "" {
 		klog.Info("using embedded config")
-		_, err = toml.Decode(string(embeddedConfig), &config)
+		_, err = toml.Decode(embeddedConfig, &config)
 		if err != nil { // Should never happen.
 			panic("invalid embedded config: " + err.Error())
 		}
