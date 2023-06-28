@@ -181,7 +181,7 @@ func validateGoOpenssl(ctx context.Context, tag *v1.TagReference, path string, b
 		return nil
 	}
 	// check for openssl strings
-	return validateStringsOpenssl(ctx, path, baton)
+	return validateStringsOpenssl(path, baton)
 }
 
 func validateGoCGOInit(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
@@ -219,7 +219,7 @@ func validateGoCGOInit(ctx context.Context, tag *v1.TagReference, path string, b
 }
 
 // scan the binary for multiple libcrypto libraries
-func validateStringsOpenssl(ctx context.Context, path string, baton *Baton) error {
+func validateStringsOpenssl(path string, baton *Baton) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return err
