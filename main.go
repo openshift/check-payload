@@ -109,8 +109,10 @@ func main() {
 				if err != nil {
 					return err
 				}
+				if err := pprof.StartCPUProfile(f); err != nil {
+					return err
+				}
 				klog.Info("collecting CPU profile data to ", cpuProfile)
-				pprof.StartCPUProfile(f)
 			}
 
 			return nil
@@ -175,7 +177,7 @@ func main() {
 		},
 	}
 	scanNode.Flags().String("root", "", "root path to scan")
-	scanNode.MarkFlagRequired("root")
+	_ = scanNode.MarkFlagRequired("root")
 
 	scanImage := &cobra.Command{
 		Use:          "image [image pull spec]",
@@ -193,7 +195,7 @@ func main() {
 		},
 	}
 	scanImage.Flags().String("spec", "", "payload url")
-	scanImage.MarkFlagRequired("spec")
+	_ = scanImage.MarkFlagRequired("spec")
 
 	scanCmd.AddCommand(scanPayload)
 	scanCmd.AddCommand(scanNode)

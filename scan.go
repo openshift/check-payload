@@ -210,7 +210,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		return results
 	}
 	defer func() {
-		podmanContainerRm(ctx, createID)
+		_ = podmanContainerRm(ctx, createID)
 	}()
 	// mount
 	mountPath, err := podmanMount(ctx, createID)
@@ -224,7 +224,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		klog.InfoS("found operator", "component", component.Component, "source_location", component.SourceLocation, "maintainer_component", component.MaintainerComponent)
 	}
 	defer func() {
-		podmanUnmount(ctx, createID)
+		_ = podmanUnmount(ctx, createID)
 	}()
 
 	// does the image contain openssl
