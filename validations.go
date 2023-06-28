@@ -70,7 +70,7 @@ func validateGoVersion(ctx context.Context, tag *v1.TagReference, path string, b
 func validateGoSymbols(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error {
 	symtable, err := readTable(path)
 	if err != nil {
-		return fmt.Errorf("go: could not read table for %v: %v", filepath.Base(path), err)
+		return fmt.Errorf("go: could not read table for %v: %w", filepath.Base(path), err)
 	}
 	// Skip if the golang binary is not using crypto
 	if !isUsingCryptoModule(symtable) {
@@ -91,7 +91,7 @@ func validateGoSymbols(ctx context.Context, tag *v1.TagReference, path string, b
 	}
 
 	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
-		return fmt.Errorf("go: expected symbols not found for %v: %v", filepath.Base(path), err)
+		return fmt.Errorf("go: expected symbols not found for %v: %w", filepath.Base(path), err)
 	}
 	return nil
 }
@@ -317,7 +317,7 @@ func isElfExe(path string) (bool, error) {
 	exe, err := elf.Open(path)
 	if err != nil {
 		var elfErr *elf.FormatError
-		if errors.As(err, &elfErr) || err == io.EOF {
+		if errors.As(err, &elfErr) || err == io.EOF { //nolint:errorlint // See https://github.com/polyfloyd/go-errorlint/pull/45.
 			// Not an ELF.
 			return false, nil
 		}

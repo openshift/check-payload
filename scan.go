@@ -5,7 +5,6 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -25,7 +24,7 @@ func validateApplicationDependencies(apps []string) error {
 
 	for _, app := range apps {
 		if _, err := exec.LookPath(app); err != nil {
-			multierr.AppendInto(&multiErr, fmt.Errorf("executable not found: %v", err))
+			multierr.AppendInto(&multiErr, err)
 		}
 	}
 
