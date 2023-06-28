@@ -30,7 +30,7 @@ type Config struct {
 }
 
 type ArtifactPod struct {
-	ApiVersion string       `json:"apiVersion"`
+	APIVersion string       `json:"apiVersion"`
 	Items      []corev1.Pod `json:"items"`
 }
 
