@@ -109,8 +109,10 @@ func main() {
 				if err != nil {
 					return err
 				}
+				if err := pprof.StartCPUProfile(f); err != nil {
+					return err
+				}
 				klog.Info("collecting CPU profile data to ", cpuProfile)
-				pprof.StartCPUProfile(f)
 			}
 
 			return nil
@@ -175,7 +177,7 @@ func main() {
 		},
 	}
 	scanNode.Flags().String("root", "", "root path to scan")
-	scanNode.MarkFlagRequired("root")
+	_ = scanNode.MarkFlagRequired("root")
 
 	scanImage := &cobra.Command{
 		Use:          "image [image pull spec]",
@@ -193,7 +195,7 @@ func main() {
 		},
 	}
 	scanImage.Flags().String("spec", "", "payload url")
-	scanImage.MarkFlagRequired("spec")
+	_ = scanImage.MarkFlagRequired("spec")
 
 	scanCmd.AddCommand(scanPayload)
 	scanCmd.AddCommand(scanNode)
@@ -226,7 +228,7 @@ func getConfig(config *Config) error {
 	// fall back to embedded config.
 	if errors.Is(err, os.ErrNotExist) && configFile == "" {
 		klog.Info("using embedded config")
-		_, err = toml.Decode(string(embeddedConfig), &config)
+		_, err = toml.Decode(embeddedConfig, &config)
 		if err != nil { // Should never happen.
 			panic("invalid embedded config: " + err.Error())
 		}

@@ -82,7 +82,7 @@ func getFilesFromRPM(ctx context.Context, cfg *Config, rpm string) ([]string, er
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return files, fmt.Errorf("rpm -ql error (stderr=%v) (err=%v)", stderr.String(), err)
+		return files, fmt.Errorf("rpm -ql error: %w (stderr=%v)", err, stderr.String())
 	}
 
 	scanner := bufio.NewScanner(&stdout)
@@ -101,7 +101,7 @@ func getAllRPMs(ctx context.Context, cfg *Config) ([]string, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return rpms, fmt.Errorf("rpm -qa error (stderr=%v) (err=%v)", stderr.String(), err)
+		return rpms, fmt.Errorf("rpm -qa error: %w (stderr=%v)", err, stderr.String())
 	}
 
 	scanner := bufio.NewScanner(&stdout)

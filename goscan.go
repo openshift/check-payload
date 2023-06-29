@@ -21,7 +21,7 @@ const (
 )
 
 // Select the magic number based on the Go version
-func magicNumber(fileName, goVersion string) []byte {
+func magicNumber(goVersion string) []byte {
 	bs := make([]byte, 4)
 	var magic uint32
 	if strings.Compare(goVersion, "go1.20") >= 0 {
@@ -83,7 +83,7 @@ func readTable(fileName string) (*gosym.Table, error) {
 	}
 
 	// Find .gopclntab by magic number even if there is no section label
-	magic := magicNumber(fileName, bi.GoVersion)
+	magic := magicNumber(bi.GoVersion)
 	pclntabIndex := bytes.Index(tableData, magic)
 	if pclntabIndex < 0 {
 		return nil, fmt.Errorf("could not find magic number in %s ", fileName)

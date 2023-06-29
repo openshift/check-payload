@@ -5,7 +5,6 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -25,7 +24,7 @@ func validateApplicationDependencies(apps []string) error {
 
 	for _, app := range apps {
 		if _, err := exec.LookPath(app); err != nil {
-			multierr.AppendInto(&multiErr, fmt.Errorf("executable not found: %v", err))
+			multierr.AppendInto(&multiErr, err)
 		}
 	}
 
@@ -104,7 +103,7 @@ func runPayloadScan(ctx context.Context, cfg *Config) []*ScanResults {
 		}
 		tag := tag
 		tx <- &Request{Tag: &tag}
-		if limit > 0 && int(i) == limit-1 {
+		if limit > 0 && i == limit-1 {
 			break
 		}
 	}
@@ -178,7 +177,7 @@ func ReadReleaseInfo(filename string) (*release.ReleaseInfo, error) {
 		return nil, err
 	}
 	releaseInfo := &release.ReleaseInfo{}
-	if err := json.Unmarshal([]byte(data), releaseInfo); err != nil {
+	if err := json.Unmarshal(data, releaseInfo); err != nil {
 		return nil, err
 	}
 	return releaseInfo, nil
@@ -210,7 +209,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		return results
 	}
 	defer func() {
-		podmanContainerRm(ctx, createID)
+		_ = podmanContainerRm(ctx, createID)
 	}()
 	// mount
 	mountPath, err := podmanMount(ctx, createID)
@@ -224,7 +223,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		klog.InfoS("found operator", "component", component.Component, "source_location", component.SourceLocation, "maintainer_component", component.MaintainerComponent)
 	}
 	defer func() {
-		podmanUnmount(ctx, createID)
+		_ = podmanUnmount(ctx, createID)
 	}()
 
 	// does the image contain openssl

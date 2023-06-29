@@ -17,10 +17,10 @@ var alternateEntryPoints = []string{
 }
 
 func podmanCreate(ctx context.Context, image string) (string, error) {
-	stdout, _, err := runPodman(ctx, "create", image)
+	stdout, err := runPodman(ctx, "create", image)
 	if err != nil {
 		for _, entryPoint := range alternateEntryPoints {
-			stdout, _, err = runPodman(ctx, "create", "--entrypoint", entryPoint, image)
+			stdout, err = runPodman(ctx, "create", "--entrypoint", entryPoint, image)
 			if err == nil {
 				break
 			}
@@ -33,7 +33,7 @@ func podmanCreate(ctx context.Context, image string) (string, error) {
 }
 
 func podmanUnmount(ctx context.Context, id string) error {
-	_, _, err := runPodman(ctx, "unmount", id)
+	_, err := runPodman(ctx, "unmount", id)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func podmanUnmount(ctx context.Context, id string) error {
 }
 
 func podmanMount(ctx context.Context, id string) (string, error) {
-	stdout, _, err := runPodman(ctx, "mount", id)
+	stdout, err := runPodman(ctx, "mount", id)
 	if err != nil {
 		return "", err
 	}
@@ -55,7 +55,7 @@ func podmanPull(ctx context.Context, image string, insecure bool) error {
 	}
 	args = append(args, image)
 
-	_, _, err := runPodman(ctx, args...)
+	_, err := runPodman(ctx, args...)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func podmanPull(ctx context.Context, image string, insecure bool) error {
 
 func podmanInspect(ctx context.Context, image string, args ...string) (string, error) {
 	cmdArgs := append([]string{"inspect", image}, args...)
-	stdout, _, err := runPodman(ctx, cmdArgs...)
+	stdout, err := runPodman(ctx, cmdArgs...)
 	if err != nil {
 		return "", err
 	}
@@ -72,14 +72,14 @@ func podmanInspect(ctx context.Context, image string, args ...string) (string, e
 }
 
 func podmanContainerRm(ctx context.Context, id string) error {
-	_, _, err := runPodman(ctx, "container", "rm", id)
+	_, err := runPodman(ctx, "container", "rm", id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func runPodman(ctx context.Context, args ...string) (bytes.Buffer, bytes.Buffer, error) {
+func runPodman(ctx context.Context, args ...string) (bytes.Buffer, error) {
 	klog.V(1).InfoS("podman "+args[0], "args", args[1:])
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -87,9 +87,9 @@ func runPodman(ctx context.Context, args ...string) (bytes.Buffer, bytes.Buffer,
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return stdout, stderr, fmt.Errorf("podman error (args=%v) (stderr=%v) (error=%w)", args, stderr.String(), err)
+		return stdout, fmt.Errorf("podman error (args=%v) (stderr=%v) (error=%w)", args, stderr.String(), err)
 	}
-	return stdout, stderr, nil
+	return stdout, nil
 }
 
 func getOpenshiftComponentFromImage(ctx context.Context, image string) (*OpenshiftComponent, error) {
