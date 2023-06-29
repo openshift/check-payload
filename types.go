@@ -27,6 +27,13 @@ type Config struct {
 	PullSecret              string        `json:"pull_secret"`
 	TimeLimit               time.Duration `json:"time_limit"`
 	Verbose                 bool          `json:"verbose"`
+
+	PayloadIgnores map[string]Payload `toml:"payload"`
+}
+
+type Payload struct {
+	FilterFiles []string `json:"filter_files" toml:"filter_files"`
+	FilterDirs  []string `json:"filter_dirs" toml:"filter_dirs"`
 }
 
 type ArtifactPod struct {
