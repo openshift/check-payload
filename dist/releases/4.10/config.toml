@@ -1,0 +1,38 @@
+# List of directories to ignore. This is a prefix match,
+# i.e. everything under a matched directory is ignored.
+filter_dirs = [
+  "/lib/firmware",
+  "/lib/modules",
+  "/usr/lib/.build-id",
+  "/usr/lib/firmware",
+  "/usr/lib/grub",
+  "/usr/lib/modules",
+  "/usr/share/app-info",
+  "/usr/share/doc",
+  "/usr/share/fonts",
+  "/usr/share/icons",
+  "/usr/share/openshift",
+  "/usr/src/plugins",
+  "/rootfs",
+  "/sysroot",
+]
+
+# List of files to ignore. This is a strict match.
+filter_files = [
+  "/usr/sbin/build-locale-archive"
+]
+
+# List of images to ignore.
+filter_images = [ ]
+
+# Payload Components
+
+[payload.multus-cni-alt-container]
+filter_files = [ "/usr/src/multus-cni/rhel7/bin/multus" ]
+
+[payload.operator-lifecycle-manager-container]
+filter_files = [ "/usr/bin/cpb" ]
+
+[payload.openshift-enterprise-pod-container]
+filter_files = [ "/usr/bin/pod" ]
+

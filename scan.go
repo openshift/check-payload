@@ -237,7 +237,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		}
 		innerPath := stripMountPath(mountPath, path)
 		if file.IsDir() {
-			if cfg.IgnoreDir(innerPath) {
+			if cfg.IgnoreDirWithComponent(innerPath, component) {
 				return filepath.SkipDir
 			}
 			return nil
@@ -245,7 +245,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		if !file.Type().IsRegular() {
 			return nil
 		}
-		if cfg.IgnoreFile(innerPath) {
+		if cfg.IgnoreFileWithComponent(innerPath, component) {
 			return nil
 		}
 		klog.V(1).InfoS("scanning path", "path", path)
