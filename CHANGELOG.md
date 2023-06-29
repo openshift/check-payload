@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.16] - 2023-06-29
+
+### Features
+
+- Add a few more ignore paths
+
+### Cleanup
+
+- ci: add golangci-lint, fix existing warnings (#2)
+
 ## [0.2.15] - 2023-06-26
 
 ### Bug Fixes
