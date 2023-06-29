@@ -35,6 +35,7 @@ filter_files = [
   "/usr/sbin/ldconfig",
   "/usr/sbin/sln",
   "/usr/src/multus-cni/rhel7/bin/multus",
+  "/usr/src/whereabouts/rhel7/bin/whereabouts",
 ]
 
 # List of images to ignore.
