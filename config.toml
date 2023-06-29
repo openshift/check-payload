@@ -36,6 +36,7 @@ filter_files = [
   "/usr/sbin/sln",
   "/usr/src/multus-cni/rhel7/bin/multus",
   "/usr/src/whereabouts/rhel7/bin/whereabouts",
+  "/usr/src/egress-router-cni/rhel7/bin/egress-router",
 ]
 
 # List of images to ignore.
