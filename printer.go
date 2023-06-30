@@ -6,6 +6,8 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"k8s.io/klog/v2"
+
+	mapset "github.com/deckarep/golang-set/v2"
 )
 
 var (
@@ -59,6 +61,40 @@ func printResults(cfg *Config, results []*ScanResults) {
 		if err := os.WriteFile(cfg.OutputFile, []byte(combinedReport), 0o777); err != nil {
 			klog.Errorf("could not write file: %v", err)
 		}
+	}
+
+	if cfg.PrintExceptions {
+		displayExceptions(results, cfg)
+	}
+}
+
+func displayExceptions(results []*ScanResults, cfg *Config) {
+	exceptions := make(map[string]mapset.Set[*ScanResult])
+	for _, result := range results {
+		for _, res := range result.Items {
+			if res.Error != nil {
+				component := getComponent(res)
+				if set, ok := exceptions[component.Component]; ok {
+					set.Add(res)
+				} else {
+					exceptions[component.Component] = mapset.NewSet(res)
+				}
+			}
+		}
+	}
+
+	for payloadName, set := range exceptions {
+		fmt.Printf("[payload.%v]\n", payloadName)
+		if len(set.ToSlice()) == 1 {
+			fmt.Printf("filter_files = [ \" %v \" ]\n", set.ToSlice()[0].Path)
+		} else {
+			fmt.Printf("filter_files = [ \n")
+			for _, res := range set.ToSlice() {
+				fmt.Printf("  \"%v\",\n", res.Path)
+			}
+			fmt.Printf("]\n")
+		}
+		fmt.Println("")
 	}
 }
 

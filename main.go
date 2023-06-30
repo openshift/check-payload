@@ -50,18 +50,19 @@ var requiredGolangSymbols = []string{
 var Commit string
 
 var (
-	configFile                            string
-	parallelism                           int
-	outputFile                            string
-	pullSecretFile                        string
-	outputFormat                          string
-	filterFiles, filterDirs, filterImages []string
 	components                            []string
-	insecurePull                          bool
-	verbose                               bool
-	limit                                 int
-	timeLimit                             time.Duration
+	configFile                            string
 	cpuProfile                            string
+	filterFiles, filterDirs, filterImages []string
+	insecurePull                          bool
+	limit                                 int
+	outputFile                            string
+	outputFormat                          string
+	parallelism                           int
+	printExceptions                       bool
+	pullSecretFile                        string
+	timeLimit                             time.Duration
+	verbose                               bool
 )
 
 func main() {
@@ -97,6 +98,7 @@ func main() {
 			config.InsecurePull = insecurePull
 			config.OutputFile = outputFile
 			config.OutputFormat = outputFormat
+			config.PrintExceptions = printExceptions
 			config.PullSecret = pullSecretFile
 			config.Limit = limit
 			config.TimeLimit = timeLimit
@@ -142,6 +144,7 @@ func main() {
 	scanCmd.PersistentFlags().StringVar(&pullSecretFile, "pull-secret", "", "pull secret to use for pulling images")
 	scanCmd.PersistentFlags().DurationVar(&timeLimit, "time-limit", 1*time.Hour, "limit running time")
 	scanCmd.PersistentFlags().StringVar(&cpuProfile, "cpuprofile", "", "write CPU profile to file")
+	scanCmd.PersistentFlags().BoolVarP(&printExceptions, "print-exceptions", "p", false, "display exception list")
 
 	scanPayload := &cobra.Command{
 		Use:          "payload [image pull spec]",
@@ -154,6 +157,7 @@ func main() {
 			defer cancel()
 			config.FromURL, _ = cmd.Flags().GetString("url")
 			config.FromFile, _ = cmd.Flags().GetString("file")
+			config.PrintExceptions, _ = cmd.Flags().GetBool("print-exceptions")
 			results = runPayloadScan(ctx, &config)
 			return nil
 		},

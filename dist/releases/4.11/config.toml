@@ -18,7 +18,10 @@ filter_dirs = [
 ]
 
 # List of files to ignore. This is a strict match.
-filter_files = [ ]
+filter_files = [ 
+  "/usr/sbin/ldconfig",
+  "/usr/sbin/build-locale-archive",
+]
 
 # List of images to ignore.
 filter_images = [ ]
@@ -41,3 +44,48 @@ filter_files = [ "/usr/bin/cpb" ]
 [payload.openshift-enterprise-pod-container]
 filter_files = [ "/usr/bin/pod" ]
 
+[payload.ose-ovn-kubernetes-container]
+filter_files = [
+  "/usr/libexec/cni/host-local",
+  "/usr/libexec/cni/sample",
+  "/usr/libexec/cni/vrf",
+  "/usr/libexec/cni/tuning",
+  "/usr/libexec/cni/vlan",
+  "/usr/libexec/cni/bridge",
+  "/usr/libexec/cni/host-device",
+  "/usr/libexec/cni/loopback",
+  "/usr/libexec/cni/portmap",
+  "/usr/libexec/cni/firewall",
+  "/usr/libexec/cni/macvlan",
+  "/usr/libexec/cni/ptp",
+  "/usr/libexec/cni/sbr",
+  "/usr/libexec/cni/bandwidth",
+  "/usr/libexec/cni/dhcp",
+  "/usr/libexec/cni/ipvlan",
+  "/usr/libexec/cni/static",
+]
+
+[payload.ose-agent-installer-node-agent-container]
+filter_files = [
+  "/usr/libexec/cni/host-device",
+  "/usr/libexec/cni/host-local",
+  "/usr/libexec/cni/ipvlan",
+  "/usr/libexec/cni/ptp",
+  "/usr/libexec/cni/dhcp",
+  "/usr/libexec/cni/loopback",
+  "/usr/libexec/cni/macvlan",
+  "/usr/libexec/cni/sample",
+  "/usr/libexec/cni/sbr",
+  "/usr/libexec/cni/vlan",
+  "/usr/libexec/cni/bridge",
+  "/usr/libexec/cni/firewall",
+  "/usr/libexec/cni/portmap",
+  "/usr/bin/runc",
+  "/usr/libexec/cni/bandwidth",
+  "/usr/libexec/cni/static",
+  "/usr/libexec/cni/tuning",
+  "/usr/libexec/cni/vrf",
+]
+
+[payload.openshift-enterprise-builder-container]
+filter_files = [ " /usr/bin/runc " ]
