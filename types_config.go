@@ -28,27 +28,10 @@ func (c *Config) Log() {
 	)
 }
 
-func isFileMatch(path string, filterFiles []string) bool {
-	for _, f := range filterFiles {
+// isMatch tells if path equals to one of the entries.
+func isMatch(path string, entries []string) bool {
+	for _, f := range entries {
 		if f == path {
-			return true
-		}
-	}
-	return false
-}
-
-func isDirMatch(path string, filterDirs []string) bool {
-	for _, f := range filterDirs {
-		if f == path {
-			return true
-		}
-	}
-	return false
-}
-
-func isDirPrefixMatch(path string, filterDirs []string) bool {
-	for _, dir := range filterDirs {
-		if strings.HasPrefix(path, dir+"/") {
 			return true
 		}
 	}
@@ -60,7 +43,7 @@ func (c *Config) isFileIgnoredByComponent(path string, component *OpenshiftCompo
 		return false
 	}
 	if op, ok := c.PayloadIgnores[component.Component]; ok {
-		return isFileMatch(path, op.FilterFiles)
+		return isMatch(path, op.FilterFiles)
 	}
 	return false
 }
@@ -70,13 +53,13 @@ func (c *Config) isDirIgnoredByComponent(path string, component *OpenshiftCompon
 		return false
 	}
 	if op, ok := c.PayloadIgnores[component.Component]; ok {
-		return isFileMatch(path, op.FilterDirs)
+		return isMatch(path, op.FilterDirs)
 	}
 	return false
 }
 
 func (c *Config) IgnoreFile(path string) bool {
-	return isFileMatch(path, c.FilterFiles)
+	return isMatch(path, c.FilterFiles)
 }
 
 func (c *Config) IgnoreFileWithComponent(path string, component *OpenshiftComponent) bool {
@@ -84,13 +67,23 @@ func (c *Config) IgnoreFileWithComponent(path string, component *OpenshiftCompon
 }
 
 func (c *Config) IgnoreDir(path string) bool {
-	return isFileMatch(path, c.FilterDirs)
+	return isMatch(path, c.FilterDirs)
 }
 
 func (c *Config) IgnoreDirWithComponent(path string, component *OpenshiftComponent) bool {
 	return c.isDirIgnoredByComponent(path, component) || c.IgnoreDir(path)
 }
 
+// IgnoreDirPrefix is similar to IgnoreDir. The difference is, this method
+// performs a a prefix match, meaning that "/a/b/c" path supplied will
+// return true if c.FilterDirs contains "/a" or "/a/b".
+// This method should be used from code that receives the list of files
+// (such as rpm -ql input), rather than traverses a file tree.
 func (c *Config) IgnoreDirPrefix(path string) bool {
-	return isDirMatch(path, c.FilterDirs)
+	for _, dir := range c.FilterDirs {
+		if strings.HasPrefix(path, dir+"/") {
+			return true
+		}
+	}
+	return false
 }
