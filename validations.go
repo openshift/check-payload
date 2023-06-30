@@ -325,7 +325,18 @@ func isElfExe(path string) (bool, error) {
 		return false, err
 	}
 	defer exe.Close()
-	return exe.Type == elf.ET_EXEC, nil
+	switch exe.Type {
+	case elf.ET_EXEC:
+		return true, nil
+	case elf.ET_DYN: // Either a binary or a shared object.
+		pie, err := isPie(exe)
+		if err != nil {
+			return false, err
+		}
+		return pie, nil
+	}
+	// Unknown ELF file, so not a binary.
+	return false, nil
 }
 
 func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagReference, topDir, innerPath string) *ScanResult {
