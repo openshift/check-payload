@@ -72,13 +72,15 @@ func displayExceptions(results []*ScanResults, cfg *Config) {
 	exceptions := make(map[string]mapset.Set[*ScanResult])
 	for _, result := range results {
 		for _, res := range result.Items {
-			if res.Error != nil {
-				component := getComponent(res)
-				if set, ok := exceptions[component.Component]; ok {
-					set.Add(res)
-				} else {
-					exceptions[component.Component] = mapset.NewSet(res)
-				}
+			if res.Error == nil {
+				// skip over successes
+				continue
+			}
+			component := getComponent(res)
+			if set, ok := exceptions[component.Component]; ok {
+				set.Add(res)
+			} else {
+				exceptions[component.Component] = mapset.NewSet(res)
 			}
 		}
 	}
@@ -86,7 +88,7 @@ func displayExceptions(results []*ScanResults, cfg *Config) {
 	for payloadName, set := range exceptions {
 		fmt.Printf("[payload.%v]\n", payloadName)
 		if len(set.ToSlice()) == 1 {
-			fmt.Printf("filter_files = [ \" %v \" ]\n", set.ToSlice()[0].Path)
+			fmt.Printf("filter_files = [ \"%v\" ]\n", set.ToSlice()[0].Path)
 		} else {
 			fmt.Printf("filter_files = [ \n")
 			for _, res := range set.ToSlice() {
