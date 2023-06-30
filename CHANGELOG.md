@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.17] - 2023-06-30
+
+## Bug fixes
+
+- Fixes to -p output
+
+## Features
+
+- Add support for per-tag ignores
+- Add config file for 4.12
+
 ## [0.2.16] - 2023-06-30
 
 ## Bug fixes
