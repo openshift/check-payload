@@ -1,4 +1,4 @@
-package main
+package scan
 
 import (
 	"time"
@@ -8,6 +8,7 @@ import (
 )
 
 type Config struct {
+	Commit                  string        `json:"commit"`
 	ConfigFile              string        `json:"config_file"`
 	Components              []string      `json:"components" toml:"components"`
 	FilterFiles             []string      `json:"filter_files" toml:"filter_files"`

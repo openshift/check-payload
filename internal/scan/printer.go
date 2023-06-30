@@ -1,4 +1,4 @@
-package main
+package scan
 
 import (
 	"fmt"
@@ -28,7 +28,7 @@ var (
 	successNodeRowHeader     = table.Row{colTitleNodePath}
 )
 
-func printResults(cfg *Config, results []*ScanResults) {
+func PrintResults(cfg *Config, results []*ScanResults) {
 	var failureReport, successReport string
 
 	var combinedReport string
@@ -39,7 +39,7 @@ func printResults(cfg *Config, results []*ScanResults) {
 		failureReport, successReport = generateReport(results, cfg)
 	}
 
-	failed := isFailed(results)
+	failed := IsFailed(results)
 	if failed {
 		fmt.Println("---- Failure Report")
 		fmt.Println(failureReport)

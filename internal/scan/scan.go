@@ -1,4 +1,4 @@
-package main
+package scan
 
 import (
 	"bytes"
@@ -14,22 +14,9 @@ import (
 
 	v1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/oc/pkg/cli/admin/release"
-	"go.uber.org/multierr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 )
-
-func validateApplicationDependencies(apps []string) error {
-	var multiErr error
-
-	for _, app := range apps {
-		if _, err := exec.LookPath(app); err != nil {
-			multierr.AppendInto(&multiErr, err)
-		}
-	}
-
-	return multiErr
-}
 
 type Request struct {
 	Tag *v1.TagReference
@@ -40,7 +27,7 @@ type Result struct {
 	Results *ScanResults
 }
 
-func runOperatorScan(ctx context.Context, cfg *Config) []*ScanResults {
+func RunOperatorScan(ctx context.Context, cfg *Config) []*ScanResults {
 	tag := &v1.TagReference{
 		From: &corev1.ObjectReference{
 			Name: cfg.ContainerImage,
@@ -54,7 +41,7 @@ func runOperatorScan(ctx context.Context, cfg *Config) []*ScanResults {
 	return runs
 }
 
-func runPayloadScan(ctx context.Context, cfg *Config) []*ScanResults {
+func RunPayloadScan(ctx context.Context, cfg *Config) []*ScanResults {
 	var runs []*ScanResults
 
 	payload, err := GetPayload(cfg)
@@ -127,7 +114,7 @@ func ValidateTag(ctx context.Context, cfg *Config, tag *v1.TagReference, rx chan
 	rx <- &Result{Results: result}
 }
 
-func isFailed(results []*ScanResults) bool {
+func IsFailed(results []*ScanResults) bool {
 	for _, result := range results {
 		for _, res := range result.Items {
 			if res.Error != nil {

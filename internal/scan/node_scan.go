@@ -1,4 +1,4 @@
-package main
+package scan
 
 import (
 	"bufio"
@@ -22,7 +22,7 @@ func NewTag(name string) *v1.TagReference {
 	}
 }
 
-func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
+func RunNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 	var runs []*ScanResults
 	results := NewScanResults()
 	runs = append(runs, results)

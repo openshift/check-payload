@@ -1,4 +1,4 @@
-package main
+package scan
 
 import (
 	"bufio"
@@ -18,11 +18,17 @@ import (
 	"github.com/Masterminds/semver/v3"
 	mapset "github.com/deckarep/golang-set/v2"
 	v1 "github.com/openshift/api/image/v1"
+
+	"github.com/openshift/check-payload/pkg/goscan"
 )
 
 var (
-	ErrNotGolangExe  = errors.New("not golang executable")
-	ErrNotExecutable = errors.New("not a regular executable")
+	ErrNotGolangExe       = errors.New("not golang executable")
+	ErrNotExecutable      = errors.New("not a regular executable")
+	requiredGolangSymbols = []string{
+		"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
+		"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
+	}
 )
 
 type Baton struct {
@@ -68,7 +74,7 @@ func validateGoVersion(ctx context.Context, _ *v1.TagReference, path string, bat
 }
 
 func validateGoSymbols(_ context.Context, _ *v1.TagReference, path string, baton *Baton) error {
-	symtable, err := readTable(path)
+	symtable, err := goscan.ReadTable(path)
 	if err != nil {
 		return fmt.Errorf("go: could not read table for %v: %w", filepath.Base(path), err)
 	}
@@ -90,7 +96,7 @@ func validateGoSymbols(_ context.Context, _ *v1.TagReference, path string, baton
 		return nil
 	}
 
-	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
+	if err := goscan.ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
 		return fmt.Errorf("go: expected symbols not found for %v: %w", filepath.Base(path), err)
 	}
 	return nil
@@ -329,7 +335,7 @@ func isElfExe(path string) (bool, error) {
 	case elf.ET_EXEC:
 		return true, nil
 	case elf.ET_DYN: // Either a binary or a shared object.
-		pie, err := isPie(exe)
+		pie, err := goscan.IsPie(exe)
 		if err != nil {
 			return false, err
 		}
