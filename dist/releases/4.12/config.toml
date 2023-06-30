@@ -88,7 +88,7 @@ filter_files = [ "/usr/bin/runc" ]
 # The binaries in this image are built via rpm and are ok, but lack the
 # strictfipsruntime tag
 [tag.rhel-coreos-8]
-filter_files = [ 
+filter_files = [
   "/usr/bin/crictl",
   "/usr/bin/crio",
   "/usr/bin/crio-status",
