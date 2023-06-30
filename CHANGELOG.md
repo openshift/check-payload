@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.18] - 2023-06-30
+
+### Features
+
+* Embed per-version config files, allow to choose one using -V,
+  --config-for-version option (for example: `scan -V 4.12 payload ...`)
+
 ## [0.2.17] - 2023-06-30
 
 ### Bug fixes

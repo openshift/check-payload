@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/openshift/check-payload/dist/releases"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 )
@@ -51,7 +52,7 @@ var Commit string
 
 var (
 	components                            []string
-	configFile                            string
+	configFile, configForVersion          string
 	cpuProfile                            string
 	filterFiles, filterDirs, filterImages []string
 	insecurePull                          bool
@@ -132,6 +133,7 @@ func main() {
 		},
 	}
 	scanCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "use toml config file (default: "+defaultConfigFile+")")
+	scanCmd.PersistentFlags().StringVarP(&configForVersion, "config-for-version", "V", "", "use embedded toml config file for specified version")
 	scanCmd.PersistentFlags().StringSliceVar(&filterFiles, "filter-files", nil, "")
 	scanCmd.PersistentFlags().StringSliceVar(&filterDirs, "filter-dirs", nil, "")
 	scanCmd.PersistentFlags().StringSliceVar(&filterImages, "filter-images", nil, "")
@@ -219,6 +221,23 @@ func main() {
 }
 
 func getConfig(config *Config) error {
+	// Handle --config-for-version first.
+	if configForVersion != "" {
+		if configFile != "" {
+			return errors.New("can't use both --config and --config-for-version")
+		}
+		cfg, err := releases.GetConfigFor(configForVersion)
+		if err != nil {
+			return err
+		}
+		_, err = toml.Decode(string(cfg), &config)
+		if err != nil { // Should never happen.
+			panic("invalid embedded config: " + err.Error())
+		}
+		return nil
+	}
+
+	// Handle --config.
 	file := configFile
 	if file == "" {
 		file = defaultConfigFile
@@ -228,8 +247,9 @@ func getConfig(config *Config) error {
 		klog.Infof("using config file: %v", file)
 		return nil
 	}
-	// When --config is not specified and defaultConfigFile is not found,
-	// fall back to embedded config.
+
+	// When neither --config not --config-for-version are specified, and
+	// defaultConfigFile is not found, fall back to embedded config.
 	if errors.Is(err, os.ErrNotExist) && configFile == "" {
 		klog.Info("using embedded config")
 		_, err = toml.Decode(embeddedConfig, &config)
