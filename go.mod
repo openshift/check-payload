@@ -1,4 +1,4 @@
-module github.com/rphillips/check-payload
+module github.com/openshift/check-payload
 
 go 1.19
 
