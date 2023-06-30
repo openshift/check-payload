@@ -2,31 +2,31 @@
 
 ## [0.2.17] - 2023-06-30
 
-## Bug fixes
+### Bug fixes
 
 - Fixes to -p output
 
-## Features
+### Features
 
 - Add support for per-tag ignores
 - Add config file for 4.12
 
 ## [0.2.16] - 2023-06-30
 
-## Bug fixes
+### Bug fixes
 
 - Cleanup Go symbols error message
 - Fix PIE executables detection
 - GHA-related fixes to CI
 - Add LICENSE
 
-## Features
+### Features
 
 - Add support for per-payload image ignores
 - Add exception printer (-p) option
 - Configuration: add more exceptions
 
-## Documentation
+### Documentation
 
 - CHANGELOG: cleanup
 - README: add prereqiusites
