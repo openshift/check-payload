@@ -245,7 +245,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		if !file.Type().IsRegular() {
 			return nil
 		}
-		if cfg.IgnoreFileWithComponent(innerPath, component) {
+		if cfg.IgnoreFileWithTag(innerPath, tag) || cfg.IgnoreFileWithComponent(innerPath, component) {
 			return nil
 		}
 		klog.V(1).InfoS("scanning path", "path", path)

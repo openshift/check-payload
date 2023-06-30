@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/carlmjohnson/versioninfo"
+	imagev1 "github.com/openshift/api/image/v1"
 	"k8s.io/klog/v2"
 )
 
@@ -58,6 +59,16 @@ func (c *Config) isDirIgnoredByComponent(path string, component *OpenshiftCompon
 	return false
 }
 
+func (c *Config) isFileIgnoredByTag(path string, tag *imagev1.TagReference) bool {
+	if tag == nil {
+		return false
+	}
+	if op, ok := c.TagIgnores[tag.Name]; ok {
+		return isMatch(path, op.FilterFiles)
+	}
+	return false
+}
+
 func (c *Config) IgnoreFile(path string) bool {
 	return isMatch(path, c.FilterFiles)
 }
@@ -68,6 +79,10 @@ func (c *Config) IgnoreFileWithComponent(path string, component *OpenshiftCompon
 
 func (c *Config) IgnoreDir(path string) bool {
 	return isMatch(path, c.FilterDirs)
+}
+
+func (c *Config) IgnoreFileWithTag(path string, tag *imagev1.TagReference) bool {
+	return c.isFileIgnoredByTag(path, tag)
 }
 
 func (c *Config) IgnoreDirWithComponent(path string, component *OpenshiftComponent) bool {
