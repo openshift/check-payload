@@ -29,10 +29,11 @@ type Config struct {
 	TimeLimit               time.Duration `json:"time_limit"`
 	Verbose                 bool          `json:"verbose"`
 
-	PayloadIgnores map[string]Payload `toml:"payload"`
+	PayloadIgnores map[string]IgnoreLists `toml:"payload"`
+	TagIgnores     map[string]IgnoreLists `toml:"tag"`
 }
 
-type Payload struct {
+type IgnoreLists struct {
 	FilterFiles []string `json:"filter_files" toml:"filter_files"`
 	FilterDirs  []string `json:"filter_dirs" toml:"filter_dirs"`
 }

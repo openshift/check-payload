@@ -39,10 +39,10 @@ var validationFns = map[string][]ValidationFn{
 		validateGoVersion,
 		validateGoCgo,
 		validateGoCGOInit,
-		validateGoTags,
 		validateGoSymbols,
 		validateGoStatic,
 		validateGoOpenssl,
+		validateGoTags,
 	},
 	"exe": {
 		validateExe,
