@@ -64,11 +64,11 @@ func printResults(cfg *Config, results []*ScanResults) {
 	}
 
 	if cfg.PrintExceptions {
-		displayExceptions(results, cfg)
+		displayExceptions(results)
 	}
 }
 
-func displayExceptions(results []*ScanResults, cfg *Config) {
+func displayExceptions(results []*ScanResults) {
 	exceptions := make(map[string]mapset.Set[*ScanResult])
 	for _, result := range results {
 		for _, res := range result.Items {

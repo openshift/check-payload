@@ -50,13 +50,13 @@ filter_images = [ ]
 ##   "/usr/bin/cpb",
 ##   "/usr/bin/pod",
 ## ]
-## 
+##
 ## [payload.agent-installer-node-agent-container]
 ## filter_files = [ "/usr/bin/cpb" ]
-## 
+##
 ## [payload.operator-lifecycle-manager-container]
 ## filter_files = [ "/usr/bin/cpb" ]
-## 
+##
 ## [payload.openshift-enterprise-pod-container]
 ## filter_files = [ "/usr/bin/pod" ]
 

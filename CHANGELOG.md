@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.16] - 2023-06-30
+
+## Bug fixes
+
+- Cleanup Go symbols error message
+- Fix PIE executables detection
+- GHA-related fixes to CI
+- Add LICENSE
+
+## Features
+
+- Add support for per-payload image ignores
+- Add exception printer (-p) option
+- Configuration: add more exceptions
+
+## Documentation
+
+- CHANGELOG: cleanup
+- README: add prereqiusites
+
 ## [0.2.15] - 2023-06-26
 
 ### Bug Fixes
@@ -7,6 +27,7 @@
 - Add rhel9 fips symbol
 
 ### Features
+
 - Add `sysroot` to filtered directories list
 
 ## [0.2.14] - 2023-06-26
