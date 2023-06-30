@@ -19,6 +19,7 @@ filter_dirs = [
 
 # List of files to ignore. This is a strict match.
 filter_files = [
+  "/usr/sbin/ldconfig",
   "/usr/sbin/build-locale-archive"
 ]
 
