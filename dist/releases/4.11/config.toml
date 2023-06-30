@@ -28,16 +28,6 @@ filter_images = [ ]
 
 # Payload Components
 
-[payload.ose-agent-installer-node-agent-container]
-filter_files = [
-  "/usr/libexec/catatonit/catatonit",
-  "/usr/bin/cpb",
-  "/usr/bin/pod",
-]
-
-[payload.agent-installer-node-agent-container]
-filter_files = [ "/usr/bin/cpb" ]
-
 [payload.operator-lifecycle-manager-container]
 filter_files = [ "/usr/bin/cpb" ]
 
@@ -67,6 +57,9 @@ filter_files = [
 
 [payload.ose-agent-installer-node-agent-container]
 filter_files = [
+  "/usr/libexec/catatonit/catatonit",
+  "/usr/bin/cpb",
+  "/usr/bin/pod",
   "/usr/libexec/cni/host-device",
   "/usr/libexec/cni/host-local",
   "/usr/libexec/cni/ipvlan",
@@ -88,4 +81,4 @@ filter_files = [
 ]
 
 [payload.openshift-enterprise-builder-container]
-filter_files = [ " /usr/bin/runc " ]
+filter_files = [ "/usr/bin/runc" ]
