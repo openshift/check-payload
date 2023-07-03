@@ -27,6 +27,7 @@ filter_files = [
 filter_images = [ ]
 
 # Node Ignores
+# these node exceptions via rpm have been manually validated
 [node."glibc-2.28-189.5.el8_6.x86_64"]
 filter_files = [
   "/sbin/ldconfig"
