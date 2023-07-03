@@ -27,6 +27,7 @@ filter_files = [
 filter_images = [ ]
 
 # Node Ignores
+# these node exceptions via rpm have been manually validated
 [node."runc-1.1.6-4.rhaos4.12.el8.x86_64"]
 filter_files = [ "/usr/bin/runc" ]
 
