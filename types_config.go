@@ -3,31 +3,12 @@ package main
 import (
 	"strings"
 
-	"github.com/carlmjohnson/versioninfo"
 	imagev1 "github.com/openshift/api/image/v1"
 	"k8s.io/klog/v2"
 )
 
 func (c *Config) Log() {
-	klog.InfoS("using config",
-		"components", c.Components,
-		"filter_dirs", c.FilterDirs,
-		"filter_files", c.FilterFiles,
-		"filter_images", c.FilterImages,
-		"from_file", c.FromFile,
-		"from_url", c.FromURL,
-		"limit", c.Limit,
-		"node_scan", c.NodeScan,
-		"container_image", c.ContainerImage,
-		"payload_ignores", c.PayloadIgnores,
-		"node_ignores", c.NodeIgnores,
-		"output_file", c.OutputFile,
-		"output_format", c.OutputFormat,
-		"parallelism", c.Parallelism,
-		"time_limit", c.TimeLimit,
-		"verbose", c.Verbose,
-		"version", versioninfo.Revision,
-	)
+	klog.Infof("using config %+v", c)
 }
 
 // isMatch tells if path equals to one of the entries.
