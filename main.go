@@ -30,17 +30,13 @@ var applicationDeps = []string{
 	"nm",
 	"oc",
 	"podman",
-	"readelf",
-	"strings",
 }
 
 var applicationDepsNodeScan = []string{
 	"file",
 	"go",
 	"nm",
-	"readelf",
 	"rpm",
-	"strings",
 }
 
 var requiredGolangSymbols = []string{
