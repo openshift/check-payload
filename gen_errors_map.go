@@ -7,6 +7,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"sort"
 	"strings"
 	"text/template"
 )
@@ -49,7 +50,7 @@ func main() {
 	s := bufio.NewScanner(input)
 	for s.Scan() {
 		line := s.Text()
-		if strings.HasPrefix(line, "\tErr") {
+		if strings.HasPrefix(line, "\tErr") && strings.Contains(line, " = errors.New(") {
 			// Extract the variable name.
 			vars = append(vars, line[1:strings.IndexByte(line, ' ')])
 		}
@@ -57,6 +58,7 @@ func main() {
 	if err := s.Err(); err != nil {
 		log.Fatal(err)
 	}
+	sort.Strings(vars)
 	tmpl.Execute(out, struct {
 		Vars []string
 	}{

@@ -40,6 +40,10 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 			results.Append(res)
 			continue
 		}
+		ignoreErrors := cfg.IgnoreErrors
+		if op, ok := cfg.NodeIgnores[rpm]; ok {
+			ignoreErrors = append(ignoreErrors, op.IgnoreErrors...)
+		}
 		for _, innerPath := range files {
 			if cfg.IgnoreFile(innerPath) || cfg.IgnoreDirPrefix(innerPath) || cfg.IgnoreFileByNode(innerPath, nodeVersion) || cfg.IgnoreFileByRpm(innerPath, rpm) {
 				continue
@@ -57,7 +61,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 				continue
 			}
 			klog.V(1).InfoS("scanning path", "path", path)
-			res := scanBinary(ctx, component, tag, cfg.NodeScan, innerPath)
+			res := scanBinary(ctx, component, tag, ignoreErrors, cfg.NodeScan, innerPath)
 			if res.Skip {
 				// Do not add skipped binaries to results.
 				continue
