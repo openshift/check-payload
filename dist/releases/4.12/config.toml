@@ -44,8 +44,9 @@ filter_files = [
   "/usr/bin/pinns",
 ]
 
-[node."podman-4.2.0-6.1.rhaos4.12.el8.x86_64"]
-filter_files = [
+[[node."podman-4.2.0-6.1.rhaos4.12.el8.x86_64".ignore_errors]]
+error = "ErrGoMissingTag"
+files = [
   "/usr/bin/podman",
   "/usr/libexec/podman/rootlessport",
 ]
@@ -138,6 +139,12 @@ filter_files = [
   "/usr/bin/cpb",
   "/usr/bin/pod",
   "/usr/bin/runc",
+]
+
+[[payload.ose-agent-installer-node-agent-container.ignore_errors]]
+error = "ErrGoMissingTag"
+files = [
+  "/usr/bin/skopeo",
   "/usr/bin/podman",
   "/usr/libexec/podman/rootlessport",
 ]
@@ -153,9 +160,7 @@ filter_files = [
   "/usr/bin/crio",
   "/usr/bin/crio-status",
   "/usr/bin/pinns",
-  "/usr/bin/podman",
   "/usr/bin/runc",
-  "/usr/bin/skopeo",
   "/usr/lib/dracut/modules.d/30ignition/ignition",
   "/usr/libexec/catatonit/catatonit",
   "/usr/libexec/cni/bandwidth",
@@ -175,6 +180,12 @@ filter_files = [
   "/usr/libexec/cni/tuning",
   "/usr/libexec/cni/vlan",
   "/usr/libexec/cni/vrf",
-  "/usr/libexec/podman/rootlessport",
 ]
 
+[[tag.rhel-coreos-8.ignore_errors]]
+error = "ErrGoMissingTag"
+files = [
+  "/usr/bin/skopeo",
+  "/usr/bin/podman",
+  "/usr/libexec/podman/rootlessport",
+]

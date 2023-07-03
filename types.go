@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"time"
 
 	v1 "github.com/openshift/api/image/v1"
@@ -8,6 +9,7 @@ import (
 )
 
 type Config struct {
+	IgnoreErrors            IgnoreErrors  `json:"ignore_error" toml:"ignore_error"`
 	ConfigFile              string        `json:"config_file"`
 	Components              []string      `json:"components" toml:"components"`
 	FilterFiles             []string      `json:"filter_files" toml:"filter_files"`
@@ -34,9 +36,16 @@ type Config struct {
 	NodeIgnores    map[string]IgnoreLists `toml:"node"`
 }
 
+type IgnoreError struct {
+	Error KnownError `toml:"error"`
+	Files []string   `toml:"files"`
+}
+type IgnoreErrors []IgnoreError
+
 type IgnoreLists struct {
-	FilterFiles []string `json:"filter_files" toml:"filter_files"`
-	FilterDirs  []string `json:"filter_dirs" toml:"filter_dirs"`
+	FilterFiles  []string     `json:"filter_files" toml:"filter_files"`
+	FilterDirs   []string     `json:"filter_dirs" toml:"filter_dirs"`
+	IgnoreErrors IgnoreErrors `json:"ignore_errors" toml:"ignore_errors"`
 }
 
 type ArtifactPod struct {
@@ -60,4 +69,24 @@ type OpenshiftComponent struct {
 	Component           string `json:"component"`
 	SourceLocation      string `json:"source_location"`
 	MaintainerComponent string `json:"maintainer_component"`
+}
+
+// ForFile checks if an err should be ignored for a specified file.
+func (i IgnoreErrors) ForFile(file string, err error) bool {
+	if len(i) == 0 {
+		return false
+	}
+
+	for _, ie := range i {
+		if !errors.Is(err, ie.Error.Err) {
+			continue
+		}
+		for _, f := range ie.Files {
+			if file == f {
+				return true
+			}
+		}
+	}
+
+	return false
 }

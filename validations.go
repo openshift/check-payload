@@ -334,7 +334,7 @@ func isElfExe(path string) (bool, error) {
 	return false, nil
 }
 
-func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagReference, topDir, innerPath string) *ScanResult {
+func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagReference, ignoreErr IgnoreErrors, topDir, innerPath string) *ScanResult {
 	allFn := validationFns["all"]
 
 	baton := &Baton{TopDir: topDir}
@@ -353,6 +353,9 @@ func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagR
 
 	for _, fn := range allFn {
 		if err := fn(ctx, tag, path, baton); err != nil {
+			if ignoreErr.ForFile(innerPath, err) {
+				continue
+			}
 			return res.SetError(err)
 		}
 	}
@@ -370,6 +373,9 @@ func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagR
 
 	for _, fn := range checks {
 		if err := fn(ctx, tag, path, baton); err != nil {
+			if ignoreErr.ForFile(innerPath, err) {
+				continue
+			}
 			return res.SetError(err)
 		}
 	}
