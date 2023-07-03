@@ -20,6 +20,7 @@ func (c *Config) Log() {
 		"node_scan", c.NodeScan,
 		"container_image", c.ContainerImage,
 		"payload_ignores", c.PayloadIgnores,
+		"node_ignores", c.NodeIgnores,
 		"output_file", c.OutputFile,
 		"output_format", c.OutputFormat,
 		"parallelism", c.Parallelism,
@@ -69,6 +70,13 @@ func (c *Config) isFileIgnoredByTag(path string, tag *imagev1.TagReference) bool
 	return false
 }
 
+func (c *Config) isFileIgnoredByNode(path string, tag string) bool {
+	if op, ok := c.NodeIgnores[tag]; ok {
+		return isMatch(path, op.FilterFiles)
+	}
+	return false
+}
+
 func (c *Config) IgnoreFile(path string) bool {
 	return isMatch(path, c.FilterFiles)
 }
@@ -83,6 +91,14 @@ func (c *Config) IgnoreDir(path string) bool {
 
 func (c *Config) IgnoreFileWithTag(path string, tag *imagev1.TagReference) bool {
 	return c.isFileIgnoredByTag(path, tag)
+}
+
+func (c *Config) IgnoreFileByNode(path string, nodeVersion string) bool {
+	return c.isFileIgnoredByNode(path, nodeVersion)
+}
+
+func (c *Config) IgnoreFileByRpm(path string, rpm string) bool {
+	return c.isFileIgnoredByNode(path, rpm)
 }
 
 func (c *Config) IgnoreDirWithComponent(path string, component *OpenshiftComponent) bool {
