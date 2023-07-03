@@ -64,7 +64,7 @@ filter_files = [
 filter_files = [ "/usr/bin/crictl" ]
 
 [node."podman-4.0.2-7.rhaos4.11.el8.x86_64"]
-filter_Files = [ 
+filter_Files = [
   "/usr/bin/podman",
   "/usr/libexec/podman/rootlessport",
 ]
