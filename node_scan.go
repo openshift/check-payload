@@ -30,6 +30,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 	component := &OpenshiftComponent{
 		Component: "node",
 	}
+	nodeVersion := "default"
 	rpms, _ := getAllRPMs(ctx, cfg)
 	for _, rpm := range rpms {
 		tag := NewTag(rpm)
@@ -40,7 +41,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 			continue
 		}
 		for _, innerPath := range files {
-			if cfg.IgnoreFile(innerPath) || cfg.IgnoreDirPrefix(innerPath) {
+			if cfg.IgnoreFile(innerPath) || cfg.IgnoreDirPrefix(innerPath) || cfg.IgnoreFileByNode(innerPath, nodeVersion) || cfg.IgnoreFileByRpm(innerPath, rpm) {
 				continue
 			}
 			path := filepath.Join(cfg.NodeScan, innerPath)
