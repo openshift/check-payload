@@ -202,29 +202,20 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		results.Append(NewScanResult().SetTag(tag).SetError(err))
 		return results
 	}
-	// create
-	createID, err := podmanCreate(ctx, image)
+	// mount
+	mountPath, err := podmanMount(ctx, image)
 	if err != nil {
 		results.Append(NewScanResult().SetTag(tag).SetError(err))
 		return results
 	}
 	defer func() {
-		_ = podmanContainerRm(ctx, createID)
+		_ = podmanUnmount(ctx, image)
 	}()
-	// mount
-	mountPath, err := podmanMount(ctx, createID)
-	if err != nil {
-		results.Append(NewScanResult().SetTag(tag).SetError(err))
-		return results
-	}
 	// get openshift component
 	component, _ := getOpenshiftComponentFromImage(ctx, image)
 	if component != nil {
 		klog.InfoS("found operator", "component", component.Component, "source_location", component.SourceLocation, "maintainer_component", component.MaintainerComponent)
 	}
-	defer func() {
-		_ = podmanUnmount(ctx, createID)
-	}()
 
 	// does the image contain openssl
 	opensslInfo := validateOpenssl(ctx, mountPath)

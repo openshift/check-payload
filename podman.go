@@ -10,30 +10,8 @@ import (
 	"k8s.io/klog/v2"
 )
 
-var alternateEntryPoints = []string{
-	"/bin/sh",
-	"/bin/bash",
-	"/usr/bin/bash",
-}
-
-func podmanCreate(ctx context.Context, image string) (string, error) {
-	stdout, err := runPodman(ctx, "create", image)
-	if err != nil {
-		for _, entryPoint := range alternateEntryPoints {
-			stdout, err = runPodman(ctx, "create", "--entrypoint", entryPoint, image)
-			if err == nil {
-				break
-			}
-		}
-		if err != nil {
-			return "", err
-		}
-	}
-	return strings.TrimSpace(stdout.String()), nil
-}
-
 func podmanUnmount(ctx context.Context, id string) error {
-	_, err := runPodman(ctx, "unmount", id)
+	_, err := runPodman(ctx, "image", "unmount", id)
 	if err != nil {
 		return err
 	}
@@ -41,7 +19,7 @@ func podmanUnmount(ctx context.Context, id string) error {
 }
 
 func podmanMount(ctx context.Context, id string) (string, error) {
-	stdout, err := runPodman(ctx, "mount", id)
+	stdout, err := runPodman(ctx, "image", "mount", id)
 	if err != nil {
 		return "", err
 	}
@@ -69,14 +47,6 @@ func podmanInspect(ctx context.Context, image string, args ...string) (string, e
 		return "", err
 	}
 	return stdout.String(), nil
-}
-
-func podmanContainerRm(ctx context.Context, id string) error {
-	_, err := runPodman(ctx, "container", "rm", id)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func runPodman(ctx context.Context, args ...string) (bytes.Buffer, error) {
