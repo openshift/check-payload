@@ -81,6 +81,23 @@ func main() {
 		},
 	}
 
+	showCmd := &cobra.Command{
+		Use:   "show",
+		Short: "Show various information",
+	}
+
+	showErrorsCmd := &cobra.Command{
+		Use:   "errors",
+		Short: "Show known scan errors",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			for k, v := range KnownErrors {
+				fmt.Printf("%-30s %s\n", k, v.Error())
+			}
+			return nil
+		},
+	}
+	showCmd.AddCommand(showErrorsCmd)
+
 	scanCmd := &cobra.Command{
 		Use:   "scan",
 		Short: "Run a scan",
@@ -204,6 +221,7 @@ func main() {
 	scanCmd.AddCommand(scanImage)
 
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(showCmd)
 	rootCmd.AddCommand(scanCmd)
 
 	// Add klog flags.
