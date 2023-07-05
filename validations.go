@@ -304,8 +304,7 @@ func isGoExecutable(ctx context.Context, path string) error {
 	if err := cmd.Run(); err != nil {
 		return err
 	}
-	goVersionRegex := regexp.MustCompile(`.*:\s+go.*`)
-	if goVersionRegex.Match(stdout.Bytes()) {
+	if strings.Contains(stdout.String(), ": go1.") {
 		return nil
 	}
 	return ErrNotGolangExe
