@@ -21,6 +21,11 @@ import (
 )
 
 var (
+	// Compile regular expressions once during initialization.
+	validateGoVersionRegexp      = regexp.MustCompile(`go(\d.\d\d)`)
+	validateGoTagsRegexp         = regexp.MustCompile(`-tags=(.*)\n`)
+	validateStringsOpensslRegexp = regexp.MustCompile(`libcrypto.so(\.?\d+)*`)
+
 	ErrNotGolangExe  = errors.New("not golang executable")
 	ErrNotExecutable = errors.New("not a regular executable")
 )
@@ -57,8 +62,7 @@ func validateGoVersion(ctx context.Context, _ *v1.TagReference, path string, bat
 		return err
 	}
 
-	golangVersionRegexp := regexp.MustCompile(`go(\d.\d\d)`)
-	matches := golangVersionRegexp.FindAllStringSubmatch(stdout.String(), -1)
+	matches := validateGoVersionRegexp.FindAllStringSubmatch(stdout.String(), -1)
 	if len(matches) == 0 {
 		return fmt.Errorf("go: could not find compiler version in binary")
 	}
@@ -140,8 +144,7 @@ func validateGoTags(_ context.Context, _ *v1.TagReference, _ string, baton *Bato
 		return nil
 	}
 
-	golangTagsRegexp := regexp.MustCompile(`-tags=(.*)\n`)
-	matches := golangTagsRegexp.FindAllSubmatch(baton.GoVersionDetailed, -1)
+	matches := validateGoTagsRegexp.FindAllSubmatch(baton.GoVersionDetailed, -1)
 	if matches == nil {
 		return nil
 	}
@@ -229,7 +232,6 @@ func validateStringsOpenssl(path string, baton *Baton) error {
 	stream := bufio.NewReader(f)
 
 	libcryptoVersion := ""
-	cryptoRegexp := regexp.MustCompile(`libcrypto.so(\.?\d+)*`)
 	haveMultipleLibcrypto := false
 
 	const size int = 1 * 1024 * 1024
@@ -244,7 +246,7 @@ func validateStringsOpenssl(path string, baton *Baton) error {
 			break
 		}
 
-		matches := cryptoRegexp.FindAllSubmatch(buf, -1)
+		matches := validateStringsOpensslRegexp.FindAllSubmatch(buf, -1)
 		if len(matches) == 0 {
 			continue
 		}
