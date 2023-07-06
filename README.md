@@ -19,13 +19,34 @@ make
 * podman should be installed on the node.
 * podman should be configured with pull secrets for the images to be scanned.
 
+### Configuration
+
+The binary has a number of built-in configuration files.
+
+A default built-in configuration ([config.toml](./config.toml)) is used if no
+options are specified, and no `./config.toml` file is available from the
+current working directory when running the tool.
+
+A built-in configuration tailored for a specific OpenShift version can be
+specified using `-V`, `--config-for-version` option, for example `-V 4.11`.
+These configuration files are embedded during build time from the directories
+under [dist/releases/](./dist/releases/).
+
+A specific configuration from a file can be specified using
+`--config path/to/config.toml` option.
+
 ### Scan an OpenShift release payload
 
 ```sh
- sudo ./check-payload scan payload \
-   --url quay.io/openshift-release-dev/ocp-release:4.11.0-assembly.art6883.4 \
+ sudo ./check-payload scan payload -V 4.11 \
+   --url quay.io/openshift-release-dev/ocp-release:4.11.44-x86_64
    --output-file report.txt
 ```
+
+Here
+* `-V` specifies the configuration for a particular OpenShift version;
+* `--url` specifies a payload URL;
+* `--output-file` specifies a file to write the scan report to.
 
 ### Scan a container or operator image
 
@@ -34,11 +55,11 @@ sudo ./check-payload scan operator \
   --spec registry.ci.openshift.org/ocp-priv/4.11-art-assembly-art6883-3-priv@sha256:138b1b9ae11b0d3b5faafacd1b469ec8c20a234b387ae33cf007441fa5c5d567
 ```
 
-### Scan a node
+### Scan a node using container image
 
 ```sh
 IMAGE=some.registry.location/check-payload
-podman  run --privileged -ti -v /:/myroot $IMAGE scan node --root /myroot
+podman run --privileged -ti -v /:/myroot $IMAGE scan node --root /myroot
 ```
 
 ## How it works
@@ -76,7 +97,7 @@ flowchart LR
   subgraph results
   Printer
   end
-  
+
 ```
 
 ### Validations
