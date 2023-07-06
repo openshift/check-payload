@@ -18,9 +18,7 @@ var (
 	colTitleImage        = "Image"
 	failureRowHeader     = table.Row{colTitleOperatorName, colTitleTagName, colTitleExeName, colTitlePassedFailed, colTitleImage}
 	successRowHeader     = table.Row{colTitleOperatorName, colTitleTagName, colTitleExeName, colTitleImage}
-)
 
-var (
 	colTitleNodePath         = "Path"
 	colTitleNodePassedFailed = "Status"
 	colTitleNodeFrom         = "From"
@@ -77,10 +75,10 @@ func displayExceptions(results []*ScanResults) {
 				continue
 			}
 			component := getComponent(res)
-			if set, ok := exceptions[component.Component]; ok {
+			if set, ok := exceptions[component]; ok {
 				set.Add(res)
 			} else {
-				exceptions[component.Component] = mapset.NewSet(res)
+				exceptions[component] = mapset.NewSet(res)
 			}
 		}
 	}
@@ -89,14 +87,15 @@ func displayExceptions(results []*ScanResults) {
 		if payloadName != "" {
 			fmt.Printf("[payload.%v]\n", payloadName)
 		}
-		if len(set.ToSlice()) == 1 {
-			fmt.Printf("filter_files = [ \"%v\" ]\n", set.ToSlice()[0].Path)
+		ss := set.ToSlice()
+		if len(ss) == 1 {
+			fmt.Printf("filter_files = [ %q ]\n", ss[0].Path)
 		} else {
-			fmt.Printf("filter_files = [\n")
-			for _, res := range set.ToSlice() {
-				fmt.Printf("  \"%v\",\n", res.Path)
+			fmt.Println("filter_files = [")
+			for _, res := range ss {
+				fmt.Printf("  %q,\n", res.Path)
 			}
-			fmt.Printf("]\n")
+			fmt.Println("]")
 		}
 		fmt.Println("")
 	}
@@ -162,13 +161,11 @@ func generateOutputString(cfg *Config, ftw table.Writer, stw table.Writer) (stri
 	return failureReport, successReport
 }
 
-func getComponent(res *ScanResult) *OpenshiftComponent {
+func getComponent(res *ScanResult) string {
 	if res.Component != nil {
-		return res.Component
+		return res.Component.Component
 	}
-	return &OpenshiftComponent{
-		Component: "<unknown>",
-	}
+	return "<unknown>"
 }
 
 func renderReport(results []*ScanResults) (failures table.Writer, successes table.Writer) {
@@ -179,9 +176,9 @@ func renderReport(results []*ScanResults) (failures table.Writer, successes tabl
 		for _, res := range result.Items {
 			component := getComponent(res)
 			if res.Error != nil {
-				failureTableRows = append(failureTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Error, res.Tag.From.Name})
+				failureTableRows = append(failureTableRows, table.Row{component, res.Tag.Name, res.Path, res.Error, res.Tag.From.Name})
 			} else {
-				successTableRows = append(successTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Tag.From.Name})
+				successTableRows = append(successTableRows, table.Row{component, res.Tag.Name, res.Path, res.Tag.From.Name})
 			}
 		}
 	}
