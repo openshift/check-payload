@@ -25,9 +25,6 @@ var (
 	validateGoVersionRegexp      = regexp.MustCompile(`go(\d.\d\d)`)
 	validateGoTagsRegexp         = regexp.MustCompile(`-tags=(.*)\n`)
 	validateStringsOpensslRegexp = regexp.MustCompile(`libcrypto.so(\.?\d+)*`)
-
-	ErrNotGolangExe  = errors.New("not golang executable")
-	ErrNotExecutable = errors.New("not a regular executable")
 )
 
 type Baton struct {
@@ -94,8 +91,8 @@ func validateGoSymbols(_ context.Context, _ *v1.TagReference, path string, baton
 		return nil
 	}
 
-	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
-		return fmt.Errorf("go: expected symbols not found for %v: %w", filepath.Base(path), err)
+	if !ExpectedSyms(requiredGolangSymbols, symtable) {
+		return ErrGoMissingSymbols
 	}
 	return nil
 }
@@ -123,7 +120,7 @@ func validateGoCgo(_ context.Context, _ *v1.TagReference, _ string, baton *Baton
 	}
 
 	if !bytes.Contains(baton.GoVersionDetailed, []byte("CGO_ENABLED=1")) {
-		return fmt.Errorf("go: binary is not CGO_ENABLED")
+		return ErrNotCgoEnabled
 	}
 	return nil
 }
@@ -157,12 +154,12 @@ func validateGoTags(_ context.Context, _ *v1.TagReference, _ string, baton *Bato
 	// check for invalid tags
 	binaryTags := mapset.NewSet(tags...)
 	if set := binaryTags.Intersect(invalidTagsSet); set.Cardinality() > 0 {
-		return fmt.Errorf("go: binary has invalid tag %v enabled", set.ToSlice())
+		return fmt.Errorf("%w: %v", ErrGoInvalidTag, set.ToSlice())
 	}
 
 	// check for required tags
 	if set := binaryTags.Intersect(expectedTagsSet); set.Cardinality() == 0 {
-		return fmt.Errorf("go: binary does not contain required tag(s) %v", expectedTagsSet.ToSlice())
+		return fmt.Errorf("%w: %v", ErrGoMissingTag, expectedTagsSet.ToSlice())
 	}
 
 	return nil
@@ -215,7 +212,7 @@ func validateGoCGOInit(_ context.Context, _ *v1.TagReference, path string, _ *Ba
 	}
 
 	if !cgoInitFound {
-		return fmt.Errorf("x_cgo_init: not found")
+		return ErrNoCgoInit
 	}
 
 	return nil
@@ -262,17 +259,17 @@ func validateStringsOpenssl(path string, baton *Baton) error {
 	}
 
 	if libcryptoVersion == "" {
-		return fmt.Errorf("openssl: did not find libcrypto library within binary")
+		return ErrNoLibcrypto
 	}
 
 	if haveMultipleLibcrypto {
-		return errors.New("openssl: found multiple different libcrypto versions")
+		return ErrMultipleLibcrypto
 	}
 
 	// check for openssl library within container image
 	opensslInnerPath := filepath.Join(baton.TopDir, "usr", "lib64", libcryptoVersion)
 	if _, err := os.Lstat(opensslInnerPath); err != nil {
-		return fmt.Errorf("could not find dependent openssl version %v within container image", libcryptoVersion)
+		return fmt.Errorf("%w: %v", ErrNoLibcryptoSO, libcryptoVersion)
 	}
 
 	return nil
@@ -290,7 +287,7 @@ func isDynamicallyLinked(ctx context.Context, path string) error {
 		return err
 	}
 	if !bytes.Contains(stdout.Bytes(), []byte("dynamically linked")) {
-		return fmt.Errorf("exe: executable is statically linked")
+		return ErrNotDynLinked
 	}
 	return nil
 }
@@ -299,17 +296,14 @@ func validateExe(ctx context.Context, _ *v1.TagReference, path string, _ *Baton)
 	return isDynamicallyLinked(ctx, path)
 }
 
-func isGoExecutable(ctx context.Context, path string) error {
+func isGoExecutable(ctx context.Context, path string) (bool, error) {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", path)
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		return err
+		return false, err
 	}
-	if strings.Contains(stdout.String(), ": go1.") {
-		return nil
-	}
-	return ErrNotGolangExe
+	return strings.Contains(stdout.String(), ": go1."), nil
 }
 
 // isElfExe checks if path is an ELF executable (which most probably means
@@ -340,10 +334,8 @@ func isElfExe(path string) (bool, error) {
 	return false, nil
 }
 
-func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagReference, topDir, innerPath string) *ScanResult {
+func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagReference, ignoreErr IgnoreErrors, topDir, innerPath string) *ScanResult {
 	allFn := validationFns["all"]
-	goFn := validationFns["go"]
-	exeFn := validationFns["exe"]
 
 	baton := &Baton{TopDir: topDir}
 	res := NewScanResult().SetComponent(component).SetTag(tag).SetPath(innerPath)
@@ -361,23 +353,30 @@ func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagR
 
 	for _, fn := range allFn {
 		if err := fn(ctx, tag, path, baton); err != nil {
+			if ignoreErr.ForFile(innerPath, err) {
+				continue
+			}
 			return res.SetError(err)
 		}
 	}
 
-	// is this a go executable
-	if isGoExecutable(ctx, path) == nil {
-		for _, fn := range goFn {
-			if err := fn(ctx, tag, path, baton); err != nil {
-				return res.SetError(err)
-			}
-		}
+	goBinary, err := isGoExecutable(ctx, path)
+	if err != nil {
+		return res.SetError(err)
+	}
+	var checks []ValidationFn
+	if goBinary {
+		checks = validationFns["go"]
 	} else {
-		// is a regular binary
-		for _, fn := range exeFn {
-			if err := fn(ctx, tag, path, baton); err != nil {
-				return res.SetError(err)
+		checks = validationFns["exe"]
+	}
+
+	for _, fn := range checks {
+		if err := fn(ctx, tag, path, baton); err != nil {
+			if ignoreErr.ForFile(innerPath, err) {
+				continue
 			}
+			return res.SetError(err)
 		}
 	}
 

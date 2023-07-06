@@ -81,6 +81,23 @@ func main() {
 		},
 	}
 
+	showCmd := &cobra.Command{
+		Use:   "show",
+		Short: "Show various information",
+	}
+
+	showErrorsCmd := &cobra.Command{
+		Use:   "errors",
+		Short: "Show known scan errors",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			for k, v := range KnownErrors {
+				fmt.Printf("%-30s %s\n", k, v.Error())
+			}
+			return nil
+		},
+	}
+	showCmd.AddCommand(showErrorsCmd)
+
 	scanCmd := &cobra.Command{
 		Use:   "scan",
 		Short: "Run a scan",
@@ -204,6 +221,7 @@ func main() {
 	scanCmd.AddCommand(scanImage)
 
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(showCmd)
 	rootCmd.AddCommand(scanCmd)
 
 	// Add klog flags.
@@ -216,7 +234,23 @@ func main() {
 	}
 }
 
-func getConfig(config *Config) error {
+func getConfig(config *Config) (retErr error) {
+	var (
+		res toml.MetaData
+		err error
+	)
+
+	// Check if the configuration was fully parsed.
+	defer func() {
+		if retErr != nil {
+			return
+		}
+		un := res.Undecoded()
+		if len(un) != 0 {
+			retErr = fmt.Errorf("unknown keys in config: %+v", un)
+		}
+	}()
+
 	// Handle --config-for-version first.
 	if configForVersion != "" {
 		if configFile != "" {
@@ -226,7 +260,7 @@ func getConfig(config *Config) error {
 		if err != nil {
 			return err
 		}
-		_, err = toml.Decode(string(cfg), &config)
+		res, err = toml.Decode(string(cfg), &config)
 		if err != nil { // Should never happen.
 			panic("invalid embedded config: " + err.Error())
 		}
@@ -238,7 +272,7 @@ func getConfig(config *Config) error {
 	if file == "" {
 		file = defaultConfigFile
 	}
-	_, err := toml.DecodeFile(file, &config)
+	res, err = toml.DecodeFile(file, &config)
 	if err == nil {
 		klog.Infof("using config file: %v", file)
 		return nil
@@ -248,7 +282,7 @@ func getConfig(config *Config) error {
 	// defaultConfigFile is not found, fall back to embedded config.
 	if errors.Is(err, os.ErrNotExist) && configFile == "" {
 		klog.Info("using embedded config")
-		_, err = toml.Decode(embeddedConfig, &config)
+		res, err = toml.Decode(embeddedConfig, &config)
 		if err != nil { // Should never happen.
 			panic("invalid embedded config: " + err.Error())
 		}
