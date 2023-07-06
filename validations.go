@@ -299,17 +299,14 @@ func validateExe(ctx context.Context, _ *v1.TagReference, path string, _ *Baton)
 	return isDynamicallyLinked(ctx, path)
 }
 
-func isGoExecutable(ctx context.Context, path string) error {
+func isGoExecutable(ctx context.Context, path string) (bool, error) {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", path)
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		return err
+		return false, err
 	}
-	if strings.Contains(stdout.String(), ": go1.") {
-		return nil
-	}
-	return ErrNotGolangExe
+	return strings.Contains(stdout.String(), ": go1."), nil
 }
 
 // isElfExe checks if path is an ELF executable (which most probably means
@@ -342,8 +339,6 @@ func isElfExe(path string) (bool, error) {
 
 func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagReference, topDir, innerPath string) *ScanResult {
 	allFn := validationFns["all"]
-	goFn := validationFns["go"]
-	exeFn := validationFns["exe"]
 
 	baton := &Baton{TopDir: topDir}
 	res := NewScanResult().SetComponent(component).SetTag(tag).SetPath(innerPath)
@@ -365,19 +360,20 @@ func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagR
 		}
 	}
 
-	// is this a go executable
-	if isGoExecutable(ctx, path) == nil {
-		for _, fn := range goFn {
-			if err := fn(ctx, tag, path, baton); err != nil {
-				return res.SetError(err)
-			}
-		}
+	goBinary, err := isGoExecutable(ctx, path)
+	if err != nil {
+		return res.SetError(err)
+	}
+	var checks []ValidationFn
+	if goBinary {
+		checks = validationFns["go"]
 	} else {
-		// is a regular binary
-		for _, fn := range exeFn {
-			if err := fn(ctx, tag, path, baton); err != nil {
-				return res.SetError(err)
-			}
+		checks = validationFns["exe"]
+	}
+
+	for _, fn := range checks {
+		if err := fn(ctx, tag, path, baton); err != nil {
+			return res.SetError(err)
 		}
 	}
 
