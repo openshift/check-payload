@@ -72,6 +72,16 @@ func validateGoVersion(ctx context.Context, _ *v1.TagReference, path string, bat
 }
 
 func validateGoSymbols(_ context.Context, _ *v1.TagReference, path string, baton *Baton) error {
+	symtable, err := readTable(path)
+	if err != nil {
+		return fmt.Errorf("go: could not read table for %v: %w", filepath.Base(path), err)
+	}
+	// Skip if the golang binary is not using crypto
+	if !isUsingCryptoModule(symtable) {
+		baton.GoNoCrypto = true
+		return nil
+	}
+
 	v, err := semver.NewVersion(baton.GoVersion)
 	if err != nil {
 		return fmt.Errorf("go: error creating semver version: %w", err)
@@ -81,16 +91,6 @@ func validateGoSymbols(_ context.Context, _ *v1.TagReference, path string, baton
 		return fmt.Errorf("go: error creating semver constraint: %w", err)
 	}
 	if c.Check(v) {
-		return nil
-	}
-
-	symtable, err := readTable(path)
-	if err != nil {
-		return fmt.Errorf("go: could not read table for %v: %w", filepath.Base(path), err)
-	}
-	// Skip if the golang binary is not using crypto
-	if !isUsingCryptoModule(symtable) {
-		baton.GoNoCrypto = true
 		return nil
 	}
 
