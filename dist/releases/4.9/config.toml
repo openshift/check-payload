@@ -53,3 +53,8 @@ filter_files = [ "/usr/bin/cpb" ]
 [payload.openshift-enterprise-pod-container]
 filter_files = [ "/usr/bin/pod" ]
 
+[payload.ose-egress-router-cni-alt-container]
+filter_files = [ "/usr/src/egress-router-cni/rhel7/bin/egress-router" ]
+
+[payload.ose-multus-whereabouts-ipam-cni-alt-container]
+filter_files = [ "/usr/src/whereabouts/rhel7/bin/whereabouts" ]
