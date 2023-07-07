@@ -59,16 +59,16 @@ func runNodeScan(ctx context.Context, cfg *Config, root string) []*ScanResults {
 			if fileInfo.Mode()&os.ModeSymlink != 0 {
 				continue
 			}
-			klog.V(1).InfoS("scanning path", "path", path)
+			klog.V(1).InfoS("scanning path", "path", innerPath)
 			res := scanBinary(ctx, component, tag, ignoreErrors, root, innerPath)
 			if res.Skip {
 				// Do not add skipped binaries to results.
 				continue
 			}
 			if res.Error == nil {
-				klog.V(1).InfoS("scanning node success", "path", path, "status", "success")
+				klog.V(1).InfoS("scanning node success", "path", innerPath, "status", "success")
 			} else {
-				klog.InfoS("scanning node failed", "path", path, "error", res.Error, "status", "failed")
+				klog.InfoS("scanning node failed", "path", innerPath, "error", res.Error, "status", "failed")
 			}
 			results.Append(res)
 		}
