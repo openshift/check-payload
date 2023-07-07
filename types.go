@@ -32,7 +32,7 @@ type Config struct {
 
 	PayloadIgnores map[string]IgnoreLists `toml:"payload"`
 	TagIgnores     map[string]IgnoreLists `toml:"tag"`
-	NodeIgnores    map[string]IgnoreLists `toml:"node"`
+	RpmIgnores     map[string]IgnoreLists `toml:"rpm"`
 }
 
 type IgnoreError struct {

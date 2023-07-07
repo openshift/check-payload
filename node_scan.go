@@ -40,7 +40,7 @@ func runNodeScan(ctx context.Context, cfg *Config, root string) []*ScanResults {
 			continue
 		}
 		ignoreErrors := cfg.IgnoreErrors
-		if op, ok := cfg.NodeIgnores[rpm]; ok {
+		if op, ok := cfg.RpmIgnores[rpm]; ok {
 			ignoreErrors = append(ignoreErrors, op.IgnoreErrors...)
 		}
 		for _, innerPath := range files {
