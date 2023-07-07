@@ -270,10 +270,16 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 		}
 		if res.IsSuccess() {
 			klog.V(1).InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
-		} else if res.IsLevel(types.Warning) {
-			klog.V(1).InfoS("scanning warning", "image", image, "path", innerPath, "status", "warning")
 		} else {
-			klog.InfoS("scanning failed", "image", image, "path", innerPath, "error", res.Error.Error, "status", "failed")
+			status := res.Status()
+			klog.InfoS("scanning "+status,
+				"image", image,
+				"path", innerPath,
+				"error", res.Error.Error,
+				"component", getComponent(res),
+				"tag", res.Tag.Name,
+				"rpm", res.RPM,
+				"status", status)
 		}
 		results.Append(res)
 		return nil
