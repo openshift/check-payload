@@ -56,7 +56,6 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 			if fileInfo.Mode()&os.ModeSymlink != 0 {
 				continue
 			}
-			tag = NewTag(path)
 			klog.V(1).InfoS("scanning path", "path", path)
 			res := scanBinary(ctx, component, tag, cfg.NodeScan, innerPath)
 			if res.Skip {
