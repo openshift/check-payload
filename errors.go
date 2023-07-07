@@ -42,3 +42,13 @@ func (e *KnownError) UnmarshalText(text []byte) error {
 func (e KnownError) String() string {
 	return e.Str
 }
+
+// getErrName is used from displayExceptions.
+func getErrName(err error) string {
+	for k, v := range KnownErrors {
+		if errors.Is(err, v) {
+			return k
+		}
+	}
+	return ""
+}

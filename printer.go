@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"k8s.io/klog/v2"
@@ -66,38 +67,63 @@ func printResults(cfg *Config, results []*ScanResults) {
 	}
 }
 
+func getPayloadOrTagPrefix(res *ScanResult) string {
+	if res.Component != nil && res.Component.Component != "" {
+		return "payload." + res.Component.Component
+	}
+	if res.Tag != nil && res.Tag.Name != "" {
+		return "tag." + res.Tag.Name
+	}
+	return ""
+}
+
 func displayExceptions(results []*ScanResults) {
-	exceptions := make(map[string]mapset.Set[*ScanResult])
+	exceptions := make(map[string]map[string]mapset.Set[*ScanResult])
 	for _, result := range results {
 		for _, res := range result.Items {
 			if res.Error == nil {
 				// skip over successes
 				continue
 			}
-			component := getComponent(res)
-			if set, ok := exceptions[component]; ok {
+			prefix := getPayloadOrTagPrefix(res)
+			errMap, ok := exceptions[prefix]
+			if !ok {
+				errMap = make(map[string]mapset.Set[*ScanResult])
+				exceptions[prefix] = errMap
+			}
+
+			errName := getErrName(res.Error)
+			if set, ok := errMap[errName]; ok {
 				set.Add(res)
 			} else {
-				exceptions[component] = mapset.NewSet(res)
+				errMap[errName] = mapset.NewSet(res)
 			}
 		}
 	}
 
-	for payloadName, set := range exceptions {
-		if payloadName != "" {
-			fmt.Printf("[payload.%v]\n", payloadName)
-		}
-		ss := set.ToSlice()
-		if len(ss) == 1 {
-			fmt.Printf("filter_files = [ %q ]\n", ss[0].Path)
-		} else {
-			fmt.Println("filter_files = [")
-			for _, res := range ss {
-				fmt.Printf("  %q,\n", res.Path)
+	for prefix, errMap := range exceptions {
+		for errName, set := range errMap {
+			if prefix != "" {
+				fmt.Printf("[[%v.ignore_errors]]\n", prefix)
+			} else {
+				fmt.Println("[[ignore_errors]]")
 			}
-			fmt.Println("]")
+			fmt.Printf("error = %q\n", errName)
+			ss := set.ToSlice()
+			sort.Slice(ss, func(i, j int) bool {
+				return ss[i].Path < ss[j].Path
+			})
+			if len(ss) == 1 {
+				fmt.Printf("files = [ %q ]\n", ss[0].Path)
+			} else {
+				fmt.Println("files = [")
+				for _, res := range ss {
+					fmt.Printf("  %q,\n", res.Path)
+				}
+				fmt.Println("]")
+			}
+			fmt.Println("")
 		}
-		fmt.Println("")
 	}
 }
 
