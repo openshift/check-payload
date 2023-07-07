@@ -60,4 +60,5 @@ type OpenshiftComponent struct {
 	Component           string `json:"component"`
 	SourceLocation      string `json:"source_location"`
 	MaintainerComponent string `json:"maintainer_component"`
+	IsBundle            bool   `json:"is_bundle"`
 }

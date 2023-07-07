@@ -63,7 +63,7 @@ func runPodman(ctx context.Context, args ...string) (bytes.Buffer, error) {
 }
 
 func getOpenshiftComponentFromImage(ctx context.Context, image string) (*OpenshiftComponent, error) {
-	data, err := podmanInspect(ctx, image, "--format", "{{index  .Config.Labels \"com.redhat.component\" }}|{{index  .Config.Labels \"io.openshift.build.source-location\" }}|{{index .Config.Labels \"io.openshift.maintainer.component\"}}")
+	data, err := podmanInspect(ctx, image, "--format", "{{index  .Config.Labels \"com.redhat.component\" }}|{{index  .Config.Labels \"io.openshift.build.source-location\" }}|{{index .Config.Labels \"io.openshift.maintainer.component\"}}|{{index .Config.Labels \"com.redhat.delivery.operator.bundle\"}}")
 	if err != nil {
 		return nil, err
 	}
@@ -73,5 +73,6 @@ func getOpenshiftComponentFromImage(ctx context.Context, image string) (*Openshi
 	oc.Component = strings.TrimSpace(parts[0])
 	oc.SourceLocation = strings.TrimSpace(parts[1])
 	oc.MaintainerComponent = strings.TrimSpace(parts[2])
+	oc.IsBundle = strings.EqualFold(strings.TrimSpace(parts[3]), "true")
 	return oc, nil
 }

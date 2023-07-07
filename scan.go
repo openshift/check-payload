@@ -214,7 +214,12 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 	// get openshift component
 	component, _ := getOpenshiftComponentFromImage(ctx, image)
 	if component != nil {
-		klog.InfoS("found operator", "component", component.Component, "source_location", component.SourceLocation, "maintainer_component", component.MaintainerComponent)
+		klog.InfoS("found operator", "component", component.Component, "source_location", component.SourceLocation, "maintainer_component", component.MaintainerComponent, "is_bundle", component.IsBundle)
+	}
+	// skip if bundle image
+	if component.IsBundle {
+		results.Append(NewScanResult().SetTag(tag).Skipped())
+		return results
 	}
 
 	// does the image contain openssl
