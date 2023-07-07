@@ -27,12 +27,12 @@ var (
 	successNodeRowHeader     = table.Row{colTitleNodePath}
 )
 
-func printResults(cfg *Config, results []*ScanResults) {
+func printResults(cfg *Config, results []*ScanResults, nodeScan bool) {
 	var failureReport, successReport string
 
 	var combinedReport string
 
-	if cfg.NodeScan != "" {
+	if nodeScan {
 		failureReport, successReport = generateNodeScanReport(results, cfg)
 	} else {
 		failureReport, successReport = generateReport(results, cfg)

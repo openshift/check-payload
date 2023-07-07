@@ -138,10 +138,6 @@ func main() {
 				pprof.StopCPUProfile()
 				klog.Info("CPU profile saved to ", cpuProfile)
 			}
-			printResults(&config, results)
-			if isFailed(results) {
-				return errors.New("run failed")
-			}
 			return nil
 		},
 	}
@@ -167,13 +163,17 @@ func main() {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return validateApplicationDependencies(applicationDeps)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			config.FromURL, _ = cmd.Flags().GetString("url")
 			config.FromFile, _ = cmd.Flags().GetString("file")
 			config.PrintExceptions, _ = cmd.Flags().GetBool("print-exceptions")
 			results = runPayloadScan(ctx, &config)
+			printResults(&config, results, false)
+			if isFailed(results) {
+				return errors.New("run failed")
+			}
 			return nil
 		},
 	}
@@ -187,11 +187,15 @@ func main() {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return validateApplicationDependencies(applicationDepsNodeScan)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
-			config.NodeScan, _ = cmd.Flags().GetString("root")
-			results = runNodeScan(ctx, &config)
+			root, _ := cmd.Flags().GetString("root")
+			results = runNodeScan(ctx, &config, root)
+			printResults(&config, results, true)
+			if isFailed(results) {
+				return errors.New("run failed")
+			}
 			return nil
 		},
 	}

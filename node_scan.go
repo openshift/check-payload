@@ -22,7 +22,7 @@ func NewTag(name string) *v1.TagReference {
 	}
 }
 
-func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
+func runNodeScan(ctx context.Context, cfg *Config, root string) []*ScanResults {
 	var runs []*ScanResults
 	results := NewScanResults()
 	runs = append(runs, results)
@@ -31,10 +31,10 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 		Component: "node",
 	}
 	nodeVersion := "default"
-	rpms, _ := getAllRPMs(ctx, cfg)
+	rpms, _ := getAllRPMs(ctx, root)
 	for _, rpm := range rpms {
 		tag := NewTag(rpm)
-		files, err := getFilesFromRPM(ctx, cfg, rpm)
+		files, err := getFilesFromRPM(ctx, root, rpm)
 		if err != nil {
 			res := NewScanResult().SetTag(tag).SetError(err)
 			results.Append(res)
@@ -48,7 +48,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 			if cfg.IgnoreFile(innerPath) || cfg.IgnoreDirPrefix(innerPath) || cfg.IgnoreFileByNode(innerPath, nodeVersion) || cfg.IgnoreFileByRpm(innerPath, rpm) {
 				continue
 			}
-			path := filepath.Join(cfg.NodeScan, innerPath)
+			path := filepath.Join(root, innerPath)
 			fileInfo, err := os.Lstat(path)
 			if err != nil {
 				// some files are stripped from an rhcos image
@@ -61,7 +61,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 				continue
 			}
 			klog.V(1).InfoS("scanning path", "path", path)
-			res := scanBinary(ctx, component, tag, ignoreErrors, cfg.NodeScan, innerPath)
+			res := scanBinary(ctx, component, tag, ignoreErrors, root, innerPath)
 			if res.Skip {
 				// Do not add skipped binaries to results.
 				continue
@@ -77,12 +77,12 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 	return runs
 }
 
-func getFilesFromRPM(ctx context.Context, cfg *Config, rpm string) ([]string, error) {
-	klog.Infof("rpm -ql %v", rpm)
+func getFilesFromRPM(ctx context.Context, root, name string) ([]string, error) {
+	klog.Infof("rpm -ql %v", name)
 	files := []string{}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "rpm", "-ql", "--root", cfg.NodeScan, rpm)
+	cmd := exec.CommandContext(ctx, "rpm", "-ql", "--root", root, name)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -96,12 +96,12 @@ func getFilesFromRPM(ctx context.Context, cfg *Config, rpm string) ([]string, er
 	return files, nil
 }
 
-func getAllRPMs(ctx context.Context, cfg *Config) ([]string, error) {
+func getAllRPMs(ctx context.Context, root string) ([]string, error) {
 	klog.Info("rpm -qa")
 	rpms := []string{}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "rpm", "-qa", "--root", cfg.NodeScan)
+	cmd := exec.CommandContext(ctx, "rpm", "-qa", "--root", root)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
