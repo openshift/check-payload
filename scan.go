@@ -261,7 +261,14 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 		if res.Error == nil {
 			klog.V(1).InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
 		} else {
-			klog.InfoS("scanning failed", "image", image, "path", innerPath, "error", res.Error, "status", "failed")
+			klog.InfoS("scanning failed",
+				"image", image,
+				"path", innerPath,
+				"error", res.Error,
+				"errName", getErrName(res.Error),
+				"component", getComponent(res),
+				"tag", res.Tag.Name,
+				"status", "failed")
 		}
 		results.Append(res)
 		return nil
