@@ -60,11 +60,12 @@ func runNodeScan(ctx context.Context, cfg *Config, root string) []*ScanResults {
 				continue
 			}
 			klog.V(1).InfoS("scanning path", "path", innerPath)
-			res := scanBinary(ctx, component, tag, ignoreErrors, root, innerPath)
+			res := scanBinary(ctx, ignoreErrors, root, innerPath)
 			if res.Skip {
 				// Do not add skipped binaries to results.
 				continue
 			}
+			res.SetTag(tag).SetComponent(component)
 			if res.Error == nil {
 				klog.V(1).InfoS("scanning node success", "path", innerPath, "status", "success")
 			} else {

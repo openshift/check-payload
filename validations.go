@@ -17,7 +17,6 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	mapset "github.com/deckarep/golang-set/v2"
-	v1 "github.com/openshift/api/image/v1"
 )
 
 var (
@@ -334,11 +333,11 @@ func isElfExe(path string) (bool, error) {
 	return false, nil
 }
 
-func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagReference, ignoreErr IgnoreErrors, topDir, innerPath string) *ScanResult {
+func scanBinary(ctx context.Context, ignoreErr IgnoreErrors, topDir, innerPath string) *ScanResult {
 	allFn := validationFns["all"]
 
 	baton := &Baton{TopDir: topDir}
-	res := NewScanResult().SetComponent(component).SetTag(tag).SetPath(innerPath)
+	res := NewScanResult().SetPath(innerPath)
 
 	path := filepath.Join(topDir, innerPath)
 
