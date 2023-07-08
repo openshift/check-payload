@@ -34,7 +34,7 @@ type Baton struct {
 	GoVersionDetailed []byte
 }
 
-type ValidationFn func(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) error
+type ValidationFn func(ctx context.Context, path string, baton *Baton) error
 
 var validationFns = map[string][]ValidationFn{
 	"go": {
@@ -51,7 +51,7 @@ var validationFns = map[string][]ValidationFn{
 	},
 }
 
-func validateGoVersion(ctx context.Context, _ *v1.TagReference, path string, baton *Baton) error {
+func validateGoVersion(ctx context.Context, path string, baton *Baton) error {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
 	cmd.Stdout = &stdout
@@ -68,7 +68,7 @@ func validateGoVersion(ctx context.Context, _ *v1.TagReference, path string, bat
 	return nil
 }
 
-func validateGoSymbols(_ context.Context, _ *v1.TagReference, path string, baton *Baton) error {
+func validateGoSymbols(_ context.Context, path string, baton *Baton) error {
 	symtable, err := readTable(path)
 	if err != nil {
 		return fmt.Errorf("go: could not read table for %v: %w", filepath.Base(path), err)
@@ -106,7 +106,7 @@ func isUsingCryptoModule(symtable *gosym.Table) bool {
 	return false
 }
 
-func validateGoCgo(_ context.Context, _ *v1.TagReference, _ string, baton *Baton) error {
+func validateGoCgo(_ context.Context, _ string, baton *Baton) error {
 	v, err := semver.NewVersion(baton.GoVersion)
 	if err != nil {
 		return fmt.Errorf("go: error creating semver version: %w", err)
@@ -125,7 +125,7 @@ func validateGoCgo(_ context.Context, _ *v1.TagReference, _ string, baton *Baton
 	return nil
 }
 
-func validateGoTags(_ context.Context, _ *v1.TagReference, _ string, baton *Baton) error {
+func validateGoTags(_ context.Context, _ string, baton *Baton) error {
 	invalidTagsSet := mapset.NewSet("no_openssl")
 	expectedTagsSet := mapset.NewSet("strictfipsruntime")
 
@@ -165,7 +165,7 @@ func validateGoTags(_ context.Context, _ *v1.TagReference, _ string, baton *Bato
 	return nil
 }
 
-func validateGoStatic(ctx context.Context, _ *v1.TagReference, path string, baton *Baton) error {
+func validateGoStatic(ctx context.Context, path string, baton *Baton) error {
 	// if the static golang binary does not contain crypto then skip
 	if baton.GoNoCrypto {
 		return nil
@@ -175,7 +175,7 @@ func validateGoStatic(ctx context.Context, _ *v1.TagReference, path string, bato
 	return validateStaticGo(ctx, path)
 }
 
-func validateGoOpenssl(_ context.Context, _ *v1.TagReference, path string, baton *Baton) error {
+func validateGoOpenssl(_ context.Context, path string, baton *Baton) error {
 	// if there is no crypto then skip openssl test
 	if baton.GoNoCrypto {
 		return nil
@@ -184,7 +184,7 @@ func validateGoOpenssl(_ context.Context, _ *v1.TagReference, path string, baton
 	return validateStringsOpenssl(path, baton)
 }
 
-func validateGoCGOInit(_ context.Context, _ *v1.TagReference, path string, _ *Baton) error {
+func validateGoCGOInit(_ context.Context, path string, _ *Baton) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -292,7 +292,7 @@ func isDynamicallyLinked(ctx context.Context, path string) error {
 	return nil
 }
 
-func validateExe(ctx context.Context, _ *v1.TagReference, path string, _ *Baton) error {
+func validateExe(ctx context.Context, path string, _ *Baton) error {
 	return isDynamicallyLinked(ctx, path)
 }
 
@@ -352,7 +352,7 @@ func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagR
 	}
 
 	for _, fn := range allFn {
-		if err := fn(ctx, tag, path, baton); err != nil {
+		if err := fn(ctx, path, baton); err != nil {
 			if ignoreErr.ForFile(innerPath, err) {
 				continue
 			}
@@ -372,7 +372,7 @@ func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagR
 	}
 
 	for _, fn := range checks {
-		if err := fn(ctx, tag, path, baton); err != nil {
+		if err := fn(ctx, path, baton); err != nil {
 			if ignoreErr.ForFile(innerPath, err) {
 				continue
 			}
