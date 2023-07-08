@@ -18,6 +18,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	mapset "github.com/deckarep/golang-set/v2"
+	"k8s.io/klog/v2"
 )
 
 var (
@@ -336,9 +337,7 @@ func isElfExe(path string) (bool, error) {
 	return false, nil
 }
 
-func scanBinary(ctx context.Context, ignoreErr IgnoreErrors, topDir, innerPath string) *ScanResult {
-	allFn := validationFns["all"]
-
+func scanBinary(ctx context.Context, ignoreErr IgnoreErrors, rpmIgnores map[string]IgnoreLists, topDir, innerPath string) *ScanResult {
 	baton := &Baton{TopDir: topDir}
 	res := NewScanResult().SetPath(innerPath)
 
@@ -355,14 +354,6 @@ func scanBinary(ctx context.Context, ignoreErr IgnoreErrors, topDir, innerPath s
 	}
 
 	scanned.Add(1)
-	for _, fn := range allFn {
-		if err := fn(ctx, path, baton); err != nil {
-			if ignoreErr.ForFile(innerPath, err) {
-				continue
-			}
-			return res.SetError(err)
-		}
-	}
 
 	goBinary, err := isGoExecutable(ctx, path)
 	if err != nil {
@@ -374,11 +365,25 @@ func scanBinary(ctx context.Context, ignoreErr IgnoreErrors, topDir, innerPath s
 	} else {
 		checks = validationFns["exe"]
 	}
+	checks = append(checks, validationFns["all"]...)
 
 	for _, fn := range checks {
 		if err := fn(ctx, path, baton); err != nil {
 			if ignoreErr.ForFile(innerPath, err) {
 				continue
+			}
+			// Find out which rpm the file belongs to.
+			rpm, rpmErr := rpmFromFile(ctx, topDir, innerPath)
+			if rpmErr != nil {
+				klog.Info(rpmErr) // XXX: a minor warning.
+			} else if rpm != "" {
+				// See if the error is to be ignored for this rpm.
+				if il, ok := rpmIgnores[rpm]; ok {
+					if il.Ignore(innerPath, err) {
+						continue
+					}
+				}
+				res.SetRpm(rpm)
 			}
 			return res.SetError(err)
 		}
@@ -386,4 +391,31 @@ func scanBinary(ctx context.Context, ignoreErr IgnoreErrors, topDir, innerPath s
 
 	passed.Add(1)
 	return res.Success()
+}
+
+func rpmFromFile(ctx context.Context, root, path string) (string, error) {
+	var outbuf, errbuf bytes.Buffer
+
+	// XXX: maybe remove --queryformat='%{NAME}'?
+	cmd := exec.CommandContext(ctx, "rpm", "-qf", "--dbpath="+rpmDBPath(root), "--root", root, "--queryformat=%{NAME}", path)
+	cmd.Env = append(cmd.Environ(), "LANG=C") // Do not localize error messages.
+	cmd.Stdout = &outbuf
+	cmd.Stderr = &errbuf
+
+	if err := cmd.Run(); err != nil &&
+		!bytes.Contains(errbuf.Bytes(), []byte("is not owned by any package")) &&
+		!bytes.Contains(errbuf.Bytes(), []byte("No such file or directory")) {
+		return "", fmt.Errorf("rpm -qf error: %w (stderr=%s)", err, strings.TrimSpace(errbuf.String()))
+	}
+	return strings.TrimSpace(outbuf.String()), nil
+}
+
+func rpmDBPath(root string) string {
+	for _, path := range []string{"/var/lib/rpm", "/usr/share/rpm", "/usr/lib/sysimage/rpm"} {
+		st, err := os.Lstat(filepath.Join(root, path))
+		if err == nil && st.IsDir() {
+			return path
+		}
+	}
+	return ""
 }

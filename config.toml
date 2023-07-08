@@ -32,7 +32,6 @@ filter_files = [
   "/usr/libexec/catatonit/catatonit",
   "/usr/sbin/build-locale-archive",
   "/usr/sbin/glibc_post_upgrade.x86_64",
-  "/usr/sbin/ldconfig",
   "/usr/sbin/sln",
   "/usr/src/multus-cni/rhel7/bin/multus",
   "/usr/src/whereabouts/rhel7/bin/whereabouts",
@@ -41,6 +40,14 @@ filter_files = [
 
 # List of images to ignore.
 filter_images = [ ]
+
+[[ignore_errors]]
+error = "ErrNotDynLinked"
+files = [
+  "/sbin/ldconfig",
+  "/usr/sbin/ldconfig",
+]
+
 
 # Payload Components
 

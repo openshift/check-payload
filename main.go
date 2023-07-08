@@ -191,9 +191,12 @@ func main() {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			root, _ := cmd.Flags().GetString("root")
-			results = runNodeScan(ctx, &config, root)
-			printResults(&config, results, true)
-			if isFailed(results) {
+			results := NewScanResults()
+			runs := []*ScanResults{results}
+			runWalkScan(ctx, &config, root, nil, nil, results)
+
+			printResults(&config, runs, true)
+			if isFailed(runs) {
 				return errors.New("run failed")
 			}
 			return nil

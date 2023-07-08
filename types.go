@@ -55,6 +55,7 @@ type ArtifactPod struct {
 type ScanResult struct {
 	Component *OpenshiftComponent
 	Tag       *v1.TagReference
+	Rpm       string
 	Path      string
 	Skip      bool
 	Error     error

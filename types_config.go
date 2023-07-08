@@ -74,8 +74,16 @@ func (c *Config) IgnoreFileWithTag(path string, tag *imagev1.TagReference) bool 
 	return c.isFileIgnoredByTag(path, tag)
 }
 
-func (c *Config) IgnoreFileByRpm(path string, rpm string) bool {
-	return c.isFileIgnoredByRpm(path, rpm)
+func (l *IgnoreLists) Ignore(path string, err error) bool {
+	for _, dir := range l.FilterDirs {
+		if strings.HasPrefix(path, dir+"/") {
+			return true
+		}
+	}
+	if isMatch(path, l.FilterFiles) {
+		return true
+	}
+	return l.IgnoreErrors.ForFile(path, err)
 }
 
 func (c *Config) IgnoreDirWithComponent(path string, component *OpenshiftComponent) bool {

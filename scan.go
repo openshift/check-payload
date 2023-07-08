@@ -47,11 +47,7 @@ func runOperatorScan(ctx context.Context, cfg *Config) []*ScanResults {
 		},
 	}
 
-	results := validateTag(ctx, tag, cfg)
-
-	var runs []*ScanResults
-	runs = append(runs, results)
-	return runs
+	return []*ScanResults{validateTag(ctx, tag, cfg)}
 }
 
 func runPayloadScan(ctx context.Context, cfg *Config) []*ScanResults {
@@ -189,7 +185,6 @@ func ReadReleaseInfo(filename string) (*release.ReleaseInfo, error) {
 
 func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanResults {
 	results := NewScanResults()
-
 	image := tag.From.Name
 
 	// skip over ignored images
@@ -230,12 +225,25 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 	opensslInfo := validateOpenssl(ctx, mountPath)
 	results.Append(NewScanResult().SetOpenssl(opensslInfo).SetTag(tag))
 
+	runWalkScan(ctx, cfg, mountPath, tag, component, results)
+	return results
+}
+
+func runWalkScan(ctx context.Context, cfg *Config, mountPath string, tag *v1.TagReference, component *OpenshiftComponent, results *ScanResults) {
+	var tagName, componentName string
+
 	ignoreErrors := cfg.IgnoreErrors
-	if op, ok := cfg.TagIgnores[tag.Name]; ok {
-		ignoreErrors = append(ignoreErrors, op.IgnoreErrors...)
+	if tag != nil {
+		tagName = tag.Name
+		if op, ok := cfg.TagIgnores[tagName]; ok {
+			ignoreErrors = append(ignoreErrors, op.IgnoreErrors...)
+		}
 	}
-	if op, ok := cfg.PayloadIgnores[component.Component]; ok {
-		ignoreErrors = append(ignoreErrors, op.IgnoreErrors...)
+	if component != nil {
+		componentName = component.Component
+		if op, ok := cfg.PayloadIgnores[componentName]; ok {
+			ignoreErrors = append(ignoreErrors, op.IgnoreErrors...)
+		}
 	}
 
 	// business logic for scan
@@ -257,31 +265,29 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 			return nil
 		}
 		klog.V(1).InfoS("scanning path", "path", path)
-		res := scanBinary(ctx, ignoreErrors, mountPath, innerPath)
+		res := scanBinary(ctx, ignoreErrors, cfg.RpmIgnores, mountPath, innerPath)
 		if res.Skip {
 			// Do not add skipped binaries to results.
 			return nil
 		}
 		res.SetTag(tag).SetComponent(component)
 		if res.Error == nil {
-			klog.V(1).InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
+			klog.V(1).InfoS("scanning success", "path", innerPath, "status", "success")
 		} else {
 			klog.InfoS("scanning failed",
-				"image", image,
 				"path", innerPath,
 				"error", res.Error,
 				"errName", getErrName(res.Error),
-				"component", getComponent(res),
-				"tag", res.Tag.Name,
+				"component", component,
+				"tag", tag,
+				"rpm", res.Rpm,
 				"status", "failed")
 		}
 		results.Append(res)
 		return nil
 	}); err != nil {
-		return results
+		results.Append(NewScanResult().SetTag(tag).SetComponent(component).SetError(err))
 	}
-
-	return results
 }
 
 func stripMountPath(mountPath, path string) string {
