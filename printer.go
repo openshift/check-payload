@@ -62,6 +62,8 @@ func printResults(cfg *Config, results []*ScanResults, nodeScan bool) {
 		}
 	}
 
+	klog.InfoS("files stats", "total", total.Load(), "scanned", scanned.Load(), "passed", passed.Load())
+
 	if cfg.PrintExceptions {
 		displayExceptions(results)
 	}

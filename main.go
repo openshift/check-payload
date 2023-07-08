@@ -214,6 +214,10 @@ func main() {
 			defer cancel()
 			config.ContainerImage, _ = cmd.Flags().GetString("spec")
 			results = runOperatorScan(ctx, &config)
+			printResults(&config, results, false)
+			if isFailed(results) {
+				return errors.New("run failed")
+			}
 			return nil
 		},
 	}

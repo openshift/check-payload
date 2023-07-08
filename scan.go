@@ -128,14 +128,18 @@ func ValidateTag(ctx context.Context, cfg *Config, tag *v1.TagReference, rx chan
 }
 
 func isFailed(results []*ScanResults) bool {
+	var passed, failed int
 	for _, result := range results {
 		for _, res := range result.Items {
 			if res.Error != nil {
-				return true
+				failed++
+			} else {
+				passed++
 			}
 		}
 	}
-	return false
+	klog.InfoS("result stats", "passed", passed, "failed", failed)
+	return failed > 0
 }
 
 func GetPayload(config *Config) (*release.ReleaseInfo, error) {

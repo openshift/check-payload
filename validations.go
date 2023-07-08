@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync/atomic"
 
 	"github.com/Masterminds/semver/v3"
 	mapset "github.com/deckarep/golang-set/v2"
@@ -24,6 +25,8 @@ var (
 	validateGoVersionRegexp      = regexp.MustCompile(`go(\d.\d\d)`)
 	validateGoTagsRegexp         = regexp.MustCompile(`-tags=(.*)\n`)
 	validateStringsOpensslRegexp = regexp.MustCompile(`libcrypto.so(\.?\d+)*`)
+
+	total, scanned, passed atomic.Uint32
 )
 
 type Baton struct {
@@ -341,6 +344,7 @@ func scanBinary(ctx context.Context, ignoreErr IgnoreErrors, topDir, innerPath s
 
 	path := filepath.Join(topDir, innerPath)
 
+	total.Add(1)
 	// We are only interested in Linux binaries.
 	elf, err := isElfExe(path)
 	if err != nil {
@@ -350,6 +354,7 @@ func scanBinary(ctx context.Context, ignoreErr IgnoreErrors, topDir, innerPath s
 		return res.Skipped()
 	}
 
+	scanned.Add(1)
 	for _, fn := range allFn {
 		if err := fn(ctx, path, baton); err != nil {
 			if ignoreErr.ForFile(innerPath, err) {
@@ -379,5 +384,6 @@ func scanBinary(ctx context.Context, ignoreErr IgnoreErrors, topDir, innerPath s
 		}
 	}
 
+	passed.Add(1)
 	return res.Success()
 }
