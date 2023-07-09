@@ -17,53 +17,110 @@ filter_dirs = [
   "/sysroot",
 ]
 
-# List of files to ignore. This is a strict match.
-filter_files = [
-  ### static binaries, no crypto
-  "/usr/bin/grpc_health_probe",
-  "/usr/bin/cdi-containerimage-server",
-  "/usr/bin/dumb-init", # https://github.com/Yelp/dumb-init
-  "/app/bin/dumb-init", # https://github.com/Yelp/dumb-init
-  "/usr/bin/cpb",
-  "/usr/bin/pinns",
-  "/usr/bin/pod",
-  "/usr/bin/tini-static",
-  "/usr/local/bin/catatonit",
-  "/usr/libexec/catatonit/catatonit",
-  "/usr/sbin/build-locale-archive",
-  "/usr/sbin/glibc_post_upgrade.x86_64",
-  "/usr/sbin/sln",
-  "/usr/src/multus-cni/rhel7/bin/multus",
-  "/usr/src/whereabouts/rhel7/bin/whereabouts",
-  "/usr/src/egress-router-cni/rhel7/bin/egress-router",
-]
-
-# List of images to ignore.
-filter_images = [ ]
-
-[[ignore_errors]]
+[[rpm.glibc-common.ignore_errors]]
 error = "ErrNotDynLinked"
+files = [ "/usr/sbin/build-locale-archive" ]
+
+[[rpm.glibc.ignore_errors]]
+error = "ErrNotDynLinked"
+files = [ "/usr/sbin/ldconfig" ]
+
+[[rpm.podman.ignore_errors]]
+error = "ErrGoMissingTag"
 files = [
-  "/sbin/ldconfig",
-  "/usr/sbin/ldconfig",
+  "/usr/bin/podman",
+  "/usr/libexec/podman/rootlessport",
+  "/usr/libexec/podman/quadlet", # 4.13
 ]
 
+[[rpm.podman-catatonit.ignore_errors]]
+error = "ErrNotDynLinked"
+files = [ "/usr/libexec/catatonit/catatonit" ]
 
-# Payload Components
+[[rpm.podman.ignore_errors]] # 4.13
+error = "ErrNotDynLinked"
+files = [ "/usr/libexec/podman/catatonit" ]
 
-## [payload.ose-agent-installer-node-agent-container]
-## filter_files = [
-##   "/usr/libexec/catatonit/catatonit",
-##   "/usr/bin/cpb",
-##   "/usr/bin/pod",
-## ]
-##
-## [payload.agent-installer-node-agent-container]
-## filter_files = [ "/usr/bin/cpb" ]
-##
-## [payload.operator-lifecycle-manager-container]
-## filter_files = [ "/usr/bin/cpb" ]
-##
-## [payload.openshift-enterprise-pod-container]
-## filter_files = [ "/usr/bin/pod" ]
+[[rpm.runc.ignore_errors]]
+error = "ErrGoMissingTag"
+files = [ "/usr/bin/runc" ]
+
+[[rpm.containernetworking-plugins.ignore_errors]]
+error = "ErrGoMissingTag"
+files = [
+  "/usr/libexec/cni/bandwidth",
+  "/usr/libexec/cni/bridge",
+  "/usr/libexec/cni/dhcp",
+  "/usr/libexec/cni/firewall",
+  "/usr/libexec/cni/host-device",
+  "/usr/libexec/cni/host-local",
+  "/usr/libexec/cni/ipvlan",
+  "/usr/libexec/cni/loopback",
+  "/usr/libexec/cni/macvlan",
+  "/usr/libexec/cni/portmap",
+  "/usr/libexec/cni/ptp",
+  "/usr/libexec/cni/sample",
+  "/usr/libexec/cni/sbr",
+  "/usr/libexec/cni/static",
+  "/usr/libexec/cni/tuning",
+  "/usr/libexec/cni/vlan",
+  "/usr/libexec/cni/vrf",
+  "/usr/libexec/cni/dummy", # 4.13
+]
+
+[[rpm.cri-tools.ignore_errors]]
+error = "ErrGoMissingTag"
+files = [ "/usr/bin/crictl" ]
+
+[[rpm.cri-o.ignore_errors]]
+error = "ErrGoMissingTag"
+files = [
+  "/usr/bin/crio",
+  "/usr/bin/crio-status",
+]
+
+[[rpm.cri-o.ignore_errors]]
+error = "ErrNotDynLinked"
+files = [ "/usr/bin/pinns" ]
+
+[[rpm.skopeo.ignore_errors]]
+error = "ErrGoMissingTag"
+files = [ "/usr/bin/skopeo" ]
+
+[[rpm.ignition.ignore_errors]]
+error = "ErrGoMissingTag"
+files = [ "/usr/lib/dracut/modules.d/30ignition/ignition" ]
+
+# Payload Components (for binaries that do not belong to any rpm).
+# For 4.12, 4.11, 4.10, 4.9, 4.8:
+[payload.operator-lifecycle-manager-container]
+## ErrNotCgoEnabled, ErrGoMissingTag
+filter_files = [ "/usr/bin/cpb" ]
+
+[[payload.openshift-enterprise-pod-container.ignore_errors]]
+error = "ErrNotDynLinked"
+files = [ "/usr/bin/pod" ]
+
+# For 4.10, 4.9:
+[[payload.multus-cni-alt-container.ignore_errors]]
+error = "ErrNoLibcryptoSO"
+files = [ "/usr/src/multus-cni/rhel7/bin/multus" ]
+
+# For 4.9:
+[[payload.ose-egress-router-cni-alt-container.ignore_errors]]
+error = "ErrNoLibcryptoSO"
+files = [ "/usr/src/egress-router-cni/rhel7/bin/egress-router" ]
+
+[[payload.ose-multus-whereabouts-ipam-cni-alt-container.ignore_errors]]
+error = "ErrNoLibcryptoSO"
+files = [ "/usr/src/whereabouts/rhel7/bin/whereabouts" ]
+
+[[payload.ose-machine-config-operator-container.ignore_errors]]
+error = "ErrNoLibcryptoSO"
+files = [ "/usr/bin/machine-config-daemon.rhel9" ]
+
+[[payload.ose-network-tools-container.ignore_errors]]
+error = "ErrNoLibcryptoSO"
+files = [ "/usr/bin/ovnkube-trace" ]
+
 
