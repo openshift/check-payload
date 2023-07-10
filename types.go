@@ -10,6 +10,7 @@ import (
 type Config struct {
 	ConfigFile              string        `json:"config_file"`
 	Components              []string      `json:"components" toml:"components"`
+	FailOnWarnings          bool          `json:"fail_on_warnings" toml:"fail_on_warnings"`
 	FilterFiles             []string      `json:"filter_files" toml:"filter_files"`
 	FilterDirs              []string      `json:"filter_dirs" toml:"filter_dirs"`
 	FilterImages            []string      `json:"filter_images" toml:"filter_images"`
@@ -49,7 +50,7 @@ type ScanResult struct {
 	Tag       *v1.TagReference
 	Path      string
 	Skip      bool
-	Error     error
+	Error     *ValidationError
 }
 
 type ScanResults struct {
@@ -61,4 +62,40 @@ type OpenshiftComponent struct {
 	SourceLocation      string `json:"source_location"`
 	MaintainerComponent string `json:"maintainer_component"`
 	IsBundle            bool   `json:"is_bundle"`
+}
+
+type ValidationError struct {
+	Level ErrorLevel
+	Error error
+}
+
+type ErrorLevel int64
+
+const (
+	Error ErrorLevel = iota
+	Warning
+)
+
+func NewValidationError(err error) *ValidationError {
+	if err == nil {
+		return nil
+	}
+	return &ValidationError{Error: err, Level: Error}
+}
+
+func (ve *ValidationError) GetError() error {
+	return ve.Error
+}
+
+func (ve *ValidationError) SetWarning() *ValidationError {
+	ve.Level = Warning
+	return ve
+}
+
+func (ve *ValidationError) IsError() bool {
+	return ve.Error != nil && !ve.IsWarning()
+}
+
+func (ve *ValidationError) IsWarning() bool {
+	return ve.Level == Warning
 }

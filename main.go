@@ -50,6 +50,7 @@ var (
 	components                            []string
 	configFile, configForVersion          string
 	cpuProfile                            string
+	failOnWarnings                        bool
 	filterFiles, filterDirs, filterImages []string
 	insecurePull                          bool
 	limit                                 int
@@ -88,6 +89,7 @@ func main() {
 			if err := getConfig(&config); err != nil {
 				return err
 			}
+			config.FailOnWarnings = failOnWarnings
 			config.FilterFiles = append(config.FilterFiles, filterFiles...)
 			config.FilterDirs = append(config.FilterDirs, filterDirs...)
 			config.FilterImages = append(config.FilterImages, filterImages...)
@@ -125,6 +127,9 @@ func main() {
 			if isFailed(results) {
 				return errors.New("run failed")
 			}
+			if isWarnings(results) && config.FailOnWarnings {
+				return errors.New("run failed with warnings")
+			}
 			return nil
 		},
 	}
@@ -134,6 +139,7 @@ func main() {
 	scanCmd.PersistentFlags().StringSliceVar(&filterDirs, "filter-dirs", nil, "")
 	scanCmd.PersistentFlags().StringSliceVar(&filterImages, "filter-images", nil, "")
 	scanCmd.PersistentFlags().StringSliceVar(&components, "components", nil, "")
+	scanCmd.PersistentFlags().BoolVar(&failOnWarnings, "fail-on-warnings", false, "fail on warnings")
 	scanCmd.PersistentFlags().BoolVar(&insecurePull, "insecure-pull", false, "use insecure pull")
 	scanCmd.PersistentFlags().IntVar(&limit, "limit", -1, "limit the number of pods scanned")
 	scanCmd.PersistentFlags().IntVar(&parallelism, "parallelism", 5, "how many pods to check at once")
