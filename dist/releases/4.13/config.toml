@@ -126,6 +126,7 @@ filter_files = [ "/usr/bin/pod" ]
 
 [payload.ose-ovn-kubernetes-container]
 filter_files = [
+  "/usr/libexec/cni/rhel8/ovn-k8s-cni-overlay",
   "/usr/libexec/cni/host-local",
   "/usr/libexec/cni/sample",
   "/usr/libexec/cni/vrf",
@@ -174,3 +175,34 @@ filter_files = [
 
 [payload.openshift-enterprise-builder-container]
 filter_files = [ "/usr/bin/runc" ]
+
+[payload.multus-cni-container]
+filter_files = [
+  "/usr/src/multus-cni/bin/multus",
+  "/usr/src/multus-cni/bin/multus-daemon",
+  "/usr/src/multus-cni/rhel9/bin/multus",
+  "/usr/src/multus-cni/bin/multus-shim",
+  "/usr/src/multus-cni/rhel9/bin/multus-shim",
+  "/usr/src/multus-cni/rhel9/bin/multus-daemon",
+]
+
+[payload.ose-machine-config-operator-container]
+filter_files = [ "/usr/bin/machine-config-daemon.rhel9" ]
+
+[payload.ose-egress-router-cni-container]
+filter_files = [
+  "/usr/src/egress-router-cni/bin/egress-router",
+  "/usr/src/egress-router-cni/rhel9/bin/egress-router",
+]
+
+[payload.ose-multus-whereabouts-ipam-cni-container]
+filter_files = [
+  "/usr/src/whereabouts/bin/ip-control-loop",
+  "/usr/src/whereabouts/bin/whereabouts"
+]
+
+[payload.ose-network-interface-bond-cni-container]
+filter_files = [ "/bondcni/bond" ]
+
+[payload.ose-network-tools-container]
+filter_files = [ "/usr/bin/ovnkube-trace" ]
