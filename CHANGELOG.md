@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.19] - 2023-07-11
+
+### Bug Fixes
+
+- Fix remove container create/rm step
+- Remove obsoleted requirements
+- Use RPM name in node scan
+- perf: validaetGoSymbols and skip early 
+- perf: compile regexes only once
+- perf: isGoExecutable do not use regexp
+
+### Features
+
+- Add node ignores
+- Add 4.9, 4.10, 4.11, 4.12, 4.13 config files
+- Add warning support and ---fail-on-warnings
+
 ## [0.2.18] - 2023-06-30
 
 ### Features
