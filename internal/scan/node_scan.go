@@ -1,4 +1,4 @@
-package main
+package scan
 
 import (
 	"bufio"
@@ -12,6 +12,9 @@ import (
 	v1 "github.com/openshift/api/image/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
+
+	"github.com/openshift/check-payload/internal/types"
+	"github.com/openshift/check-payload/internal/validations"
 )
 
 func NewTag(name string) *v1.TagReference {
@@ -22,12 +25,12 @@ func NewTag(name string) *v1.TagReference {
 	}
 }
 
-func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
-	var runs []*ScanResults
-	results := NewScanResults()
+func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
+	var runs []*types.ScanResults
+	results := types.NewScanResults()
 	runs = append(runs, results)
 	klog.Info("scanning node")
-	component := &OpenshiftComponent{
+	component := &types.OpenshiftComponent{
 		Component: "node",
 	}
 	nodeVersion := "default"
@@ -36,7 +39,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 		tag := NewTag(rpm)
 		files, err := getFilesFromRPM(ctx, cfg, rpm)
 		if err != nil {
-			res := NewScanResult().SetTag(tag).SetError(err)
+			res := types.NewScanResult().SetTag(tag).SetError(err)
 			results.Append(res)
 			continue
 		}
@@ -57,7 +60,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 				continue
 			}
 			klog.V(1).InfoS("scanning path", "path", path)
-			res := scanBinary(ctx, component, tag, cfg.NodeScan, innerPath)
+			res := validations.ScanBinary(ctx, component, tag, cfg.NodeScan, innerPath)
 			if res.Skip {
 				// Do not add skipped binaries to results.
 				continue
@@ -73,7 +76,7 @@ func runNodeScan(ctx context.Context, cfg *Config) []*ScanResults {
 	return runs
 }
 
-func getFilesFromRPM(ctx context.Context, cfg *Config, rpm string) ([]string, error) {
+func getFilesFromRPM(ctx context.Context, cfg *types.Config, rpm string) ([]string, error) {
 	klog.Infof("rpm -ql %v", rpm)
 	files := []string{}
 	var stdout bytes.Buffer
@@ -92,7 +95,7 @@ func getFilesFromRPM(ctx context.Context, cfg *Config, rpm string) ([]string, er
 	return files, nil
 }
 
-func getAllRPMs(ctx context.Context, cfg *Config) ([]string, error) {
+func getAllRPMs(ctx context.Context, cfg *types.Config) ([]string, error) {
 	klog.Info("rpm -qa")
 	rpms := []string{}
 	var stdout bytes.Buffer

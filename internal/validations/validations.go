@@ -1,4 +1,4 @@
-package main
+package validations
 
 import (
 	"bufio"
@@ -18,6 +18,9 @@ import (
 	"github.com/Masterminds/semver/v3"
 	mapset "github.com/deckarep/golang-set/v2"
 	v1 "github.com/openshift/api/image/v1"
+
+	"github.com/openshift/check-payload/internal/golang"
+	"github.com/openshift/check-payload/internal/types"
 )
 
 var (
@@ -28,6 +31,11 @@ var (
 
 	ErrNotGolangExe  = errors.New("not golang executable")
 	ErrNotExecutable = errors.New("not a regular executable")
+
+	requiredGolangSymbols = []string{
+		"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
+		"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
+	}
 )
 
 type Baton struct {
@@ -37,7 +45,7 @@ type Baton struct {
 	GoVersionDetailed []byte
 }
 
-type ValidationFn func(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) *ValidationError
+type ValidationFn func(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) *types.ValidationError
 
 var validationFns = map[string][]ValidationFn{
 	"go": {
@@ -54,27 +62,27 @@ var validationFns = map[string][]ValidationFn{
 	},
 }
 
-func validateGoVersion(ctx context.Context, _ *v1.TagReference, path string, baton *Baton) *ValidationError {
+func validateGoVersion(ctx context.Context, _ *v1.TagReference, path string, baton *Baton) *types.ValidationError {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		return NewValidationError(err)
+		return types.NewValidationError(err)
 	}
 
 	matches := validateGoVersionRegexp.FindAllStringSubmatch(stdout.String(), -1)
 	if len(matches) == 0 {
-		return NewValidationError(fmt.Errorf("go: could not find compiler version in binary"))
+		return types.NewValidationError(fmt.Errorf("go: could not find compiler version in binary"))
 	}
 	baton.GoVersion = matches[0][1]
 	baton.GoVersionDetailed = stdout.Bytes()
 	return nil
 }
 
-func validateGoSymbols(_ context.Context, _ *v1.TagReference, path string, baton *Baton) *ValidationError {
-	symtable, err := readTable(path)
+func validateGoSymbols(_ context.Context, _ *v1.TagReference, path string, baton *Baton) *types.ValidationError {
+	symtable, err := golang.ReadTable(path)
 	if err != nil {
-		return NewValidationError(fmt.Errorf("go: could not read table for %v: %w", filepath.Base(path), err))
+		return types.NewValidationError(fmt.Errorf("go: could not read table for %v: %w", filepath.Base(path), err))
 	}
 	// Skip if the golang binary is not using crypto
 	if !isUsingCryptoModule(symtable) {
@@ -84,18 +92,18 @@ func validateGoSymbols(_ context.Context, _ *v1.TagReference, path string, baton
 
 	v, err := semver.NewVersion(baton.GoVersion)
 	if err != nil {
-		return NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
+		return types.NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
 	}
 	c, err := semver.NewConstraint("< 1.18")
 	if err != nil {
-		return NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
+		return types.NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
 	}
 	if c.Check(v) {
 		return nil
 	}
 
-	if err := ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
-		return NewValidationError(fmt.Errorf("go: expected symbols not found for %v: %w", filepath.Base(path), err))
+	if err := golang.ExpectedSyms(requiredGolangSymbols, symtable); err != nil {
+		return types.NewValidationError(fmt.Errorf("go: expected symbols not found for %v: %w", filepath.Base(path), err))
 	}
 	return nil
 }
@@ -109,36 +117,36 @@ func isUsingCryptoModule(symtable *gosym.Table) bool {
 	return false
 }
 
-func validateGoCgo(_ context.Context, _ *v1.TagReference, _ string, baton *Baton) *ValidationError {
+func validateGoCgo(_ context.Context, _ *v1.TagReference, _ string, baton *Baton) *types.ValidationError {
 	v, err := semver.NewVersion(baton.GoVersion)
 	if err != nil {
-		return NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
+		return types.NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
 	}
 	c, err := semver.NewConstraint("<= 1.17")
 	if err != nil {
-		return NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
+		return types.NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
 	}
 	if c.Check(v) {
 		return nil
 	}
 
 	if !bytes.Contains(baton.GoVersionDetailed, []byte("CGO_ENABLED=1")) {
-		return NewValidationError(fmt.Errorf("go: binary is not CGO_ENABLED"))
+		return types.NewValidationError(fmt.Errorf("go: binary is not CGO_ENABLED"))
 	}
 	return nil
 }
 
-func validateGoTags(_ context.Context, _ *v1.TagReference, _ string, baton *Baton) *ValidationError {
+func validateGoTags(_ context.Context, _ *v1.TagReference, _ string, baton *Baton) *types.ValidationError {
 	invalidTagsSet := mapset.NewSet("no_openssl")
 	expectedTagsSet := mapset.NewSet("strictfipsruntime")
 
 	v, err := semver.NewVersion(baton.GoVersion)
 	if err != nil {
-		return NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
+		return types.NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
 	}
 	c, err := semver.NewConstraint("<= 1.17")
 	if err != nil {
-		return NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
+		return types.NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
 	}
 	if c.Check(v) {
 		return nil
@@ -151,24 +159,24 @@ func validateGoTags(_ context.Context, _ *v1.TagReference, _ string, baton *Bato
 
 	tags := strings.Split(string(matches[0][1]), ",")
 	if len(tags) == 0 {
-		return NewValidationError(fmt.Errorf("go: binary has zero tags enabled (should have strictfipsruntime)")).SetWarning()
+		return types.NewValidationError(fmt.Errorf("go: binary has zero tags enabled (should have strictfipsruntime)")).SetWarning()
 	}
 
 	// check for invalid tags
 	binaryTags := mapset.NewSet(tags...)
 	if set := binaryTags.Intersect(invalidTagsSet); set.Cardinality() > 0 {
-		return NewValidationError(fmt.Errorf("go: binary has invalid tag %v enabled", set.ToSlice()))
+		return types.NewValidationError(fmt.Errorf("go: binary has invalid tag %v enabled", set.ToSlice()))
 	}
 
 	// check for required tags
 	if set := binaryTags.Intersect(expectedTagsSet); set.Cardinality() == 0 {
-		return NewValidationError(fmt.Errorf("go: binary does not contain required tag(s) %v", expectedTagsSet.ToSlice())).SetWarning()
+		return types.NewValidationError(fmt.Errorf("go: binary does not contain required tag(s) %v", expectedTagsSet.ToSlice())).SetWarning()
 	}
 
 	return nil
 }
 
-func validateGoStatic(ctx context.Context, _ *v1.TagReference, path string, baton *Baton) *ValidationError {
+func validateGoStatic(ctx context.Context, _ *v1.TagReference, path string, baton *Baton) *types.ValidationError {
 	// if the static golang binary does not contain crypto then skip
 	if baton.GoNoCrypto {
 		return nil
@@ -178,19 +186,19 @@ func validateGoStatic(ctx context.Context, _ *v1.TagReference, path string, bato
 	return validateStaticGo(ctx, path)
 }
 
-func validateGoOpenssl(_ context.Context, _ *v1.TagReference, path string, baton *Baton) *ValidationError {
+func validateGoOpenssl(_ context.Context, _ *v1.TagReference, path string, baton *Baton) *types.ValidationError {
 	// if there is no crypto then skip openssl test
 	if baton.GoNoCrypto {
 		return nil
 	}
 	// check for openssl strings
-	return NewValidationError(validateStringsOpenssl(path, baton))
+	return types.NewValidationError(validateStringsOpenssl(path, baton))
 }
 
-func validateGoCGOInit(_ context.Context, _ *v1.TagReference, path string, _ *Baton) *ValidationError {
+func validateGoCGOInit(_ context.Context, _ *v1.TagReference, path string, _ *Baton) *types.ValidationError {
 	f, err := os.Open(path)
 	if err != nil {
-		return NewValidationError(err)
+		return types.NewValidationError(err)
 	}
 	defer f.Close()
 
@@ -203,7 +211,7 @@ func validateGoCGOInit(_ context.Context, _ *v1.TagReference, path string, _ *Ba
 	for {
 		n, err := stream.Read(buf)
 		if err != nil && err != io.EOF {
-			return NewValidationError(err)
+			return types.NewValidationError(err)
 		}
 		if n == 0 || err == io.EOF {
 			break
@@ -215,7 +223,7 @@ func validateGoCGOInit(_ context.Context, _ *v1.TagReference, path string, _ *Ba
 	}
 
 	if !cgoInitFound {
-		return NewValidationError(fmt.Errorf("x_cgo_init: not found"))
+		return types.NewValidationError(fmt.Errorf("x_cgo_init: not found"))
 	}
 
 	return nil
@@ -278,24 +286,24 @@ func validateStringsOpenssl(path string, baton *Baton) error {
 	return nil
 }
 
-func validateStaticGo(ctx context.Context, path string) *ValidationError {
+func validateStaticGo(ctx context.Context, path string) *types.ValidationError {
 	return isDynamicallyLinked(ctx, path)
 }
 
-func isDynamicallyLinked(ctx context.Context, path string) *ValidationError {
+func isDynamicallyLinked(ctx context.Context, path string) *types.ValidationError {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "file", "-s", path)
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		return NewValidationError(err)
+		return types.NewValidationError(err)
 	}
 	if !bytes.Contains(stdout.Bytes(), []byte("dynamically linked")) {
-		return NewValidationError(fmt.Errorf("exe: executable is statically linked"))
+		return types.NewValidationError(fmt.Errorf("exe: executable is statically linked"))
 	}
 	return nil
 }
 
-func validateExe(ctx context.Context, _ *v1.TagReference, path string, _ *Baton) *ValidationError {
+func validateExe(ctx context.Context, _ *v1.TagReference, path string, _ *Baton) *types.ValidationError {
 	return isDynamicallyLinked(ctx, path)
 }
 
@@ -330,7 +338,7 @@ func isElfExe(path string) (bool, error) {
 	case elf.ET_EXEC:
 		return true, nil
 	case elf.ET_DYN: // Either a binary or a shared object.
-		pie, err := isPie(exe)
+		pie, err := golang.IsPie(exe)
 		if err != nil {
 			return false, err
 		}
@@ -340,13 +348,13 @@ func isElfExe(path string) (bool, error) {
 	return false, nil
 }
 
-func scanBinary(ctx context.Context, component *OpenshiftComponent, tag *v1.TagReference, topDir, innerPath string) *ScanResult {
+func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v1.TagReference, topDir, innerPath string) *types.ScanResult {
 	allFn := validationFns["all"]
 	goFn := validationFns["go"]
 	exeFn := validationFns["exe"]
 
 	baton := &Baton{TopDir: topDir}
-	res := NewScanResult().SetComponent(component).SetTag(tag).SetPath(innerPath)
+	res := types.NewScanResult().SetComponent(component).SetTag(tag).SetPath(innerPath)
 
 	path := filepath.Join(topDir, innerPath)
 

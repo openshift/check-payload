@@ -1,4 +1,4 @@
-package main
+package golang
 
 import (
 	"bytes"
@@ -47,7 +47,7 @@ func buildSettingMap(bi *buildinfo.BuildInfo) map[string]string {
 }
 
 // Open a Go ELF executable and read .gopclntab
-func readTable(fileName string) (*gosym.Table, error) {
+func ReadTable(fileName string) (*gosym.Table, error) {
 	// Default section label is .gopclntab
 	sectionLabel := ".gopclntab"
 	bi, err := buildinfo.ReadFile(fileName)

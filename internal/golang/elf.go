@@ -1,10 +1,10 @@
 //go:build go1.21
 
-package main
+package golang
 
 import "debug/elf"
 
-func isPie(file *elf.File) (bool, error) {
+func IsPie(file *elf.File) (bool, error) {
 	vals, err := file.DynValue(elf.DT_FLAGS_1)
 	if err != nil {
 		return false, err
