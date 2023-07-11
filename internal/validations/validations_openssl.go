@@ -1,4 +1,4 @@
-package main
+package validations
 
 import (
 	"bytes"
@@ -8,14 +8,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-)
 
-type OpensslInfo struct {
-	Present bool
-	FIPS    bool
-	Error   error
-	Path    string
-}
+	"github.com/openshift/check-payload/internal/types"
+)
 
 func findLib(mountPath string, searchPaths []string, subname string) (path string, err error) {
 	var returnPath string
@@ -37,8 +32,8 @@ func findLib(mountPath string, searchPaths []string, subname string) (path strin
 	return returnPath, nil
 }
 
-func validateOpenssl(ctx context.Context, mountPath string) OpensslInfo {
-	info := OpensslInfo{
+func ValidateOpenssl(ctx context.Context, mountPath string) types.OpensslInfo {
+	info := types.OpensslInfo{
 		Present: false,
 		FIPS:    false,
 		Error:   nil,

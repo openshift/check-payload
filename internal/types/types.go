@@ -1,4 +1,4 @@
-package main
+package types
 
 import (
 	"time"
@@ -62,6 +62,13 @@ type OpenshiftComponent struct {
 	SourceLocation      string `json:"source_location"`
 	MaintainerComponent string `json:"maintainer_component"`
 	IsBundle            bool   `json:"is_bundle"`
+}
+
+type OpensslInfo struct {
+	Present bool
+	FIPS    bool
+	Error   error
+	Path    string
 }
 
 type ValidationError struct {

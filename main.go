@@ -14,6 +14,9 @@ import (
 	"github.com/openshift/check-payload/dist/releases"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
+
+	"github.com/openshift/check-payload/internal/scan"
+	"github.com/openshift/check-payload/internal/types"
 )
 
 const (
@@ -39,11 +42,6 @@ var applicationDepsNodeScan = []string{
 	"rpm",
 }
 
-var requiredGolangSymbols = []string{
-	"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
-	"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
-}
-
 var Commit string
 
 var (
@@ -64,8 +62,8 @@ var (
 )
 
 func main() {
-	var config Config
-	var results []*ScanResults
+	var config types.Config
+	var results []*types.ScanResults
 
 	rootCmd := cobra.Command{
 		Use:           "check-payload",
@@ -123,11 +121,11 @@ func main() {
 				pprof.StopCPUProfile()
 				klog.Info("CPU profile saved to ", cpuProfile)
 			}
-			printResults(&config, results)
-			if isFailed(results) {
+			scan.PrintResults(&config, results)
+			if scan.IsFailed(results) {
 				return errors.New("run failed")
 			}
-			if isWarnings(results) && config.FailOnWarnings {
+			if scan.IsWarnings(results) && config.FailOnWarnings {
 				return errors.New("run failed with warnings")
 			}
 			return nil
@@ -154,7 +152,7 @@ func main() {
 		Use:          "payload [image pull spec]",
 		SilenceUsage: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return validateApplicationDependencies(applicationDeps)
+			return scan.ValidateApplicationDependencies(applicationDeps)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
@@ -162,7 +160,7 @@ func main() {
 			config.FromURL, _ = cmd.Flags().GetString("url")
 			config.FromFile, _ = cmd.Flags().GetString("file")
 			config.PrintExceptions, _ = cmd.Flags().GetBool("print-exceptions")
-			results = runPayloadScan(ctx, &config)
+			results = scan.RunPayloadScan(ctx, &config)
 			return nil
 		},
 	}
@@ -174,13 +172,13 @@ func main() {
 		Use:          "node [--root /myroot]",
 		SilenceUsage: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return validateApplicationDependencies(applicationDepsNodeScan)
+			return scan.ValidateApplicationDependencies(applicationDepsNodeScan)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			config.NodeScan, _ = cmd.Flags().GetString("root")
-			results = runNodeScan(ctx, &config)
+			results = scan.RunNodeScan(ctx, &config)
 			return nil
 		},
 	}
@@ -192,13 +190,13 @@ func main() {
 		Aliases:      []string{"operator"},
 		SilenceUsage: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return validateApplicationDependencies(applicationDeps)
+			return scan.ValidateApplicationDependencies(applicationDeps)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			config.ContainerImage, _ = cmd.Flags().GetString("spec")
-			results = runOperatorScan(ctx, &config)
+			results = scan.RunOperatorScan(ctx, &config)
 			return nil
 		},
 	}
@@ -222,7 +220,7 @@ func main() {
 	}
 }
 
-func getConfig(config *Config) error {
+func getConfig(config *types.Config) error {
 	// Handle --config-for-version first.
 	if configForVersion != "" {
 		if configFile != "" {

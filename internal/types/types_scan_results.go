@@ -1,4 +1,4 @@
-package main
+package types
 
 func NewScanResults() *ScanResults {
 	return &ScanResults{}

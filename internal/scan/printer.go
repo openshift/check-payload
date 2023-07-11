@@ -1,13 +1,14 @@
-package main
+package scan
 
 import (
 	"fmt"
 	"os"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"k8s.io/klog/v2"
 
-	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/openshift/check-payload/internal/types"
 )
 
 var (
@@ -28,7 +29,7 @@ var (
 	successNodeRowHeader     = table.Row{colTitleNodePath}
 )
 
-func printResults(cfg *Config, results []*ScanResults) {
+func PrintResults(cfg *types.Config, results []*types.ScanResults) {
 	var failureReport, warningReport, successReport string
 
 	var combinedReport string
@@ -39,8 +40,8 @@ func printResults(cfg *Config, results []*ScanResults) {
 		failureReport, warningReport, successReport = generateReport(results, cfg)
 	}
 
-	isWarnings := isWarnings(results)
-	isFailed := isFailed(results)
+	isWarnings := IsWarnings(results)
+	isFailed := IsFailed(results)
 	if isFailed {
 		fmt.Println("---- Failure Report")
 		fmt.Println(failureReport)
@@ -75,8 +76,8 @@ func printResults(cfg *Config, results []*ScanResults) {
 	}
 }
 
-func displayExceptions(results []*ScanResults) {
-	exceptions := make(map[string]mapset.Set[*ScanResult])
+func displayExceptions(results []*types.ScanResults) {
+	exceptions := make(map[string]mapset.Set[*types.ScanResult])
 	for _, result := range results {
 		for _, res := range result.Items {
 			if res.Error == nil {
@@ -109,16 +110,16 @@ func displayExceptions(results []*ScanResults) {
 	}
 }
 
-func generateNodeScanReport(results []*ScanResults, cfg *Config) (string, string, string) {
+func generateNodeScanReport(results []*types.ScanResults, cfg *types.Config) (string, string, string) {
 	var failureTableRows []table.Row
 	var warningTableRows []table.Row
 	var successTableRows []table.Row
 
 	for _, result := range results {
 		for _, res := range result.Items {
-			if res.IsLevel(Error) {
+			if res.IsLevel(types.Error) {
 				failureTableRows = append(failureTableRows, table.Row{res.Path, res.Error.GetError(), res.Tag.From.Name})
-			} else if res.IsLevel(Warning) {
+			} else if res.IsLevel(types.Warning) {
 				warningTableRows = append(warningTableRows, table.Row{res.Path, res.Error.GetError(), res.Tag.From.Name})
 			} else {
 				successTableRows = append(successTableRows, table.Row{res.Path})
@@ -144,12 +145,12 @@ func generateNodeScanReport(results []*ScanResults, cfg *Config) (string, string
 	return generateOutputString(cfg, ftw, wtw, stw)
 }
 
-func generateReport(results []*ScanResults, cfg *Config) (string, string, string) {
+func generateReport(results []*types.ScanResults, cfg *types.Config) (string, string, string) {
 	ftw, wtw, stw := renderReport(results)
 	return generateOutputString(cfg, ftw, wtw, stw)
 }
 
-func generateOutputString(cfg *Config, ftw table.Writer, wtw table.Writer, stw table.Writer) (string, string, string) {
+func generateOutputString(cfg *types.Config, ftw table.Writer, wtw table.Writer, stw table.Writer) (string, string, string) {
 	var failureReport string
 	var successReport string
 	var warningReport string
@@ -176,16 +177,16 @@ func generateOutputString(cfg *Config, ftw table.Writer, wtw table.Writer, stw t
 	return failureReport, warningReport, successReport
 }
 
-func getComponent(res *ScanResult) *OpenshiftComponent {
+func getComponent(res *types.ScanResult) *types.OpenshiftComponent {
 	if res.Component != nil {
 		return res.Component
 	}
-	return &OpenshiftComponent{
+	return &types.OpenshiftComponent{
 		Component: "<unknown>",
 	}
 }
 
-func renderReport(results []*ScanResults) (failures table.Writer, warnings table.Writer, successes table.Writer) {
+func renderReport(results []*types.ScanResults) (failures table.Writer, warnings table.Writer, successes table.Writer) {
 	var failureTableRows []table.Row
 	var warningTableRows []table.Row
 	var successTableRows []table.Row
@@ -193,9 +194,9 @@ func renderReport(results []*ScanResults) (failures table.Writer, warnings table
 	for _, result := range results {
 		for _, res := range result.Items {
 			component := getComponent(res)
-			if res.IsLevel(Error) {
+			if res.IsLevel(types.Error) {
 				failureTableRows = append(failureTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Error.GetError(), res.Tag.From.Name})
-			} else if res.IsLevel(Warning) {
+			} else if res.IsLevel(types.Warning) {
 				warningTableRows = append(warningTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Error.GetError(), res.Tag.From.Name})
 			} else {
 				successTableRows = append(successTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Tag.From.Name})

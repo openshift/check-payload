@@ -1,4 +1,4 @@
-package main
+package scan
 
 import (
 	"bytes"
@@ -12,6 +12,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/openshift/check-payload/internal/podman"
+	"github.com/openshift/check-payload/internal/types"
+	"github.com/openshift/check-payload/internal/validations"
+
 	v1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/oc/pkg/cli/admin/release"
 	"go.uber.org/multierr"
@@ -19,7 +23,16 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func validateApplicationDependencies(apps []string) error {
+type Request struct {
+	Tag *v1.TagReference
+}
+
+type Result struct {
+	Tag     *v1.TagReference
+	Results *types.ScanResults
+}
+
+func ValidateApplicationDependencies(apps []string) error {
 	var multiErr error
 
 	for _, app := range apps {
@@ -31,16 +44,7 @@ func validateApplicationDependencies(apps []string) error {
 	return multiErr
 }
 
-type Request struct {
-	Tag *v1.TagReference
-}
-
-type Result struct {
-	Tag     *v1.TagReference
-	Results *ScanResults
-}
-
-func runOperatorScan(ctx context.Context, cfg *Config) []*ScanResults {
+func RunOperatorScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 	tag := &v1.TagReference{
 		From: &corev1.ObjectReference{
 			Name: cfg.ContainerImage,
@@ -49,13 +53,13 @@ func runOperatorScan(ctx context.Context, cfg *Config) []*ScanResults {
 
 	results := validateTag(ctx, tag, cfg)
 
-	var runs []*ScanResults
+	var runs []*types.ScanResults
 	runs = append(runs, results)
 	return runs
 }
 
-func runPayloadScan(ctx context.Context, cfg *Config) []*ScanResults {
-	var runs []*ScanResults
+func RunPayloadScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
+	var runs []*types.ScanResults
 
 	payload, err := GetPayload(cfg)
 	if err != nil {
@@ -116,21 +120,21 @@ func runPayloadScan(ctx context.Context, cfg *Config) []*ScanResults {
 	return runs
 }
 
-func scan(ctx context.Context, cfg *Config, tx <-chan *Request, rx chan<- *Result) {
+func scan(ctx context.Context, cfg *types.Config, tx <-chan *Request, rx chan<- *Result) {
 	for req := range tx {
 		ValidateTag(ctx, cfg, req.Tag, rx)
 	}
 }
 
-func ValidateTag(ctx context.Context, cfg *Config, tag *v1.TagReference, rx chan<- *Result) {
+func ValidateTag(ctx context.Context, cfg *types.Config, tag *v1.TagReference, rx chan<- *Result) {
 	result := validateTag(ctx, tag, cfg)
 	rx <- &Result{Results: result}
 }
 
-func isFailed(results []*ScanResults) bool {
+func IsFailed(results []*types.ScanResults) bool {
 	for _, result := range results {
 		for _, res := range result.Items {
-			if res.IsLevel(Error) {
+			if res.IsLevel(types.Error) {
 				return true
 			}
 		}
@@ -138,10 +142,10 @@ func isFailed(results []*ScanResults) bool {
 	return false
 }
 
-func isWarnings(results []*ScanResults) bool {
+func IsWarnings(results []*types.ScanResults) bool {
 	for _, result := range results {
 		for _, res := range result.Items {
-			if res.IsLevel(Warning) {
+			if res.IsLevel(types.Warning) {
 				return true
 			}
 		}
@@ -149,7 +153,7 @@ func isWarnings(results []*ScanResults) bool {
 	return false
 }
 
-func GetPayload(config *Config) (*release.ReleaseInfo, error) {
+func GetPayload(config *types.Config) (*release.ReleaseInfo, error) {
 	var payload *release.ReleaseInfo
 	var err error
 	if config.FromURL != "" {
@@ -194,8 +198,8 @@ func ReadReleaseInfo(filename string) (*release.ReleaseInfo, error) {
 	return releaseInfo, nil
 }
 
-func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanResults {
-	results := NewScanResults()
+func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *types.ScanResults {
+	results := types.NewScanResults()
 
 	image := tag.From.Name
 
@@ -203,39 +207,39 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 	for _, ignoredImage := range cfg.FilterImages {
 		if ignoredImage == image {
 			klog.InfoS("Ignoring image", "image", image)
-			results.Append(NewScanResult().SetTag(tag).Success())
+			results.Append(types.NewScanResult().SetTag(tag).Success())
 			return results
 		}
 	}
 
 	// pull
-	if err := podmanPull(ctx, image, cfg.InsecurePull); err != nil {
-		results.Append(NewScanResult().SetTag(tag).SetError(err))
+	if err := podman.Pull(ctx, image, cfg.InsecurePull); err != nil {
+		results.Append(types.NewScanResult().SetTag(tag).SetError(err))
 		return results
 	}
 	// mount
-	mountPath, err := podmanMount(ctx, image)
+	mountPath, err := podman.Mount(ctx, image)
 	if err != nil {
-		results.Append(NewScanResult().SetTag(tag).SetError(err))
+		results.Append(types.NewScanResult().SetTag(tag).SetError(err))
 		return results
 	}
 	defer func() {
-		_ = podmanUnmount(ctx, image)
+		_ = podman.Unmount(ctx, image)
 	}()
 	// get openshift component
-	component, _ := getOpenshiftComponentFromImage(ctx, image)
+	component, _ := podman.GetOpenshiftComponentFromImage(ctx, image)
 	if component != nil {
 		klog.InfoS("found operator", "component", component.Component, "source_location", component.SourceLocation, "maintainer_component", component.MaintainerComponent, "is_bundle", component.IsBundle)
 	}
 	// skip if bundle image
 	if component.IsBundle {
-		results.Append(NewScanResult().SetTag(tag).Skipped())
+		results.Append(types.NewScanResult().SetTag(tag).Skipped())
 		return results
 	}
 
 	// does the image contain openssl
-	opensslInfo := validateOpenssl(ctx, mountPath)
-	results.Append(NewScanResult().SetOpenssl(opensslInfo).SetTag(tag))
+	opensslInfo := validations.ValidateOpenssl(ctx, mountPath)
+	results.Append(types.NewScanResult().SetOpenssl(opensslInfo).SetTag(tag))
 
 	// business logic for scan
 	if err := filepath.WalkDir(mountPath, func(path string, file fs.DirEntry, err error) error {
@@ -256,14 +260,14 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 			return nil
 		}
 		klog.V(1).InfoS("scanning path", "path", path)
-		res := scanBinary(ctx, component, tag, mountPath, innerPath)
+		res := validations.ScanBinary(ctx, component, tag, mountPath, innerPath)
 		if res.Skip {
 			// Do not add skipped binaries to results.
 			return nil
 		}
 		if res.IsSuccess() {
 			klog.V(1).InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
-		} else if res.IsLevel(Warning) {
+		} else if res.IsLevel(types.Warning) {
 			klog.V(1).InfoS("scanning warning", "image", image, "path", innerPath, "status", "warning")
 		} else {
 			klog.InfoS("scanning failed", "image", image, "path", innerPath, "error", res.Error.Error, "status", "failed")
@@ -275,6 +279,10 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 	}
 
 	return results
+}
+
+func ValidateOpenssl(ctx context.Context, mountPath string) {
+	panic("unimplemented")
 }
 
 func stripMountPath(mountPath, path string) string {
