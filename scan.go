@@ -130,7 +130,18 @@ func ValidateTag(ctx context.Context, cfg *Config, tag *v1.TagReference, rx chan
 func isFailed(results []*ScanResults) bool {
 	for _, result := range results {
 		for _, res := range result.Items {
-			if res.Error != nil {
+			if res.IsLevel(Error) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isWarnings(results []*ScanResults) bool {
+	for _, result := range results {
+		for _, res := range result.Items {
+			if res.IsLevel(Warning) {
 				return true
 			}
 		}
@@ -250,10 +261,12 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *Config) *ScanRe
 			// Do not add skipped binaries to results.
 			return nil
 		}
-		if res.Error == nil {
+		if res.IsSuccess() {
 			klog.V(1).InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
+		} else if res.IsLevel(Warning) {
+			klog.V(1).InfoS("scanning warning", "image", image, "path", innerPath, "status", "warning")
 		} else {
-			klog.InfoS("scanning failed", "image", image, "path", innerPath, "error", res.Error, "status", "failed")
+			klog.InfoS("scanning failed", "image", image, "path", innerPath, "error", res.Error.Error, "status", "failed")
 		}
 		results.Append(res)
 		return nil

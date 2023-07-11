@@ -25,6 +25,14 @@ func (r *ScanResult) Skipped() *ScanResult {
 	return r
 }
 
+func (r *ScanResult) IsLevel(level ErrorLevel) bool {
+	return r.Error != nil && r.Error.Level == level
+}
+
+func (r *ScanResult) IsSuccess() bool {
+	return r.Error == nil
+}
+
 func (r *ScanResult) SetOpenssl(info OpensslInfo) *ScanResult {
 	if !info.Present {
 		r.SetError(errors.New("openssl library not present"))
@@ -35,8 +43,13 @@ func (r *ScanResult) SetOpenssl(info OpensslInfo) *ScanResult {
 	return r
 }
 
-func (r *ScanResult) SetError(err error) *ScanResult {
+func (r *ScanResult) SetValidationError(err *ValidationError) *ScanResult {
 	r.Error = err
+	return r
+}
+
+func (r *ScanResult) SetError(err error) *ScanResult {
+	r.Error = NewValidationError(err)
 	return r
 }
 

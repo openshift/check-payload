@@ -29,21 +29,28 @@ var (
 )
 
 func printResults(cfg *Config, results []*ScanResults) {
-	var failureReport, successReport string
+	var failureReport, warningReport, successReport string
 
 	var combinedReport string
 
 	if cfg.NodeScan != "" {
-		failureReport, successReport = generateNodeScanReport(results, cfg)
+		failureReport, warningReport, successReport = generateNodeScanReport(results, cfg)
 	} else {
-		failureReport, successReport = generateReport(results, cfg)
+		failureReport, warningReport, successReport = generateReport(results, cfg)
 	}
 
-	failed := isFailed(results)
-	if failed {
+	isWarnings := isWarnings(results)
+	isFailed := isFailed(results)
+	if isFailed {
 		fmt.Println("---- Failure Report")
 		fmt.Println(failureReport)
 		combinedReport = failureReport
+	}
+
+	if isWarnings {
+		fmt.Println("---- Warning Report")
+		fmt.Println(warningReport)
+		combinedReport += "\n\n ---- Warning Report\n" + warningReport
 	}
 
 	if cfg.Verbose {
@@ -52,7 +59,7 @@ func printResults(cfg *Config, results []*ScanResults) {
 		combinedReport += "\n\n ---- Success Report\n" + successReport
 	}
 
-	if !failed {
+	if !isFailed && (!cfg.FailOnWarnings && isWarnings) {
 		combinedReport += "\n\n ---- Successful run\n"
 		fmt.Println("---- Successful run")
 	}
@@ -102,14 +109,17 @@ func displayExceptions(results []*ScanResults) {
 	}
 }
 
-func generateNodeScanReport(results []*ScanResults, cfg *Config) (string, string) {
+func generateNodeScanReport(results []*ScanResults, cfg *Config) (string, string, string) {
 	var failureTableRows []table.Row
+	var warningTableRows []table.Row
 	var successTableRows []table.Row
 
 	for _, result := range results {
 		for _, res := range result.Items {
-			if res.Error != nil {
-				failureTableRows = append(failureTableRows, table.Row{res.Path, res.Error, res.Tag.From.Name})
+			if res.IsLevel(Error) {
+				failureTableRows = append(failureTableRows, table.Row{res.Path, res.Error.GetError(), res.Tag.From.Name})
+			} else if res.IsLevel(Warning) {
+				warningTableRows = append(warningTableRows, table.Row{res.Path, res.Error.GetError(), res.Tag.From.Name})
 			} else {
 				successTableRows = append(successTableRows, table.Row{res.Path})
 			}
@@ -121,45 +131,49 @@ func generateNodeScanReport(results []*ScanResults, cfg *Config) (string, string
 	ftw.AppendRows(failureTableRows)
 	ftw.SetIndexColumn(1)
 
+	wtw := table.NewWriter()
+	wtw.AppendHeader(failureNodeRowHeader)
+	wtw.AppendRows(warningTableRows)
+	wtw.SetIndexColumn(1)
+
 	stw := table.NewWriter()
 	stw.AppendHeader(successNodeRowHeader)
 	stw.AppendRows(successTableRows)
 	stw.SetIndexColumn(1)
 
-	return generateOutputString(cfg, ftw, stw)
+	return generateOutputString(cfg, ftw, wtw, stw)
 }
 
-func generateReport(results []*ScanResults, cfg *Config) (string, string) {
-	ftw, stw := renderReport(results)
-	failureReport, successReport := generateOutputString(cfg, ftw, stw)
-	return failureReport, successReport
+func generateReport(results []*ScanResults, cfg *Config) (string, string, string) {
+	ftw, wtw, stw := renderReport(results)
+	return generateOutputString(cfg, ftw, wtw, stw)
 }
 
-func generateOutputString(cfg *Config, ftw table.Writer, stw table.Writer) (string, string) {
+func generateOutputString(cfg *Config, ftw table.Writer, wtw table.Writer, stw table.Writer) (string, string, string) {
 	var failureReport string
+	var successReport string
+	var warningReport string
+
 	switch cfg.OutputFormat {
 	case "table":
 		failureReport = ftw.Render()
+		successReport = stw.Render()
+		warningReport = wtw.Render()
 	case "csv":
 		failureReport = ftw.RenderCSV()
+		successReport = stw.RenderCSV()
+		warningReport = wtw.RenderCSV()
 	case "markdown":
 		failureReport = ftw.RenderMarkdown()
+		successReport = stw.RenderMarkdown()
+		warningReport = wtw.RenderMarkdown()
 	case "html":
 		failureReport = ftw.RenderHTML()
+		successReport = stw.RenderHTML()
+		warningReport = wtw.RenderHTML()
 	}
 
-	var successReport string
-	switch cfg.OutputFormat {
-	case "table":
-		successReport = stw.Render()
-	case "csv":
-		successReport = stw.RenderCSV()
-	case "markdown":
-		successReport = stw.RenderMarkdown()
-	case "html":
-		successReport = stw.RenderHTML()
-	}
-	return failureReport, successReport
+	return failureReport, warningReport, successReport
 }
 
 func getComponent(res *ScanResult) *OpenshiftComponent {
@@ -171,15 +185,18 @@ func getComponent(res *ScanResult) *OpenshiftComponent {
 	}
 }
 
-func renderReport(results []*ScanResults) (failures table.Writer, successes table.Writer) {
+func renderReport(results []*ScanResults) (failures table.Writer, warnings table.Writer, successes table.Writer) {
 	var failureTableRows []table.Row
+	var warningTableRows []table.Row
 	var successTableRows []table.Row
 
 	for _, result := range results {
 		for _, res := range result.Items {
 			component := getComponent(res)
-			if res.Error != nil {
-				failureTableRows = append(failureTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Error, res.Tag.From.Name})
+			if res.IsLevel(Error) {
+				failureTableRows = append(failureTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Error.GetError(), res.Tag.From.Name})
+			} else if res.IsLevel(Warning) {
+				warningTableRows = append(warningTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Error.GetError(), res.Tag.From.Name})
 			} else {
 				successTableRows = append(successTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Tag.From.Name})
 			}
@@ -191,9 +208,14 @@ func renderReport(results []*ScanResults) (failures table.Writer, successes tabl
 	ftw.AppendRows(failureTableRows)
 	ftw.SetIndexColumn(1)
 
+	wtw := table.NewWriter()
+	wtw.AppendHeader(failureRowHeader)
+	wtw.AppendRows(warningTableRows)
+	wtw.SetIndexColumn(1)
+
 	stw := table.NewWriter()
 	stw.AppendHeader(successRowHeader)
 	stw.AppendRows(successTableRows)
 	stw.SetIndexColumn(1)
-	return ftw, stw
+	return ftw, wtw, stw
 }
