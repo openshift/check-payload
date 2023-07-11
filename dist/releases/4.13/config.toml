@@ -1,0 +1,176 @@
+# List of directories to ignore. This is a prefix match,
+# i.e. everything under a matched directory is ignored.
+filter_dirs = [
+  "/lib/firmware",
+  "/lib/modules",
+  "/usr/lib/.build-id",
+  "/usr/lib/firmware",
+  "/usr/lib/grub",
+  "/usr/lib/modules",
+  "/usr/share/app-info",
+  "/usr/share/doc",
+  "/usr/share/fonts",
+  "/usr/share/icons",
+  "/usr/share/openshift",
+  "/usr/src/plugins",
+  "/rootfs",
+  "/sysroot",
+]
+
+# List of files to ignore. This is a strict match.
+filter_files = [
+  "/usr/sbin/ldconfig",
+  "/usr/sbin/build-locale-archive",
+  "/usr/bin/crictl",
+  "/usr/bin/crio",
+  "/usr/bin/crio-status",
+  "/usr/bin/pinns",
+  "/usr/bin/podman",
+  "/usr/bin/runc",
+  "/usr/bin/skopeo",
+  "/usr/lib/dracut/modules.d/30ignition/ignition",
+  "/usr/libexec/catatonit/catatonit",
+  "/usr/libexec/cni/bandwidth",
+  "/usr/libexec/cni/bridge",
+  "/usr/libexec/cni/dhcp",
+  "/usr/libexec/cni/dummy",
+  "/usr/libexec/cni/firewall",
+  "/usr/libexec/cni/host-device",
+  "/usr/libexec/cni/host-local",
+  "/usr/libexec/cni/ipvlan",
+  "/usr/libexec/cni/loopback",
+  "/usr/libexec/cni/macvlan",
+  "/usr/libexec/cni/portmap",
+  "/usr/libexec/cni/ptp",
+  "/usr/libexec/cni/sample",
+  "/usr/libexec/cni/sbr",
+  "/usr/libexec/cni/static",
+  "/usr/libexec/cni/tuning",
+  "/usr/libexec/cni/vlan",
+  "/usr/libexec/cni/vrf",
+  "/usr/libexec/podman/rootlessport",
+  "/usr/libexec/podman/catatonit",
+  "/usr/libexec/podman/quadlet",
+]
+
+# List of images to ignore.
+filter_images = [ ]
+
+# Node Ignores
+# these node exceptions via rpm have been manually validated
+[node."runc-1.1.6-4.rhaos4.12.el8.x86_64"]
+filter_files = [ "/usr/bin/runc" ]
+
+[node."cri-tools-1.25.0-2.el8.x86_64"]
+filter_files = [ "/usr/bin/crictl" ]
+
+[node."glibc-2.28-189.5.el8_6.x86_64"]
+filter_files = [ "/sbin/ldconfig" ]
+
+[node."cri-o-1.25.3-5.rhaos4.12.git44a2cb2.el8.x86_64"]
+filter_files = [
+  "/usr/bin/crio",
+  "/usr/bin/crio-status",
+  "/usr/bin/pinns",
+]
+
+[node."podman-4.2.0-6.1.rhaos4.12.el8.x86_64"]
+filter_files = [
+  "/usr/bin/podman",
+  "/usr/libexec/podman/rootlessport",
+]
+
+[node."ignition-2.14.0-6.rhaos4.12.el8.x86_64"]
+filter_files = [
+  "/usr/lib/dracut/modules.d/30ignition/ignition"
+]
+
+[node."skopeo-1.9.4-3.1.rhaos4.12.el8.x86_64"]
+filter_files = [
+  "/usr/bin/skopeo"
+]
+
+[node."podman-catatonit-4.2.0-6.1.rhaos4.12.el8.x86_64"]
+filter_files = [
+  "/usr/libexec/catatonit/catatonit"
+]
+
+[node."containernetworking-plugins-1.0.1-7.rhaos4.12.el8.x86_64"]
+filter_files = [
+"/usr/libexec/cni/bandwidth",
+"/usr/libexec/cni/bridge",
+"/usr/libexec/cni/dhcp",
+"/usr/libexec/cni/firewall",
+"/usr/libexec/cni/host-device",
+"/usr/libexec/cni/host-local",
+"/usr/libexec/cni/ipvlan",
+"/usr/libexec/cni/loopback",
+"/usr/libexec/cni/macvlan",
+"/usr/libexec/cni/portmap",
+"/usr/libexec/cni/ptp",
+"/usr/libexec/cni/sample",
+"/usr/libexec/cni/tuning",
+"/usr/libexec/cni/vlan",
+"/usr/libexec/cni/vrf",
+"/usr/libexec/cni/sbr",
+"/usr/libexec/cni/static",
+]
+
+# Payload Components
+
+[payload.operator-lifecycle-manager-container]
+filter_files = [ "/usr/bin/cpb" ]
+
+[payload.openshift-enterprise-pod-container]
+filter_files = [ "/usr/bin/pod" ]
+
+[payload.ose-ovn-kubernetes-container]
+filter_files = [
+  "/usr/libexec/cni/host-local",
+  "/usr/libexec/cni/sample",
+  "/usr/libexec/cni/vrf",
+  "/usr/libexec/cni/tuning",
+  "/usr/libexec/cni/vlan",
+  "/usr/libexec/cni/bridge",
+  "/usr/libexec/cni/host-device",
+  "/usr/libexec/cni/loopback",
+  "/usr/libexec/cni/portmap",
+  "/usr/libexec/cni/firewall",
+  "/usr/libexec/cni/macvlan",
+  "/usr/libexec/cni/ptp",
+  "/usr/libexec/cni/sbr",
+  "/usr/libexec/cni/bandwidth",
+  "/usr/libexec/cni/dhcp",
+  "/usr/libexec/cni/ipvlan",
+  "/usr/libexec/cni/static",
+]
+
+[payload.ose-agent-installer-node-agent-container]
+filter_files = [
+  "/usr/libexec/catatonit/catatonit",
+  "/usr/libexec/cni/host-device",
+  "/usr/libexec/cni/host-local",
+  "/usr/libexec/cni/ipvlan",
+  "/usr/libexec/cni/ptp",
+  "/usr/libexec/cni/dhcp",
+  "/usr/libexec/cni/loopback",
+  "/usr/libexec/cni/macvlan",
+  "/usr/libexec/cni/sample",
+  "/usr/libexec/cni/sbr",
+  "/usr/libexec/cni/vlan",
+  "/usr/libexec/cni/bridge",
+  "/usr/libexec/cni/firewall",
+  "/usr/libexec/cni/portmap",
+  "/usr/libexec/cni/bandwidth",
+  "/usr/libexec/cni/static",
+  "/usr/libexec/cni/tuning",
+  "/usr/libexec/cni/vrf",
+  "/usr/bin/cpb",
+  "/usr/bin/pod",
+  "/usr/bin/runc",
+  "/usr/bin/podman",
+  "/usr/libexec/podman/rootlessport",
+]
+
+[payload.openshift-enterprise-builder-container]
+filter_files = [ "/usr/bin/runc" ]
