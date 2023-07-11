@@ -3,7 +3,6 @@ package scan
 import (
 	"bytes"
 	"context"
-	_ "embed"
 	"encoding/json"
 	"io/fs"
 	"os"
@@ -279,10 +278,6 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 	}
 
 	return results
-}
-
-func ValidateOpenssl(ctx context.Context, mountPath string) {
-	panic("unimplemented")
 }
 
 func stripMountPath(mountPath, path string) string {
