@@ -5,15 +5,11 @@ all:
 	CGO_ENABLED=0 $(GO) build -ldflags="-X main.Commit=$$(git describe --tags --abbrev=8 --dirty --always --long)"
 
 .PHONY: verify
-verify: verify-install verify-space verify-golangci
-
-.PHONY: verify-install
-verify-install:
-	@command golangci-lint &> /dev/null || $$(curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.53.3)
+verify: verify-space verify-golangci
 
 .PHONY: verify-golangci
 verify-golangci:
-	PATH=bin:$$PATH golangci-lint run
+	golangci-lint run
 
 .PHONY: verify-space
 verify-space: ## Ensure no whitespace at EOL
