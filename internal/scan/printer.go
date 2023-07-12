@@ -60,7 +60,12 @@ func PrintResults(cfg *types.Config, results []*types.ScanResults) {
 		combinedReport += "\n\n ---- Success Report\n" + successReport
 	}
 
-	if !isFailed && (!cfg.FailOnWarnings && isWarnings) {
+	if !isFailed && isWarnings {
+		combinedReport += "\n\n ---- Successful run with warnings\n"
+		fmt.Println("---- Successful run with warnings")
+	}
+
+	if !isFailed && !isWarnings {
 		combinedReport += "\n\n ---- Successful run\n"
 		fmt.Println("---- Successful run")
 	}
