@@ -132,6 +132,6 @@ Golang validations run through a pipeline:
 1. validateGoOpenssl - ensure openssl matches the dynamic library within the system
 1. validateGoTags - ensure golang tags are set
 
-### Printer
+### Printer 
 
 The printer aggregates all the results and formats into a table, csv, markdown, etc. If any errors are found then the process exits non-zero. A successful run returns 0.
