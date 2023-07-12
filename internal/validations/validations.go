@@ -154,7 +154,7 @@ func validateGoTags(_ context.Context, _ *v1.TagReference, _ string, baton *Bato
 
 	matches := validateGoTagsRegexp.FindAllSubmatch(baton.GoVersionDetailed, -1)
 	if matches == nil {
-		return nil
+		return types.NewValidationError(fmt.Errorf("go: binary has zero tags enabled (should have strictfipsruntime)")).SetWarning()
 	}
 
 	tags := strings.Split(string(matches[0][1]), ",")
