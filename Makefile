@@ -9,11 +9,11 @@ verify: verify-install verify-space verify-golangci
 
 .PHONY: verify-install
 verify-install:
-	@command golangci-lint &> /dev/null || go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
+	@command golangci-lint &> /dev/null || $$(curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.53.3)
 
 .PHONY: verify-golangci
 verify-golangci:
-	golangci-lint run
+	PATH=bin:$$PATH golangci-lint run
 
 .PHONY: verify-space
 verify-space: ## Ensure no whitespace at EOL
