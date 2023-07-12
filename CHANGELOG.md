@@ -7,7 +7,7 @@
 - Fix remove container create/rm step
 - Remove obsoleted requirements
 - Use RPM name in node scan
-- perf: validaetGoSymbols and skip early 
+- perf: validaetGoSymbols and skip early
 - perf: compile regexes only once
 - perf: isGoExecutable do not use regexp
 
