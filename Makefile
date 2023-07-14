@@ -1,5 +1,4 @@
 GO ?= go
-GOLANGCI_LINT_CACHE ?= /tmp/golangci-cache
 
 .PHONY: all
 all:
@@ -10,7 +9,7 @@ verify: verify-space verify-golangci
 
 .PHONY: verify-golangci
 verify-golangci:
-	GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} golangci-lint run
+	golangci-lint run
 
 .PHONY: verify-space
 verify-space: ## Ensure no whitespace at EOL
