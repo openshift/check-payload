@@ -178,3 +178,8 @@ filter_files = [
   "/usr/libexec/podman/rootlessport",
 ]
 
+[payload.devspaces-code-rhel8-container]
+filter_files = [
+  ### static binaries, no crypto
+  "/checode-linux-libc/node_modules/@vscode/ripgrep/bin/rg"
+]
