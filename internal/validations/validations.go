@@ -349,7 +349,6 @@ func isElfExe(path string) (bool, error) {
 }
 
 func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v1.TagReference, topDir, innerPath string) *types.ScanResult {
-	allFn := validationFns["all"]
 	goFn := validationFns["go"]
 	exeFn := validationFns["exe"]
 
@@ -365,12 +364,6 @@ func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v
 	}
 	if !elf {
 		return res.Skipped()
-	}
-
-	for _, fn := range allFn {
-		if err := fn(ctx, tag, path, baton); err != nil {
-			return res.SetValidationError(err)
-		}
 	}
 
 	// is this a go executable
