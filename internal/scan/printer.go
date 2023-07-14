@@ -90,10 +90,10 @@ func displayExceptions(results []*types.ScanResults) {
 				continue
 			}
 			component := getComponent(res)
-			if set, ok := exceptions[component.Component]; ok {
+			if set, ok := exceptions[component]; ok {
 				set.Add(res)
 			} else {
-				exceptions[component.Component] = mapset.NewSet(res)
+				exceptions[component] = mapset.NewSet(res)
 			}
 		}
 	}
@@ -182,13 +182,11 @@ func generateOutputString(cfg *types.Config, ftw table.Writer, wtw table.Writer,
 	return failureReport, warningReport, successReport
 }
 
-func getComponent(res *types.ScanResult) *types.OpenshiftComponent {
+func getComponent(res *types.ScanResult) string {
 	if res.Component != nil {
-		return res.Component
+		return res.Component.Component
 	}
-	return &types.OpenshiftComponent{
-		Component: "<unknown>",
-	}
+	return "<unknown>"
 }
 
 func renderReport(results []*types.ScanResults) (failures table.Writer, warnings table.Writer, successes table.Writer) {
@@ -200,11 +198,11 @@ func renderReport(results []*types.ScanResults) (failures table.Writer, warnings
 		for _, res := range result.Items {
 			component := getComponent(res)
 			if res.IsLevel(types.Error) {
-				failureTableRows = append(failureTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Error.GetError(), res.Tag.From.Name})
+				failureTableRows = append(failureTableRows, table.Row{component, res.Tag.Name, res.Path, res.Error.GetError(), res.Tag.From.Name})
 			} else if res.IsLevel(types.Warning) {
-				warningTableRows = append(warningTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Error.GetError(), res.Tag.From.Name})
+				warningTableRows = append(warningTableRows, table.Row{component, res.Tag.Name, res.Path, res.Error.GetError(), res.Tag.From.Name})
 			} else {
-				successTableRows = append(successTableRows, table.Row{component.Component, res.Tag.Name, res.Path, res.Tag.From.Name})
+				successTableRows = append(successTableRows, table.Row{component, res.Tag.Name, res.Path, res.Tag.From.Name})
 			}
 		}
 	}
