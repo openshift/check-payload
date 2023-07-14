@@ -37,6 +37,8 @@ filter_files = [
   "/usr/src/multus-cni/rhel7/bin/multus",
   "/usr/src/whereabouts/rhel7/bin/whereabouts",
   "/usr/src/egress-router-cni/rhel7/bin/egress-router",
+  "/checode-linux-libc/node_modules/@vscode/ripgrep/bin/rg", # Dev Spaces code-rhel8 container
+  "/projector/ide/bin/repair", # Dev Spaces idea-rhel8 tech preview container
 ]
 
 # List of images to ignore.
