@@ -343,9 +343,6 @@ func isElfExe(path string) (bool, error) {
 }
 
 func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v1.TagReference, topDir, innerPath string) *types.ScanResult {
-	goFn := validationFns["go"]
-	exeFn := validationFns["exe"]
-
 	baton := &Baton{TopDir: topDir}
 	res := types.NewScanResult().SetComponent(component).SetTag(tag).SetPath(innerPath)
 
@@ -364,18 +361,16 @@ func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v
 	if err != nil {
 		return res.SetError(err)
 	}
+	var checks []ValidationFn
 	if goBinary {
-		for _, fn := range goFn {
-			if err := fn(ctx, tag, path, baton); err != nil {
-				return res.SetValidationError(err)
-			}
-		}
+		checks = validationFns["go"]
 	} else {
-		// is a regular binary
-		for _, fn := range exeFn {
-			if err := fn(ctx, tag, path, baton); err != nil {
-				return res.SetValidationError(err)
-			}
+		checks = validationFns["exe"]
+	}
+
+	for _, fn := range checks {
+		if err := fn(ctx, tag, path, baton); err != nil {
+			return res.SetValidationError(err)
 		}
 	}
 
