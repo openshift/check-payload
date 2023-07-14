@@ -29,8 +29,7 @@ var (
 	validateGoTagsRegexp         = regexp.MustCompile(`-tags=(.*)\n`)
 	validateStringsOpensslRegexp = regexp.MustCompile(`libcrypto.so(\.?\d+)*`)
 
-	ErrNotGolangExe  = errors.New("not golang executable")
-	ErrNotExecutable = errors.New("not a regular executable")
+	ErrNotGolangExe = errors.New("not golang executable")
 
 	requiredGolangSymbols = []string{
 		"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
