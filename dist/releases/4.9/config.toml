@@ -24,6 +24,9 @@ filter_files = [
   "/sbin/ldconfig",
 ]
 
+# List of images to ignore.
+filter_images = [ ]
+
 # these node exceptions via rpm have been manually validated
 [node."cri-o-1.22.5-20.rhaos4.9.gitdf6ec18.el8.x86_64"]
 filter_files = [
@@ -38,9 +41,6 @@ filter_files = [ "/usr/bin/pinns" ]
 
 [node."podman-catatonit-3.2.3-0.12.module+el8.4.0+14908+81312c48.x86_64"]
 filter_files = [ "/usr/libexec/catatonit/catatonit" ]
-
-# List of images to ignore.
-filter_images = [ ]
 
 # Payload Components
 
