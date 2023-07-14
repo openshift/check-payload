@@ -13,7 +13,7 @@ verify-golangci:
 
 .PHONY: verify-space
 verify-space: ## Ensure no whitespace at EOL
-	@if git -P grep -I -n '\s$$'; then \
+	@if git -P grep -I -n '\s$$' -- ':(exclude)vendor'; then \
 		echo "^^^^ extra whitespace at EOL, please fix"; \
 		exit 1; \
 	fi
