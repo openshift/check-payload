@@ -98,18 +98,12 @@ func ReadTable(fileName string) (*gosym.Table, error) {
 	return symTable, nil
 }
 
-// Checks the .gopclntab for the expected list of symbols.
-func ExpectedSyms(expectedSyms []string, symTable *gosym.Table) error {
-	found := false
-	for _, s := range expectedSyms {
-		fn := symTable.LookupFunc(s)
-		if fn != nil {
-			found = true
-			break
+// ExpectedSyms checks that .gopclntab contains any of the expectedSymbols.
+func ExpectedSyms(expectedSymbols []string, symTable *gosym.Table) bool {
+	for _, s := range expectedSymbols {
+		if symTable.LookupFunc(s) != nil {
+			return true
 		}
 	}
-	if !found {
-		return fmt.Errorf("expected symbol(s) %v not found", expectedSyms)
-	}
-	return nil
+	return false
 }
