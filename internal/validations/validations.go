@@ -29,9 +29,6 @@ var (
 	validateGoTagsRegexp         = regexp.MustCompile(`-tags=(.*)\n`)
 	validateStringsOpensslRegexp = regexp.MustCompile(`libcrypto.so(\.?\d+)*`)
 
-	ErrNotGolangExe  = errors.New("not golang executable")
-	ErrNotExecutable = errors.New("not a regular executable")
-
 	requiredGolangSymbols = []string{
 		"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 		"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
@@ -307,17 +304,14 @@ func validateExe(ctx context.Context, _ *v1.TagReference, path string, _ *Baton)
 	return isDynamicallyLinked(ctx, path)
 }
 
-func isGoExecutable(ctx context.Context, path string) error {
+func isGoExecutable(ctx context.Context, path string) (bool, error) {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", path)
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		return err
+		return false, err
 	}
-	if strings.Contains(stdout.String(), ": go1.") {
-		return nil
-	}
-	return ErrNotGolangExe
+	return strings.Contains(stdout.String(), ": go1."), nil
 }
 
 // isElfExe checks if path is an ELF executable (which most probably means
@@ -349,10 +343,6 @@ func isElfExe(path string) (bool, error) {
 }
 
 func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v1.TagReference, topDir, innerPath string) *types.ScanResult {
-	allFn := validationFns["all"]
-	goFn := validationFns["go"]
-	exeFn := validationFns["exe"]
-
 	baton := &Baton{TopDir: topDir}
 	res := types.NewScanResult().SetComponent(component).SetTag(tag).SetPath(innerPath)
 
@@ -367,25 +357,20 @@ func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v
 		return res.Skipped()
 	}
 
-	for _, fn := range allFn {
-		if err := fn(ctx, tag, path, baton); err != nil {
-			return res.SetValidationError(err)
-		}
+	goBinary, err := isGoExecutable(ctx, path)
+	if err != nil {
+		return res.SetError(err)
+	}
+	var checks []ValidationFn
+	if goBinary {
+		checks = validationFns["go"]
+	} else {
+		checks = validationFns["exe"]
 	}
 
-	// is this a go executable
-	if isGoExecutable(ctx, path) == nil {
-		for _, fn := range goFn {
-			if err := fn(ctx, tag, path, baton); err != nil {
-				return res.SetValidationError(err)
-			}
-		}
-	} else {
-		// is a regular binary
-		for _, fn := range exeFn {
-			if err := fn(ctx, tag, path, baton); err != nil {
-				return res.SetValidationError(err)
-			}
+	for _, fn := range checks {
+		if err := fn(ctx, tag, path, baton); err != nil {
+			return res.SetValidationError(err)
 		}
 	}
 
