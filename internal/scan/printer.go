@@ -102,14 +102,15 @@ func displayExceptions(results []*types.ScanResults) {
 		if payloadName != "" {
 			fmt.Printf("[payload.%v]\n", payloadName)
 		}
-		if len(set.ToSlice()) == 1 {
-			fmt.Printf("filter_files = [ \"%v\" ]\n", set.ToSlice()[0].Path)
+		ss := set.ToSlice()
+		if len(ss) == 1 {
+			fmt.Printf("filter_files = [ %q ]\n", ss[0].Path)
 		} else {
-			fmt.Printf("filter_files = [\n")
-			for _, res := range set.ToSlice() {
-				fmt.Printf("  \"%v\",\n", res.Path)
+			fmt.Println("filter_files = [")
+			for _, res := range ss {
+				fmt.Printf("  %q,\n", res.Path)
 			}
-			fmt.Printf("]\n")
+			fmt.Println("]")
 		}
 		fmt.Println("")
 	}
