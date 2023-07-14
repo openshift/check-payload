@@ -6,7 +6,7 @@ import (
 )
 
 func TestEXE(t *testing.T) {
-	if err := validateExe(context.Background(), nil, "/usr/bin/lua5.1", nil); err != nil {
+	if err := validateExe(context.Background(), "/usr/bin/lua5.1", nil); err != nil {
 		t.Fatal(err)
 	}
 }
