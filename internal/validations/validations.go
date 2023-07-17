@@ -38,7 +38,7 @@ var (
 type Baton struct {
 	TopDir            string
 	GoNoCrypto        bool
-	GoVersion         string
+	GoVersion         *semver.Version
 	GoVersionDetailed []byte
 }
 
@@ -71,7 +71,12 @@ func validateGoVersion(ctx context.Context, path string, baton *Baton) *types.Va
 	if len(matches) == 0 {
 		return types.NewValidationError(fmt.Errorf("go: could not find compiler version in binary"))
 	}
-	baton.GoVersion = matches[0][1]
+	ver := matches[0][1]
+	semver, err := semver.NewVersion(ver)
+	if err != nil {
+		return types.NewValidationError(fmt.Errorf("can't parse go version %q: %w", ver, err))
+	}
+	baton.GoVersion = semver
 	baton.GoVersionDetailed = stdout.Bytes()
 	return nil
 }
@@ -87,15 +92,11 @@ func validateGoSymbols(_ context.Context, path string, baton *Baton) *types.Vali
 		return nil
 	}
 
-	v, err := semver.NewVersion(baton.GoVersion)
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
-	}
 	c, err := semver.NewConstraint("< 1.18")
 	if err != nil {
 		return types.NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
 	}
-	if c.Check(v) {
+	if c.Check(baton.GoVersion) {
 		return nil
 	}
 
@@ -115,15 +116,11 @@ func isUsingCryptoModule(symtable *gosym.Table) bool {
 }
 
 func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationError {
-	v, err := semver.NewVersion(baton.GoVersion)
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
-	}
 	c, err := semver.NewConstraint("<= 1.17")
 	if err != nil {
 		return types.NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
 	}
-	if c.Check(v) {
+	if c.Check(baton.GoVersion) {
 		return nil
 	}
 
@@ -137,15 +134,11 @@ func validateGoTags(_ context.Context, _ string, baton *Baton) *types.Validation
 	invalidTagsSet := mapset.NewSet("no_openssl")
 	expectedTagsSet := mapset.NewSet("strictfipsruntime")
 
-	v, err := semver.NewVersion(baton.GoVersion)
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
-	}
 	c, err := semver.NewConstraint("<= 1.17")
 	if err != nil {
 		return types.NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
 	}
-	if c.Check(v) {
+	if c.Check(baton.GoVersion) {
 		return nil
 	}
 
