@@ -33,6 +33,8 @@ var (
 		"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 		"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 	}
+
+	goLessThan118 = newSemverConstraint("< 1.18")
 )
 
 type Baton struct {
@@ -92,11 +94,7 @@ func validateGoSymbols(_ context.Context, path string, baton *Baton) *types.Vali
 		return nil
 	}
 
-	c, err := semver.NewConstraint("< 1.18")
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
-	}
-	if c.Check(baton.GoVersion) {
+	if goLessThan118.Check(baton.GoVersion) {
 		return nil
 	}
 
@@ -116,11 +114,7 @@ func isUsingCryptoModule(symtable *gosym.Table) bool {
 }
 
 func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationError {
-	c, err := semver.NewConstraint("<= 1.17")
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
-	}
-	if c.Check(baton.GoVersion) {
+	if goLessThan118.Check(baton.GoVersion) {
 		return nil
 	}
 
@@ -134,11 +128,7 @@ func validateGoTags(_ context.Context, _ string, baton *Baton) *types.Validation
 	invalidTagsSet := mapset.NewSet("no_openssl")
 	expectedTagsSet := mapset.NewSet("strictfipsruntime")
 
-	c, err := semver.NewConstraint("<= 1.17")
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
-	}
-	if c.Check(baton.GoVersion) {
+	if goLessThan118.Check(baton.GoVersion) {
 		return nil
 	}
 
@@ -368,4 +358,14 @@ func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v
 	}
 
 	return res.Success()
+}
+
+// newSemverConstraint is like semver.NewConstraint but panics if the expression cannot be parsed.
+// It simplifies safe initialization of global variables holding preparsed constraints.
+func newSemverConstraint(str string) *semver.Constraints {
+	c, err := semver.NewConstraint(str)
+	if err != nil {
+		panic(fmt.Errorf("semver: can't parse constraint %v: %w", str, err))
+	}
+	return c
 }
