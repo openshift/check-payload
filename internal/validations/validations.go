@@ -35,6 +35,10 @@ var (
 	}
 
 	goLessThan118 = newSemverConstraint("< 1.18")
+
+	// Used by validateGoTags.
+	invalidGoTagsSet  = mapset.NewSet("no_openssl")
+	expectedGoTagsSet = mapset.NewSet("strictfipsruntime")
 )
 
 type Baton struct {
@@ -125,9 +129,6 @@ func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationE
 }
 
 func validateGoTags(_ context.Context, _ string, baton *Baton) *types.ValidationError {
-	invalidTagsSet := mapset.NewSet("no_openssl")
-	expectedTagsSet := mapset.NewSet("strictfipsruntime")
-
 	if goLessThan118.Check(baton.GoVersion) {
 		return nil
 	}
@@ -144,13 +145,13 @@ func validateGoTags(_ context.Context, _ string, baton *Baton) *types.Validation
 
 	// check for invalid tags
 	binaryTags := mapset.NewSet(tags...)
-	if set := binaryTags.Intersect(invalidTagsSet); set.Cardinality() > 0 {
+	if set := binaryTags.Intersect(invalidGoTagsSet); set.Cardinality() > 0 {
 		return types.NewValidationError(fmt.Errorf("go: binary has invalid tag %v enabled", set.ToSlice()))
 	}
 
 	// check for required tags
-	if set := binaryTags.Intersect(expectedTagsSet); set.Cardinality() == 0 {
-		return types.NewValidationError(fmt.Errorf("go: binary does not contain required tag(s) %v", expectedTagsSet.ToSlice())).SetWarning()
+	if set := binaryTags.Intersect(expectedGoTagsSet); set.Cardinality() == 0 {
+		return types.NewValidationError(fmt.Errorf("go: binary does not contain required tag(s) %v", expectedGoTagsSet.ToSlice())).SetWarning()
 	}
 
 	return nil
