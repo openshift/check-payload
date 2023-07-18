@@ -33,12 +33,18 @@ var (
 		"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 		"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 	}
+
+	goLessThan118 = newSemverConstraint("< 1.18")
+
+	// Used by validateGoTags.
+	invalidGoTagsSet  = mapset.NewSet("no_openssl")
+	expectedGoTagsSet = mapset.NewSet("strictfipsruntime")
 )
 
 type Baton struct {
 	TopDir            string
 	GoNoCrypto        bool
-	GoVersion         string
+	GoVersion         *semver.Version
 	GoVersionDetailed []byte
 }
 
@@ -71,7 +77,12 @@ func validateGoVersion(ctx context.Context, path string, baton *Baton) *types.Va
 	if len(matches) == 0 {
 		return types.NewValidationError(fmt.Errorf("go: could not find compiler version in binary"))
 	}
-	baton.GoVersion = matches[0][1]
+	ver := matches[0][1]
+	semver, err := semver.NewVersion(ver)
+	if err != nil {
+		return types.NewValidationError(fmt.Errorf("can't parse go version %q: %w", ver, err))
+	}
+	baton.GoVersion = semver
 	baton.GoVersionDetailed = stdout.Bytes()
 	return nil
 }
@@ -87,15 +98,7 @@ func validateGoSymbols(_ context.Context, path string, baton *Baton) *types.Vali
 		return nil
 	}
 
-	v, err := semver.NewVersion(baton.GoVersion)
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
-	}
-	c, err := semver.NewConstraint("< 1.18")
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
-	}
-	if c.Check(v) {
+	if goLessThan118.Check(baton.GoVersion) {
 		return nil
 	}
 
@@ -115,15 +118,7 @@ func isUsingCryptoModule(symtable *gosym.Table) bool {
 }
 
 func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationError {
-	v, err := semver.NewVersion(baton.GoVersion)
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
-	}
-	c, err := semver.NewConstraint("<= 1.17")
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
-	}
-	if c.Check(v) {
+	if goLessThan118.Check(baton.GoVersion) {
 		return nil
 	}
 
@@ -134,18 +129,7 @@ func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationE
 }
 
 func validateGoTags(_ context.Context, _ string, baton *Baton) *types.ValidationError {
-	invalidTagsSet := mapset.NewSet("no_openssl")
-	expectedTagsSet := mapset.NewSet("strictfipsruntime")
-
-	v, err := semver.NewVersion(baton.GoVersion)
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
-	}
-	c, err := semver.NewConstraint("<= 1.17")
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("go: error creating semver constraint: %w", err))
-	}
-	if c.Check(v) {
+	if goLessThan118.Check(baton.GoVersion) {
 		return nil
 	}
 
@@ -161,13 +145,13 @@ func validateGoTags(_ context.Context, _ string, baton *Baton) *types.Validation
 
 	// check for invalid tags
 	binaryTags := mapset.NewSet(tags...)
-	if set := binaryTags.Intersect(invalidTagsSet); set.Cardinality() > 0 {
+	if set := binaryTags.Intersect(invalidGoTagsSet); set.Cardinality() > 0 {
 		return types.NewValidationError(fmt.Errorf("go: binary has invalid tag %v enabled", set.ToSlice()))
 	}
 
 	// check for required tags
-	if set := binaryTags.Intersect(expectedTagsSet); set.Cardinality() == 0 {
-		return types.NewValidationError(fmt.Errorf("go: binary does not contain required tag(s) %v", expectedTagsSet.ToSlice())).SetWarning()
+	if set := binaryTags.Intersect(expectedGoTagsSet); set.Cardinality() == 0 {
+		return types.NewValidationError(fmt.Errorf("go: binary does not contain required tag(s) %v", expectedGoTagsSet.ToSlice())).SetWarning()
 	}
 
 	return nil
@@ -375,4 +359,14 @@ func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v
 	}
 
 	return res.Success()
+}
+
+// newSemverConstraint is like semver.NewConstraint but panics if the expression cannot be parsed.
+// It simplifies safe initialization of global variables holding preparsed constraints.
+func newSemverConstraint(str string) *semver.Constraints {
+	c, err := semver.NewConstraint(str)
+	if err != nil {
+		panic(fmt.Errorf("semver: can't parse constraint %v: %w", str, err))
+	}
+	return c
 }
