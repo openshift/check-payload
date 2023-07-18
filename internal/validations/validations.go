@@ -237,11 +237,7 @@ func validateStringsOpenssl(path string, baton *Baton) error {
 			break
 		}
 
-		matches := validateStringsOpensslRegexp.FindAllSubmatch(buf, -1)
-		if len(matches) == 0 {
-			continue
-		}
-		binaryLibcryptoVersion := string(matches[0][0])
+		binaryLibcryptoVersion := string(validateStringsOpensslRegexp.Find(buf))
 		if binaryLibcryptoVersion == "" {
 			continue
 		}
@@ -249,7 +245,7 @@ func validateStringsOpenssl(path string, baton *Baton) error {
 			// Have different libcrypto versions in the same binary.
 			haveMultipleLibcrypto = true
 		}
-		libcryptoVersion = string(matches[0][0])
+		libcryptoVersion = binaryLibcryptoVersion
 	}
 
 	if libcryptoVersion == "" {
