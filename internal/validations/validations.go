@@ -137,12 +137,12 @@ func validateGoTags(_ context.Context, _ string, baton *Baton) *types.Validation
 		return nil
 	}
 
-	matches := validateGoTagsRegexp.FindAllSubmatch(baton.GoVersionDetailed, -1)
-	if matches == nil {
+	matches := validateGoTagsRegexp.FindSubmatch(baton.GoVersionDetailed)
+	if len(matches) < 2 {
 		return types.NewValidationError(fmt.Errorf("go: binary has zero tags enabled (should have strictfipsruntime)")).SetWarning()
 	}
 
-	tags := strings.Split(string(matches[0][1]), ",")
+	tags := strings.Split(string(matches[1]), ",")
 	if len(tags) == 0 {
 		return types.NewValidationError(fmt.Errorf("go: binary has zero tags enabled (should have strictfipsruntime)")).SetWarning()
 	}

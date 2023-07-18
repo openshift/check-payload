@@ -2,6 +2,7 @@ package validations
 
 import (
 	"bytes"
+	"context"
 	"testing"
 )
 
@@ -26,6 +27,24 @@ func BenchmarkValidateGoVersion(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		if err := doValidateGoVersion(out, baton); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkValidateGoTags(b *testing.B) {
+	ctx := context.Background()
+	path := "/usr/bin/runc"
+	baton := &Baton{}
+	out := bytes.NewBuffer([]byte(testGoVersionDetailed))
+	if err := doValidateGoVersion(out, baton); err != nil {
+		b.Fatal(err)
+	}
+
+	b.ResetTimer()
+	for i := 0; i <= b.N; i++ {
+		err := validateGoTags(ctx, path, baton)
+		if err != nil {
 			b.Fatal(err)
 		}
 	}
