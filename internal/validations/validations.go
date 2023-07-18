@@ -42,7 +42,7 @@ type Baton struct {
 	GoVersionDetailed []byte
 }
 
-type ValidationFn func(ctx context.Context, tag *v1.TagReference, path string, baton *Baton) *types.ValidationError
+type ValidationFn func(ctx context.Context, path string, baton *Baton) *types.ValidationError
 
 var validationFns = map[string][]ValidationFn{
 	"go": {
@@ -59,7 +59,7 @@ var validationFns = map[string][]ValidationFn{
 	},
 }
 
-func validateGoVersion(ctx context.Context, _ *v1.TagReference, path string, baton *Baton) *types.ValidationError {
+func validateGoVersion(ctx context.Context, path string, baton *Baton) *types.ValidationError {
 	var stdout bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
 	cmd.Stdout = &stdout
@@ -76,7 +76,7 @@ func validateGoVersion(ctx context.Context, _ *v1.TagReference, path string, bat
 	return nil
 }
 
-func validateGoSymbols(_ context.Context, _ *v1.TagReference, path string, baton *Baton) *types.ValidationError {
+func validateGoSymbols(_ context.Context, path string, baton *Baton) *types.ValidationError {
 	symtable, err := golang.ReadTable(path)
 	if err != nil {
 		return types.NewValidationError(fmt.Errorf("go: could not read table for %v: %w", filepath.Base(path), err))
@@ -114,7 +114,7 @@ func isUsingCryptoModule(symtable *gosym.Table) bool {
 	return false
 }
 
-func validateGoCgo(_ context.Context, _ *v1.TagReference, _ string, baton *Baton) *types.ValidationError {
+func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationError {
 	v, err := semver.NewVersion(baton.GoVersion)
 	if err != nil {
 		return types.NewValidationError(fmt.Errorf("go: error creating semver version: %w", err))
@@ -133,7 +133,7 @@ func validateGoCgo(_ context.Context, _ *v1.TagReference, _ string, baton *Baton
 	return nil
 }
 
-func validateGoTags(_ context.Context, _ *v1.TagReference, _ string, baton *Baton) *types.ValidationError {
+func validateGoTags(_ context.Context, _ string, baton *Baton) *types.ValidationError {
 	invalidTagsSet := mapset.NewSet("no_openssl")
 	expectedTagsSet := mapset.NewSet("strictfipsruntime")
 
@@ -173,7 +173,7 @@ func validateGoTags(_ context.Context, _ *v1.TagReference, _ string, baton *Bato
 	return nil
 }
 
-func validateGoStatic(ctx context.Context, _ *v1.TagReference, path string, baton *Baton) *types.ValidationError {
+func validateGoStatic(ctx context.Context, path string, baton *Baton) *types.ValidationError {
 	// if the static golang binary does not contain crypto then skip
 	if baton.GoNoCrypto {
 		return nil
@@ -183,7 +183,7 @@ func validateGoStatic(ctx context.Context, _ *v1.TagReference, path string, bato
 	return validateStaticGo(ctx, path)
 }
 
-func validateGoOpenssl(_ context.Context, _ *v1.TagReference, path string, baton *Baton) *types.ValidationError {
+func validateGoOpenssl(_ context.Context, path string, baton *Baton) *types.ValidationError {
 	// if there is no crypto then skip openssl test
 	if baton.GoNoCrypto {
 		return nil
@@ -192,7 +192,7 @@ func validateGoOpenssl(_ context.Context, _ *v1.TagReference, path string, baton
 	return types.NewValidationError(validateStringsOpenssl(path, baton))
 }
 
-func validateGoCGOInit(_ context.Context, _ *v1.TagReference, path string, _ *Baton) *types.ValidationError {
+func validateGoCGOInit(_ context.Context, path string, _ *Baton) *types.ValidationError {
 	f, err := os.Open(path)
 	if err != nil {
 		return types.NewValidationError(err)
@@ -300,7 +300,7 @@ func isDynamicallyLinked(ctx context.Context, path string) *types.ValidationErro
 	return nil
 }
 
-func validateExe(ctx context.Context, _ *v1.TagReference, path string, _ *Baton) *types.ValidationError {
+func validateExe(ctx context.Context, path string, _ *Baton) *types.ValidationError {
 	return isDynamicallyLinked(ctx, path)
 }
 
@@ -369,7 +369,7 @@ func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v
 	}
 
 	for _, fn := range checks {
-		if err := fn(ctx, tag, path, baton); err != nil {
+		if err := fn(ctx, path, baton); err != nil {
 			return res.SetValidationError(err)
 		}
 	}
