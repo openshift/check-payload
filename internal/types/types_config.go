@@ -8,7 +8,7 @@ import (
 )
 
 func (c *Config) Log() {
-	klog.Infof("using config +%v", c)
+	klog.Infof("using config %+v", c)
 }
 
 // isMatch tells if path equals to one of the entries.
