@@ -73,6 +73,10 @@ func validateGoVersion(ctx context.Context, path string, baton *Baton) *types.Va
 		return types.NewValidationError(err)
 	}
 
+	return doValidateGoVersion(&stdout, baton)
+}
+
+func doValidateGoVersion(stdout *bytes.Buffer, baton *Baton) *types.ValidationError {
 	matches := validateGoVersionRegexp.FindAllStringSubmatch(stdout.String(), -1)
 	if len(matches) == 0 {
 		return types.NewValidationError(fmt.Errorf("go: could not find compiler version in binary"))
