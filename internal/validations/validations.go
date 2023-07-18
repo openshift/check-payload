@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	mapset "github.com/deckarep/golang-set/v2"
 	v1 "github.com/openshift/api/image/v1"
 
 	"github.com/openshift/check-payload/internal/golang"
@@ -35,10 +34,6 @@ var (
 	}
 
 	goLessThan118 = newSemverConstraint("< 1.18")
-
-	// Used by validateGoTags.
-	invalidGoTagsSet  = mapset.NewSet("no_openssl")
-	expectedGoTagsSet = mapset.NewSet("strictfipsruntime")
 )
 
 type Baton struct {
@@ -133,6 +128,9 @@ func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationE
 }
 
 func validateGoTags(_ context.Context, _ string, baton *Baton) *types.ValidationError {
+	badTags := []string{"no_openssl"}
+	goodTags := []string{"strictfipsruntime"}
+
 	if goLessThan118.Check(baton.GoVersion) {
 		return nil
 	}
@@ -142,20 +140,20 @@ func validateGoTags(_ context.Context, _ string, baton *Baton) *types.Validation
 		return types.NewValidationError(fmt.Errorf("go: binary has zero tags enabled (should have strictfipsruntime)")).SetWarning()
 	}
 
-	tags := strings.Split(string(matches[1]), ",")
-	if len(tags) == 0 {
-		return types.NewValidationError(fmt.Errorf("go: binary has zero tags enabled (should have strictfipsruntime)")).SetWarning()
+	tags := "," + string(matches[1]) + ","
+
+	// Check for invalid tags.
+	for _, tag := range badTags {
+		if strings.Contains(tags, ","+tag+",") {
+			return types.NewValidationError(fmt.Errorf("go: binary has invalid tag %v enabled", tag))
+		}
 	}
 
-	// check for invalid tags
-	binaryTags := mapset.NewSet(tags...)
-	if set := binaryTags.Intersect(invalidGoTagsSet); set.Cardinality() > 0 {
-		return types.NewValidationError(fmt.Errorf("go: binary has invalid tag %v enabled", set.ToSlice()))
-	}
-
-	// check for required tags
-	if set := binaryTags.Intersect(expectedGoTagsSet); set.Cardinality() == 0 {
-		return types.NewValidationError(fmt.Errorf("go: binary does not contain required tag(s) %v", expectedGoTagsSet.ToSlice())).SetWarning()
+	// Check for required tags.
+	for _, tag := range goodTags {
+		if !strings.Contains(tags, ","+tag+",") {
+			return types.NewValidationError(fmt.Errorf("go: binary does not contain required tag %v", tag)).SetWarning()
+		}
 	}
 
 	return nil
