@@ -37,15 +37,6 @@ func magicNumber(goVersion string) []byte {
 	return bs
 }
 
-// Construct a hashmap of build settings
-func buildSettingMap(bi *buildinfo.BuildInfo) map[string]string {
-	settings := make(map[string]string)
-	for _, bs := range bi.Settings {
-		settings[bs.Key] = bs.Value
-	}
-	return settings
-}
-
 // Open a Go ELF executable and read .gopclntab
 func ReadTable(fileName string) (*gosym.Table, error) {
 	// Default section label is .gopclntab
@@ -57,9 +48,13 @@ func ReadTable(fileName string) (*gosym.Table, error) {
 
 	// If built with PIE and stripped, gopclntab is
 	// unlabeled and nested under .data.rel.ro.
-	settings := buildSettingMap(bi)
-	if settings["-buildmode"] == "pie" {
-		sectionLabel = ".data.rel.ro"
+	for _, bs := range bi.Settings {
+		if bs.Key == "-buildmode" {
+			if bs.Value == "pie" {
+				sectionLabel = ".data.rel.ro"
+			}
+			break
+		}
 	}
 
 	exe, err := elf.Open(fileName)
