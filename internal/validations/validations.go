@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	mapset "github.com/deckarep/golang-set/v2"
 	v1 "github.com/openshift/api/image/v1"
 
 	"github.com/openshift/check-payload/internal/golang"
@@ -35,10 +34,6 @@ var (
 	}
 
 	goLessThan118 = newSemverConstraint("< 1.18")
-
-	// Used by validateGoTags.
-	invalidGoTagsSet  = mapset.NewSet("no_openssl")
-	expectedGoTagsSet = mapset.NewSet("strictfipsruntime")
 )
 
 type Baton struct {
@@ -73,11 +68,15 @@ func validateGoVersion(ctx context.Context, path string, baton *Baton) *types.Va
 		return types.NewValidationError(err)
 	}
 
-	matches := validateGoVersionRegexp.FindAllStringSubmatch(stdout.String(), -1)
-	if len(matches) == 0 {
+	return doValidateGoVersion(&stdout, baton)
+}
+
+func doValidateGoVersion(stdout *bytes.Buffer, baton *Baton) *types.ValidationError {
+	matches := validateGoVersionRegexp.FindSubmatch(stdout.Bytes())
+	if len(matches) < 2 {
 		return types.NewValidationError(fmt.Errorf("go: could not find compiler version in binary"))
 	}
-	ver := matches[0][1]
+	ver := string(matches[1])
 	semver, err := semver.NewVersion(ver)
 	if err != nil {
 		return types.NewValidationError(fmt.Errorf("can't parse go version %q: %w", ver, err))
@@ -129,29 +128,32 @@ func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationE
 }
 
 func validateGoTags(_ context.Context, _ string, baton *Baton) *types.ValidationError {
+	badTags := []string{"no_openssl"}
+	goodTags := []string{"strictfipsruntime"}
+
 	if goLessThan118.Check(baton.GoVersion) {
 		return nil
 	}
 
-	matches := validateGoTagsRegexp.FindAllSubmatch(baton.GoVersionDetailed, -1)
-	if matches == nil {
+	matches := validateGoTagsRegexp.FindSubmatch(baton.GoVersionDetailed)
+	if len(matches) < 2 {
 		return types.NewValidationError(fmt.Errorf("go: binary has zero tags enabled (should have strictfipsruntime)")).SetWarning()
 	}
 
-	tags := strings.Split(string(matches[0][1]), ",")
-	if len(tags) == 0 {
-		return types.NewValidationError(fmt.Errorf("go: binary has zero tags enabled (should have strictfipsruntime)")).SetWarning()
+	tags := "," + string(matches[1]) + ","
+
+	// Check for invalid tags.
+	for _, tag := range badTags {
+		if strings.Contains(tags, ","+tag+",") {
+			return types.NewValidationError(fmt.Errorf("go: binary has invalid tag %v enabled", tag))
+		}
 	}
 
-	// check for invalid tags
-	binaryTags := mapset.NewSet(tags...)
-	if set := binaryTags.Intersect(invalidGoTagsSet); set.Cardinality() > 0 {
-		return types.NewValidationError(fmt.Errorf("go: binary has invalid tag %v enabled", set.ToSlice()))
-	}
-
-	// check for required tags
-	if set := binaryTags.Intersect(expectedGoTagsSet); set.Cardinality() == 0 {
-		return types.NewValidationError(fmt.Errorf("go: binary does not contain required tag(s) %v", expectedGoTagsSet.ToSlice())).SetWarning()
+	// Check for required tags.
+	for _, tag := range goodTags {
+		if !strings.Contains(tags, ","+tag+",") {
+			return types.NewValidationError(fmt.Errorf("go: binary does not contain required tag %v", tag)).SetWarning()
+		}
 	}
 
 	return nil
@@ -235,11 +237,7 @@ func validateStringsOpenssl(path string, baton *Baton) error {
 			break
 		}
 
-		matches := validateStringsOpensslRegexp.FindAllSubmatch(buf, -1)
-		if len(matches) == 0 {
-			continue
-		}
-		binaryLibcryptoVersion := string(matches[0][0])
+		binaryLibcryptoVersion := string(validateStringsOpensslRegexp.Find(buf))
 		if binaryLibcryptoVersion == "" {
 			continue
 		}
@@ -247,7 +245,7 @@ func validateStringsOpenssl(path string, baton *Baton) error {
 			// Have different libcrypto versions in the same binary.
 			haveMultipleLibcrypto = true
 		}
-		libcryptoVersion = string(matches[0][0])
+		libcryptoVersion = binaryLibcryptoVersion
 	}
 
 	if libcryptoVersion == "" {
