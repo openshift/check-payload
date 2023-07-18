@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"debug/buildinfo"
 	"debug/elf"
 	"debug/gosym"
 	"errors"
@@ -24,8 +25,6 @@ import (
 
 var (
 	// Compile regular expressions once during initialization.
-	validateGoVersionRegexp      = regexp.MustCompile(`go(\d.\d\d)`)
-	validateGoTagsRegexp         = regexp.MustCompile(`-tags=(.*)\n`)
 	validateStringsOpensslRegexp = regexp.MustCompile(`libcrypto.so(\.?\d+)*`)
 
 	requiredGolangSymbols = []string{
@@ -37,17 +36,16 @@ var (
 )
 
 type Baton struct {
-	TopDir            string
-	GoNoCrypto        bool
-	GoVersion         *semver.Version
-	GoVersionDetailed []byte
+	TopDir      string
+	GoNoCrypto  bool
+	GoVersion   *semver.Version
+	GoBuildInfo *buildinfo.BuildInfo
 }
 
 type ValidationFn func(ctx context.Context, path string, baton *Baton) *types.ValidationError
 
 var validationFns = map[string][]ValidationFn{
 	"go": {
-		validateGoVersion,
 		validateGoCgo,
 		validateGoCGOInit,
 		validateGoSymbols,
@@ -60,34 +58,8 @@ var validationFns = map[string][]ValidationFn{
 	},
 }
 
-func validateGoVersion(ctx context.Context, path string, baton *Baton) *types.ValidationError {
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "go", "version", "-m", path)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return types.NewValidationError(err)
-	}
-
-	return doValidateGoVersion(&stdout, baton)
-}
-
-func doValidateGoVersion(stdout *bytes.Buffer, baton *Baton) *types.ValidationError {
-	matches := validateGoVersionRegexp.FindSubmatch(stdout.Bytes())
-	if len(matches) < 2 {
-		return types.NewValidationError(fmt.Errorf("go: could not find compiler version in binary"))
-	}
-	ver := string(matches[1])
-	semver, err := semver.NewVersion(ver)
-	if err != nil {
-		return types.NewValidationError(fmt.Errorf("can't parse go version %q: %w", ver, err))
-	}
-	baton.GoVersion = semver
-	baton.GoVersionDetailed = stdout.Bytes()
-	return nil
-}
-
 func validateGoSymbols(_ context.Context, path string, baton *Baton) *types.ValidationError {
-	symtable, err := golang.ReadTable(path)
+	symtable, err := golang.ReadTable(path, baton.GoBuildInfo)
 	if err != nil {
 		return types.NewValidationError(fmt.Errorf("go: could not read table for %v: %w", filepath.Base(path), err))
 	}
@@ -120,11 +92,12 @@ func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationE
 	if goLessThan118.Check(baton.GoVersion) {
 		return nil
 	}
-
-	if !bytes.Contains(baton.GoVersionDetailed, []byte("CGO_ENABLED=1")) {
-		return types.NewValidationError(fmt.Errorf("go: binary is not CGO_ENABLED"))
+	for _, bs := range baton.GoBuildInfo.Settings {
+		if bs.Key == "CGO_ENABLED" && bs.Value == "1" {
+			return nil
+		}
 	}
-	return nil
+	return types.NewValidationError(fmt.Errorf("go: binary is not CGO_ENABLED"))
 }
 
 func validateGoTags(_ context.Context, _ string, baton *Baton) *types.ValidationError {
@@ -135,12 +108,16 @@ func validateGoTags(_ context.Context, _ string, baton *Baton) *types.Validation
 		return nil
 	}
 
-	matches := validateGoTagsRegexp.FindSubmatch(baton.GoVersionDetailed)
-	if len(matches) < 2 {
+	tags := "x"
+	for _, bs := range baton.GoBuildInfo.Settings {
+		if bs.Key == "-tags" {
+			tags = "," + bs.Value + ","
+			break
+		}
+	}
+	if tags == "x" {
 		return types.NewValidationError(fmt.Errorf("go: binary has zero tags enabled (should have strictfipsruntime)")).SetWarning()
 	}
-
-	tags := "," + string(matches[1]) + ","
 
 	// Check for invalid tags.
 	for _, tag := range badTags {
@@ -286,14 +263,28 @@ func validateExe(ctx context.Context, path string, _ *Baton) *types.ValidationEr
 	return isDynamicallyLinked(ctx, path)
 }
 
-func isGoExecutable(ctx context.Context, path string) (bool, error) {
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "go", "version", path)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
+func isGoExecutable(path string, baton *Baton) (bool, error) {
+	bi, err := buildinfo.ReadFile(path)
+	if err != nil {
+		// We do not return an error from buildinfo.ReadFile here because
+		// it can either be about non-readable binary or a non-binary, and
+		// it is somewhat complicated to distinguish between the two.
+		return false, nil
+	}
+
+	baton.GoBuildInfo = bi
+	// Remove the go prefix.
+	ver := strings.TrimPrefix(bi.GoVersion, "go")
+	// Remove a potential suffix after a space.
+	if i := strings.IndexByte(ver, ' '); i != -1 {
+		ver = ver[:i]
+	}
+	baton.GoVersion, err = semver.NewVersion(ver)
+	if err != nil {
 		return false, err
 	}
-	return strings.Contains(stdout.String(), ": go1."), nil
+
+	return true, nil
 }
 
 // isElfExe checks if path is an ELF executable (which most probably means
@@ -339,7 +330,7 @@ func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v
 		return res.Skipped()
 	}
 
-	goBinary, err := isGoExecutable(ctx, path)
+	goBinary, err := isGoExecutable(path, baton)
 	if err != nil {
 		return res.SetError(err)
 	}

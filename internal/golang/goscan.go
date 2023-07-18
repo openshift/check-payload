@@ -38,13 +38,9 @@ func magicNumber(goVersion string) []byte {
 }
 
 // Open a Go ELF executable and read .gopclntab
-func ReadTable(fileName string) (*gosym.Table, error) {
+func ReadTable(fileName string, bi *buildinfo.BuildInfo) (*gosym.Table, error) {
 	// Default section label is .gopclntab
 	sectionLabel := ".gopclntab"
-	bi, err := buildinfo.ReadFile(fileName)
-	if err != nil {
-		return nil, err
-	}
 
 	// If built with PIE and stripped, gopclntab is
 	// unlabeled and nested under .data.rel.ro.
