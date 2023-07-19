@@ -51,8 +51,8 @@ func (c *Config) isFileIgnoredByTag(path string, tag *imagev1.TagReference) bool
 	return false
 }
 
-func (c *Config) isFileIgnoredByNode(path string, tag string) bool {
-	if op, ok := c.NodeIgnores[tag]; ok {
+func (c *Config) isFileIgnoredByRPM(path string, rpm string) bool {
+	if op, ok := c.RPMIgnores[rpm]; ok {
 		return isMatch(path, op.FilterFiles)
 	}
 	return false
@@ -74,12 +74,8 @@ func (c *Config) IgnoreFileWithTag(path string, tag *imagev1.TagReference) bool 
 	return c.isFileIgnoredByTag(path, tag)
 }
 
-func (c *Config) IgnoreFileByNode(path string, nodeVersion string) bool {
-	return c.isFileIgnoredByNode(path, nodeVersion)
-}
-
 func (c *Config) IgnoreFileByRpm(path string, rpm string) bool {
-	return c.isFileIgnoredByNode(path, rpm)
+	return c.isFileIgnoredByRPM(path, rpm)
 }
 
 func (c *Config) IgnoreDirWithComponent(path string, component *OpenshiftComponent) bool {
