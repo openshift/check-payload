@@ -58,44 +58,44 @@ filter_images = [ ]
 
 # Node Ignores
 # these node exceptions via rpm have been manually validated
-[rpm."runc-1.1.6-4.rhaos4.12.el8.x86_64"]
+[rpm.runc]
 filter_files = [ "/usr/bin/runc" ]
 
-[rpm."cri-tools-1.25.0-2.el8.x86_64"]
+[rpm.cri-tools]
 filter_files = [ "/usr/bin/crictl" ]
 
-[rpm."glibc-2.28-189.5.el8_6.x86_64"]
+[rpm.glibc]
 filter_files = [ "/sbin/ldconfig" ]
 
-[rpm."cri-o-1.25.3-5.rhaos4.12.git44a2cb2.el8.x86_64"]
+[rpm.cri-o]
 filter_files = [
   "/usr/bin/crio",
   "/usr/bin/crio-status",
   "/usr/bin/pinns",
 ]
 
-[rpm."podman-4.2.0-6.1.rhaos4.12.el8.x86_64"]
+[rpm.podman]
 filter_files = [
   "/usr/bin/podman",
   "/usr/libexec/podman/rootlessport",
 ]
 
-[rpm."ignition-2.14.0-6.rhaos4.12.el8.x86_64"]
+[rpm.ignition]
 filter_files = [
   "/usr/lib/dracut/modules.d/30ignition/ignition"
 ]
 
-[rpm."skopeo-1.9.4-3.1.rhaos4.12.el8.x86_64"]
+[rpm.skopeo]
 filter_files = [
   "/usr/bin/skopeo"
 ]
 
-[rpm."podman-catatonit-4.2.0-6.1.rhaos4.12.el8.x86_64"]
+[rpm.podman-catatonit]
 filter_files = [
   "/usr/libexec/catatonit/catatonit"
 ]
 
-[rpm."containernetworking-plugins-1.0.1-7.rhaos4.12.el8.x86_64"]
+[rpm.containernetworking-plugins]
 filter_files = [
 "/usr/libexec/cni/bandwidth",
 "/usr/libexec/cni/bridge",

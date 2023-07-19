@@ -33,15 +33,15 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 	root := cfg.NodeScan
 	rpms, _ := rpm.GetAllRPMs(ctx, root)
 	for _, pkg := range rpms {
-		tag := NewTag(pkg)
-		files, err := rpm.GetFilesFromRPM(ctx, root, pkg)
+		tag := NewTag(pkg.Name)
+		files, err := rpm.GetFilesFromRPM(ctx, root, pkg.NVRA)
 		if err != nil {
 			res := types.NewScanResult().SetTag(tag).SetError(err)
 			results.Append(res)
 			continue
 		}
 		for _, innerPath := range files {
-			if cfg.IgnoreFile(innerPath) || cfg.IgnoreDirPrefix(innerPath) || cfg.IgnoreFileByRpm(innerPath, pkg) {
+			if cfg.IgnoreFile(innerPath) || cfg.IgnoreDirPrefix(innerPath) || cfg.IgnoreFileByRpm(innerPath, pkg.Name) {
 				continue
 			}
 			path := filepath.Join(cfg.NodeScan, innerPath)

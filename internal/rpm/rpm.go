@@ -6,9 +6,15 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"k8s.io/klog/v2"
 )
+
+type Info struct {
+	Name string // Name only
+	NVRA string // Name-Version-Release.Arch
+}
 
 func GetFilesFromRPM(ctx context.Context, root, rpm string) ([]string, error) {
 	klog.Infof("rpm -ql %v", rpm)
@@ -29,21 +35,26 @@ func GetFilesFromRPM(ctx context.Context, root, rpm string) ([]string, error) {
 	return files, nil
 }
 
-func GetAllRPMs(ctx context.Context, root string) ([]string, error) {
+func GetAllRPMs(ctx context.Context, root string) ([]Info, error) {
 	klog.Info("rpm -qa")
-	rpms := []string{}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "rpm", "-qa", "--root", root)
+	cmd := exec.CommandContext(ctx, "rpm", "-qa", "--root", root, "--qf", "%{NAME} %{NVRA}")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return rpms, fmt.Errorf("rpm -qa error: %w (stderr=%v)", err, stderr.String())
+		return nil, fmt.Errorf("rpm -qa error: %w (stderr=%v)", err, stderr.String())
 	}
+	rpms := []Info{}
 
 	scanner := bufio.NewScanner(&stdout)
 	for scanner.Scan() {
-		rpms = append(rpms, scanner.Text())
+		f := strings.Fields(scanner.Text())
+		if len(f) != 2 {
+			// Should never happen.
+			continue
+		}
+		rpms = append(rpms, Info{Name: f[0], NVRA: f[1]})
 	}
 	return rpms, nil
 }
