@@ -1,18 +1,15 @@
 package scan
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	v1 "github.com/openshift/api/image/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 
+	"github.com/openshift/check-payload/internal/rpm"
 	"github.com/openshift/check-payload/internal/types"
 	"github.com/openshift/check-payload/internal/validations"
 )
@@ -34,17 +31,17 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 		Component: "node",
 	}
 	root := cfg.NodeScan
-	rpms, _ := getAllRPMs(ctx, root)
-	for _, rpm := range rpms {
-		tag := NewTag(rpm)
-		files, err := getFilesFromRPM(ctx, root, rpm)
+	rpms, _ := rpm.GetAllRPMs(ctx, root)
+	for _, pkg := range rpms {
+		tag := NewTag(pkg)
+		files, err := rpm.GetFilesFromRPM(ctx, root, pkg)
 		if err != nil {
 			res := types.NewScanResult().SetTag(tag).SetError(err)
 			results.Append(res)
 			continue
 		}
 		for _, innerPath := range files {
-			if cfg.IgnoreFile(innerPath) || cfg.IgnoreDirPrefix(innerPath) || cfg.IgnoreFileByRpm(innerPath, rpm) {
+			if cfg.IgnoreFile(innerPath) || cfg.IgnoreDirPrefix(innerPath) || cfg.IgnoreFileByRpm(innerPath, pkg) {
 				continue
 			}
 			path := filepath.Join(cfg.NodeScan, innerPath)
@@ -74,42 +71,4 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 		}
 	}
 	return runs
-}
-
-func getFilesFromRPM(ctx context.Context, root, rpm string) ([]string, error) {
-	klog.Infof("rpm -ql %v", rpm)
-	files := []string{}
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "rpm", "-ql", "--root", root, rpm)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		return files, fmt.Errorf("rpm -ql error: %w (stderr=%v)", err, stderr.String())
-	}
-
-	scanner := bufio.NewScanner(&stdout)
-	for scanner.Scan() {
-		files = append(files, scanner.Text())
-	}
-	return files, nil
-}
-
-func getAllRPMs(ctx context.Context, root string) ([]string, error) {
-	klog.Info("rpm -qa")
-	rpms := []string{}
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "rpm", "-qa", "--root", root)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		return rpms, fmt.Errorf("rpm -qa error: %w (stderr=%v)", err, stderr.String())
-	}
-
-	scanner := bufio.NewScanner(&stdout)
-	for scanner.Scan() {
-		rpms = append(rpms, scanner.Text())
-	}
-	return rpms, nil
 }
