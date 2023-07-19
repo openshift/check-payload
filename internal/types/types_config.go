@@ -74,10 +74,6 @@ func (c *Config) IgnoreFileWithTag(path string, tag *imagev1.TagReference) bool 
 	return c.isFileIgnoredByTag(path, tag)
 }
 
-func (c *Config) IgnoreFileByNode(path string, nodeVersion string) bool {
-	return c.isFileIgnoredByNode(path, nodeVersion)
-}
-
 func (c *Config) IgnoreFileByRpm(path string, rpm string) bool {
 	return c.isFileIgnoredByNode(path, rpm)
 }
