@@ -33,10 +33,11 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 	component := &types.OpenshiftComponent{
 		Component: "node",
 	}
-	rpms, _ := getAllRPMs(ctx, cfg)
+	root := cfg.NodeScan
+	rpms, _ := getAllRPMs(ctx, root)
 	for _, rpm := range rpms {
 		tag := NewTag(rpm)
-		files, err := getFilesFromRPM(ctx, cfg, rpm)
+		files, err := getFilesFromRPM(ctx, root, rpm)
 		if err != nil {
 			res := types.NewScanResult().SetTag(tag).SetError(err)
 			results.Append(res)
@@ -59,7 +60,7 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 				continue
 			}
 			klog.V(1).InfoS("scanning path", "path", path)
-			res := validations.ScanBinary(ctx, component, tag, cfg.NodeScan, innerPath)
+			res := validations.ScanBinary(ctx, component, tag, root, innerPath)
 			if res.Skip {
 				// Do not add skipped binaries to results.
 				continue
@@ -75,12 +76,12 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 	return runs
 }
 
-func getFilesFromRPM(ctx context.Context, cfg *types.Config, rpm string) ([]string, error) {
+func getFilesFromRPM(ctx context.Context, root, rpm string) ([]string, error) {
 	klog.Infof("rpm -ql %v", rpm)
 	files := []string{}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "rpm", "-ql", "--root", cfg.NodeScan, rpm)
+	cmd := exec.CommandContext(ctx, "rpm", "-ql", "--root", root, rpm)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -94,12 +95,12 @@ func getFilesFromRPM(ctx context.Context, cfg *types.Config, rpm string) ([]stri
 	return files, nil
 }
 
-func getAllRPMs(ctx context.Context, cfg *types.Config) ([]string, error) {
+func getAllRPMs(ctx context.Context, root string) ([]string, error) {
 	klog.Info("rpm -qa")
 	rpms := []string{}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "rpm", "-qa", "--root", cfg.NodeScan)
+	cmd := exec.CommandContext(ctx, "rpm", "-qa", "--root", root)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
