@@ -29,7 +29,6 @@ var embeddedConfig string
 
 var applicationDeps = []string{
 	"file",
-	"go",
 	"nm",
 	"oc",
 	"podman",
@@ -37,7 +36,6 @@ var applicationDeps = []string{
 
 var applicationDepsNodeScan = []string{
 	"file",
-	"go",
 	"nm",
 	"rpm",
 }
