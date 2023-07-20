@@ -264,6 +264,10 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 			// Do not add skipped binaries to results.
 			return nil
 		}
+		// Check rpm.* excludes. Performed post-check because the rpm name was not known before.
+		if !res.IsSuccess() && res.RPM != "" && cfg.IgnoreFileByRpm(innerPath, res.RPM) {
+			return nil
+		}
 		if res.IsSuccess() {
 			klog.V(1).InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
 		} else if res.IsLevel(types.Warning) {
