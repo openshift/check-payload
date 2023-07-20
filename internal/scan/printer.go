@@ -14,10 +14,11 @@ import (
 var (
 	colTitleOperatorName = "Operator Name"
 	colTitleTagName      = "Tag Name"
+	colTitleRPMName      = "RPM Name"
 	colTitleExeName      = "Executable Name"
 	colTitlePassedFailed = "Status"
 	colTitleImage        = "Image"
-	failureRowHeader     = table.Row{colTitleOperatorName, colTitleTagName, colTitleExeName, colTitlePassedFailed, colTitleImage}
+	failureRowHeader     = table.Row{colTitleOperatorName, colTitleTagName, colTitleRPMName, colTitleExeName, colTitlePassedFailed, colTitleImage}
 	successRowHeader     = table.Row{colTitleOperatorName, colTitleTagName, colTitleExeName, colTitleImage}
 )
 
@@ -199,9 +200,9 @@ func renderReport(results []*types.ScanResults) (failures table.Writer, warnings
 		for _, res := range result.Items {
 			component := getComponent(res)
 			if res.IsLevel(types.Error) {
-				failureTableRows = append(failureTableRows, table.Row{component, res.Tag.Name, res.Path, res.Error.GetError(), res.Tag.From.Name})
+				failureTableRows = append(failureTableRows, table.Row{component, res.Tag.Name, res.RPM, res.Path, res.Error.GetError(), res.Tag.From.Name})
 			} else if res.IsLevel(types.Warning) {
-				warningTableRows = append(warningTableRows, table.Row{component, res.Tag.Name, res.Path, res.Error.GetError(), res.Tag.From.Name})
+				warningTableRows = append(warningTableRows, table.Row{component, res.Tag.Name, res.RPM, res.Path, res.Error.GetError(), res.Tag.From.Name})
 			} else {
 				successTableRows = append(successTableRows, table.Row{component, res.Tag.Name, res.Path, res.Tag.From.Name})
 			}
