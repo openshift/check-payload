@@ -82,34 +82,47 @@ func PrintResults(cfg *types.Config, results []*types.ScanResults) {
 	}
 }
 
+func getFilterPrefix(res *types.ScanResult) string {
+	if res.RPM != "" {
+		return "rpm." + res.RPM
+	}
+	if res.Component != nil && res.Component.Component != "" {
+		return "payload." + res.Component.Component
+	}
+	if res.Tag != nil && res.Tag.Name != "" {
+		return "tag." + res.Tag.Name
+	}
+	return ""
+}
+
 func displayExceptions(results []*types.ScanResults) {
-	exceptions := make(map[string]mapset.Set[*types.ScanResult])
+	exceptions := make(map[string]mapset.Set[string])
 	for _, result := range results {
 		for _, res := range result.Items {
-			if res.Error == nil {
-				// skip over successes
+			if res.Error == nil || res.Path == "" {
+				// Skip over successes and errors with no path set.
 				continue
 			}
-			component := getComponent(res)
-			if set, ok := exceptions[component]; ok {
-				set.Add(res)
+			prefix := getFilterPrefix(res)
+			if set, ok := exceptions[prefix]; ok {
+				set.Add(res.Path)
 			} else {
-				exceptions[component] = mapset.NewSet(res)
+				exceptions[prefix] = mapset.NewSet(res.Path)
 			}
 		}
 	}
 
-	for payloadName, set := range exceptions {
-		if payloadName != "" {
-			fmt.Printf("[payload.%v]\n", payloadName)
+	for prefix, set := range exceptions {
+		if prefix != "" {
+			fmt.Printf("[%s]\n", prefix)
 		}
 		ss := set.ToSlice()
 		if len(ss) == 1 {
-			fmt.Printf("filter_files = [ %q ]\n", ss[0].Path)
+			fmt.Printf("filter_files = [ %q ]\n", ss[0])
 		} else {
 			fmt.Println("filter_files = [")
 			for _, res := range ss {
-				fmt.Printf("  %q,\n", res.Path)
+				fmt.Printf("  %q,\n", res)
 			}
 			fmt.Println("]")
 		}
