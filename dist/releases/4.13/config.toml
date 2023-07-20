@@ -219,6 +219,6 @@ filter_files = [
   "/usr/lib/golang/pkg/tool/linux_amd64/compile",
   "/usr/lib/golang/pkg/tool/linux_ppc64le/compile",
   "/usr/lib/golang/pkg/tool/linux_s390x/compile",
-  ### helm is not FIPS compliant
+  ### helm is not FIPS compliant; exception needed until https://issues.redhat.com/browse/HELM-506 is resolved
   "/usr/bin/helm"
 ]
