@@ -124,9 +124,9 @@ func generateNodeScanReport(results []*types.ScanResults, cfg *types.Config) (st
 	for _, result := range results {
 		for _, res := range result.Items {
 			if res.IsLevel(types.Error) {
-				failureTableRows = append(failureTableRows, table.Row{res.Path, res.Error.GetError(), res.Tag.From.Name})
+				failureTableRows = append(failureTableRows, table.Row{res.Path, res.Error.GetError(), res.RPM})
 			} else if res.IsLevel(types.Warning) {
-				warningTableRows = append(warningTableRows, table.Row{res.Path, res.Error.GetError(), res.Tag.From.Name})
+				warningTableRows = append(warningTableRows, table.Row{res.Path, res.Error.GetError(), res.RPM})
 			} else {
 				successTableRows = append(successTableRows, table.Row{res.Path})
 			}

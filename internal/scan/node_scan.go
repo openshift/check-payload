@@ -5,22 +5,12 @@ import (
 	"os"
 	"path/filepath"
 
-	v1 "github.com/openshift/api/image/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/openshift/check-payload/internal/rpm"
 	"github.com/openshift/check-payload/internal/types"
 	"github.com/openshift/check-payload/internal/validations"
 )
-
-func NewTag(name string) *v1.TagReference {
-	return &v1.TagReference{
-		From: &corev1.ObjectReference{
-			Name: name,
-		},
-	}
-}
 
 func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 	var runs []*types.ScanResults
@@ -33,10 +23,9 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 	root := cfg.NodeScan
 	rpms, _ := rpm.GetAllRPMs(ctx, root)
 	for _, pkg := range rpms {
-		tag := NewTag(pkg.Name)
 		files, err := rpm.GetFilesFromRPM(ctx, root, pkg.NVRA)
 		if err != nil {
-			res := types.NewScanResult().SetTag(tag).SetError(err)
+			res := types.NewScanResult().SetRPM(pkg.Name).SetError(err)
 			results.Append(res)
 			continue
 		}
@@ -57,7 +46,7 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 				continue
 			}
 			klog.V(1).InfoS("scanning path", "path", path)
-			res := validations.ScanBinary(ctx, component, tag, root, innerPath)
+			res := validations.ScanBinary(ctx, component, nil, root, innerPath)
 			if res.Skip {
 				// Do not add skipped binaries to results.
 				continue
