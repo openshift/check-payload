@@ -55,6 +55,8 @@ filter_files = [
 
 [payload.devspaces-udi-rhel8-container]
 filter_files = [
+  ### excluded in main config.toml so re-excluding it here
+  "/usr/libexec/catatonit/catatonit",
   ### include golang compiler intentionally; exception needed until https://issues.redhat.com/browse/GT-130 is resolved
   "/usr/lib/golang/pkg/tool/linux_amd64/compile",
   "/usr/lib/golang/pkg/tool/linux_ppc64le/compile",
