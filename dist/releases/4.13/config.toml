@@ -212,3 +212,13 @@ filter_files = [
   ### static binaries, no crypto
   "/checode-linux-libc/node_modules/@vscode/ripgrep/bin/rg"
 ]
+
+[payload.devspaces-udi-rhel8-container]
+filter_files = [
+  ### include golang compiler intentionally; exception needed until https://issues.redhat.com/browse/GT-130 is resolved
+  "/usr/lib/golang/pkg/tool/linux_amd64/compile",
+  "/usr/lib/golang/pkg/tool/linux_ppc64le/compile",
+  "/usr/lib/golang/pkg/tool/linux_s390x/compile",
+  ### helm is not FIPS compliant; exception needed until https://issues.redhat.com/browse/HELM-506 is resolved
+  "/usr/bin/helm"
+]
