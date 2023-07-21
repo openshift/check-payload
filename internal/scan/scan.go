@@ -289,7 +289,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 				"path", innerPath,
 				"error", res.Error.Error,
 				"component", getComponent(res),
-				"tag", res.Tag.Name,
+				"tag", getTag(res),
 				"rpm", res.RPM,
 				"status", status)
 		}

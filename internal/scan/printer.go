@@ -86,11 +86,11 @@ func getFilterPrefix(res *types.ScanResult) string {
 	if res.RPM != "" {
 		return "rpm." + res.RPM
 	}
-	if res.Component != nil && res.Component.Component != "" {
-		return "payload." + res.Component.Component
+	if component := getComponent(res); component != "" {
+		return "payload." + component
 	}
-	if res.Tag != nil && res.Tag.Name != "" {
-		return "tag." + res.Tag.Name
+	if tag := getTag(res); tag != "" {
+		return "tag." + tag
 	}
 	return ""
 }
@@ -201,7 +201,21 @@ func getComponent(res *types.ScanResult) string {
 	if res.Component != nil {
 		return res.Component.Component
 	}
-	return "<unknown>"
+	return ""
+}
+
+func getTag(res *types.ScanResult) string {
+	if res.Tag != nil {
+		return res.Tag.Name
+	}
+	return ""
+}
+
+func getImage(res *types.ScanResult) string {
+	if res.Tag != nil && res.Tag.From != nil {
+		return res.Tag.From.Name
+	}
+	return ""
 }
 
 func renderReport(results []*types.ScanResults) (failures table.Writer, warnings table.Writer, successes table.Writer) {
@@ -212,12 +226,15 @@ func renderReport(results []*types.ScanResults) (failures table.Writer, warnings
 	for _, result := range results {
 		for _, res := range result.Items {
 			component := getComponent(res)
+			tag := getTag(res)
+			image := getImage(res)
+
 			if res.IsLevel(types.Error) {
-				failureTableRows = append(failureTableRows, table.Row{component, res.Tag.Name, res.RPM, res.Path, res.Error.GetError(), res.Tag.From.Name})
+				failureTableRows = append(failureTableRows, table.Row{component, tag, res.RPM, res.Path, res.Error.GetError(), image})
 			} else if res.IsLevel(types.Warning) {
-				warningTableRows = append(warningTableRows, table.Row{component, res.Tag.Name, res.RPM, res.Path, res.Error.GetError(), res.Tag.From.Name})
+				warningTableRows = append(warningTableRows, table.Row{component, tag, res.RPM, res.Path, res.Error.GetError(), image})
 			} else {
-				successTableRows = append(successTableRows, table.Row{component, res.Tag.Name, res.Path, res.Tag.From.Name})
+				successTableRows = append(successTableRows, table.Row{component, tag, res.Path, image})
 			}
 		}
 	}
