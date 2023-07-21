@@ -41,7 +41,7 @@ func GetAllRPMs(ctx context.Context, root string) ([]Info, error) {
 	klog.Info("rpm -qa")
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "rpm", "-qa", "--root", root, "--qf", "%{NAME} %{NVRA}")
+	cmd := exec.CommandContext(ctx, "rpm", "-qa", "--root", root, "--qf", "%{NAME} %{NVRA}\n")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
