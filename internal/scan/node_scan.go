@@ -51,10 +51,15 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 				// Do not add skipped binaries to results.
 				continue
 			}
-			if res.Error == nil {
+			if res.IsSuccess() {
 				klog.V(1).InfoS("scanning node success", "path", path, "status", "success")
 			} else {
-				klog.InfoS("scanning node failed", "path", path, "error", res.Error, "status", "failed")
+				status := res.Status()
+				klog.InfoS("scanning node "+status,
+					"rpm", res.RPM,
+					"path", path,
+					"error", res.Error,
+					"status", status)
 			}
 			results.Append(res)
 		}
