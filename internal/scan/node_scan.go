@@ -39,10 +39,8 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 				// some files are stripped from an rhcos image
 				continue
 			}
-			if fileInfo.IsDir() {
-				continue
-			}
-			if fileInfo.Mode()&os.ModeSymlink != 0 {
+			if m := fileInfo.Mode(); !m.IsRegular() {
+				// Skip all non-regular files (directories, symlinks).
 				continue
 			}
 			klog.V(1).InfoS("scanning path", "path", path)
