@@ -20,16 +20,19 @@ type Info struct {
 
 func GetFilesFromRPM(ctx context.Context, root, rpm string) ([]string, error) {
 	klog.Infof("rpm -ql %v", rpm)
-	files := []string{}
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "rpm", "-ql", "--root", root, rpm)
+	dbpath, err := rpmDBPath(root)
+	if err != nil {
+		return nil, err
+	}
+	cmd := exec.CommandContext(ctx, "rpm", "-ql", "--dbpath", dbpath, "--root", root, rpm)
+	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return files, fmt.Errorf("rpm -ql error: %w (stderr=%v)", err, stderr.String())
+		return nil, fmt.Errorf("rpm -ql error: %w (stderr=%v)", err, stderr.String())
 	}
 
+	files := []string{}
 	scanner := bufio.NewScanner(&stdout)
 	for scanner.Scan() {
 		files = append(files, scanner.Text())
@@ -39,9 +42,12 @@ func GetFilesFromRPM(ctx context.Context, root, rpm string) ([]string, error) {
 
 func GetAllRPMs(ctx context.Context, root string) ([]Info, error) {
 	klog.Info("rpm -qa")
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "rpm", "-qa", "--root", root, "--qf", "%{NAME} %{NVRA}")
+	dbpath, err := rpmDBPath(root)
+	if err != nil {
+		return nil, err
+	}
+	cmd := exec.CommandContext(ctx, "rpm", "-qa", "--dbpath", dbpath, "--root", root, "--qf", "%{NAME} %{NVRA}\n")
+	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -57,6 +63,12 @@ func GetAllRPMs(ctx context.Context, root string) ([]Info, error) {
 			continue
 		}
 		rpms = append(rpms, Info{Name: f[0], NVRA: f[1]})
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading rpm -qa: %w", err)
+	}
+	if len(rpms) == 0 {
+		return nil, fmt.Errorf("no rpms found under %q", root)
 	}
 	return rpms, nil
 }

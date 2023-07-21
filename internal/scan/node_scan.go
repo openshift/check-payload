@@ -21,7 +21,11 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 		Component: "node",
 	}
 	root := cfg.NodeScan
-	rpms, _ := rpm.GetAllRPMs(ctx, root)
+	rpms, err := rpm.GetAllRPMs(ctx, root)
+	if err != nil {
+		results.Append(types.NewScanResult().SetError(err))
+		return runs
+	}
 	for _, pkg := range rpms {
 		files, err := rpm.GetFilesFromRPM(ctx, root, pkg.NVRA)
 		if err != nil {
