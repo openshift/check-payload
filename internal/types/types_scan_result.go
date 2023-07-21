@@ -62,3 +62,8 @@ func (r *ScanResult) SetTag(tag *v1.TagReference) *ScanResult {
 	r.Tag = tag
 	return r
 }
+
+func (r *ScanResult) SetRPM(rpm string) *ScanResult {
+	r.RPM = rpm
+	return r
+}

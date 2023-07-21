@@ -18,8 +18,10 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	v1 "github.com/openshift/api/image/v1"
+	"k8s.io/klog/v2"
 
 	"github.com/openshift/check-payload/internal/golang"
+	"github.com/openshift/check-payload/internal/rpm"
 	"github.com/openshift/check-payload/internal/types"
 )
 
@@ -343,6 +345,16 @@ func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v
 
 	for _, fn := range checks {
 		if err := fn(ctx, path, baton); err != nil {
+			if res.RPM == "" {
+				// Find out which rpm the file belongs to. For performance reasons,
+				// only do it for files that failed validation.
+				rpm, rpmErr := rpm.NameFromFile(ctx, topDir, innerPath)
+				if rpmErr != nil {
+					klog.Info(rpmErr) // XXX: a minor warning.
+				} else {
+					res.SetRPM(rpm)
+				}
+			}
 			return res.SetValidationError(err)
 		}
 	}

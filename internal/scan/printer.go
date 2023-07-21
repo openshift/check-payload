@@ -14,10 +14,11 @@ import (
 var (
 	colTitleOperatorName = "Operator Name"
 	colTitleTagName      = "Tag Name"
+	colTitleRPMName      = "RPM Name"
 	colTitleExeName      = "Executable Name"
 	colTitlePassedFailed = "Status"
 	colTitleImage        = "Image"
-	failureRowHeader     = table.Row{colTitleOperatorName, colTitleTagName, colTitleExeName, colTitlePassedFailed, colTitleImage}
+	failureRowHeader     = table.Row{colTitleOperatorName, colTitleTagName, colTitleRPMName, colTitleExeName, colTitlePassedFailed, colTitleImage}
 	successRowHeader     = table.Row{colTitleOperatorName, colTitleTagName, colTitleExeName, colTitleImage}
 )
 
@@ -81,34 +82,47 @@ func PrintResults(cfg *types.Config, results []*types.ScanResults) {
 	}
 }
 
+func getFilterPrefix(res *types.ScanResult) string {
+	if res.RPM != "" {
+		return "rpm." + res.RPM
+	}
+	if res.Component != nil && res.Component.Component != "" {
+		return "payload." + res.Component.Component
+	}
+	if res.Tag != nil && res.Tag.Name != "" {
+		return "tag." + res.Tag.Name
+	}
+	return ""
+}
+
 func displayExceptions(results []*types.ScanResults) {
-	exceptions := make(map[string]mapset.Set[*types.ScanResult])
+	exceptions := make(map[string]mapset.Set[string])
 	for _, result := range results {
 		for _, res := range result.Items {
-			if res.Error == nil {
-				// skip over successes
+			if res.Error == nil || res.Path == "" {
+				// Skip over successes and errors with no path set.
 				continue
 			}
-			component := getComponent(res)
-			if set, ok := exceptions[component]; ok {
-				set.Add(res)
+			prefix := getFilterPrefix(res)
+			if set, ok := exceptions[prefix]; ok {
+				set.Add(res.Path)
 			} else {
-				exceptions[component] = mapset.NewSet(res)
+				exceptions[prefix] = mapset.NewSet(res.Path)
 			}
 		}
 	}
 
-	for payloadName, set := range exceptions {
-		if payloadName != "" {
-			fmt.Printf("[payload.%v]\n", payloadName)
+	for prefix, set := range exceptions {
+		if prefix != "" {
+			fmt.Printf("[%s]\n", prefix)
 		}
 		ss := set.ToSlice()
 		if len(ss) == 1 {
-			fmt.Printf("filter_files = [ %q ]\n", ss[0].Path)
+			fmt.Printf("filter_files = [ %q ]\n", ss[0])
 		} else {
 			fmt.Println("filter_files = [")
 			for _, res := range ss {
-				fmt.Printf("  %q,\n", res.Path)
+				fmt.Printf("  %q,\n", res)
 			}
 			fmt.Println("]")
 		}
@@ -124,9 +138,9 @@ func generateNodeScanReport(results []*types.ScanResults, cfg *types.Config) (st
 	for _, result := range results {
 		for _, res := range result.Items {
 			if res.IsLevel(types.Error) {
-				failureTableRows = append(failureTableRows, table.Row{res.Path, res.Error.GetError(), res.Tag.From.Name})
+				failureTableRows = append(failureTableRows, table.Row{res.Path, res.Error.GetError(), res.RPM})
 			} else if res.IsLevel(types.Warning) {
-				warningTableRows = append(warningTableRows, table.Row{res.Path, res.Error.GetError(), res.Tag.From.Name})
+				warningTableRows = append(warningTableRows, table.Row{res.Path, res.Error.GetError(), res.RPM})
 			} else {
 				successTableRows = append(successTableRows, table.Row{res.Path})
 			}
@@ -199,9 +213,9 @@ func renderReport(results []*types.ScanResults) (failures table.Writer, warnings
 		for _, res := range result.Items {
 			component := getComponent(res)
 			if res.IsLevel(types.Error) {
-				failureTableRows = append(failureTableRows, table.Row{component, res.Tag.Name, res.Path, res.Error.GetError(), res.Tag.From.Name})
+				failureTableRows = append(failureTableRows, table.Row{component, res.Tag.Name, res.RPM, res.Path, res.Error.GetError(), res.Tag.From.Name})
 			} else if res.IsLevel(types.Warning) {
-				warningTableRows = append(warningTableRows, table.Row{component, res.Tag.Name, res.Path, res.Error.GetError(), res.Tag.From.Name})
+				warningTableRows = append(warningTableRows, table.Row{component, res.Tag.Name, res.RPM, res.Path, res.Error.GetError(), res.Tag.From.Name})
 			} else {
 				successTableRows = append(successTableRows, table.Row{component, res.Tag.Name, res.Path, res.Tag.From.Name})
 			}
