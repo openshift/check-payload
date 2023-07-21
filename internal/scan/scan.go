@@ -49,12 +49,7 @@ func RunOperatorScan(ctx context.Context, cfg *types.Config) []*types.ScanResult
 			Name: cfg.ContainerImage,
 		},
 	}
-
-	results := validateTag(ctx, tag, cfg)
-
-	var runs []*types.ScanResults
-	runs = append(runs, results)
-	return runs
+	return []*types.ScanResults{validateTag(ctx, tag, cfg)}
 }
 
 func RunPayloadScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
