@@ -17,9 +17,6 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 	results := types.NewScanResults()
 	runs = append(runs, results)
 	klog.Info("scanning node")
-	component := &types.OpenshiftComponent{
-		Component: "node",
-	}
 	root := cfg.NodeScan
 	rpms, err := rpm.GetAllRPMs(ctx, root)
 	if err != nil {
@@ -49,7 +46,7 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 				continue
 			}
 			klog.V(1).InfoS("scanning path", "path", path)
-			res := validations.ScanBinary(ctx, component, nil, root, innerPath)
+			res := validations.ScanBinary(ctx, root, innerPath)
 			if res.Skip {
 				// Do not add skipped binaries to results.
 				continue
