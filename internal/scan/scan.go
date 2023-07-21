@@ -201,21 +201,18 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 	for _, ignoredImage := range cfg.FilterImages {
 		if ignoredImage == image {
 			klog.InfoS("Ignoring image", "image", image)
-			results.Append(types.NewScanResult().SetTag(tag).Success())
-			return results
+			return results.Append(types.NewScanResult().SetTag(tag).Success())
 		}
 	}
 
 	// pull
 	if err := podman.Pull(ctx, image, cfg.InsecurePull); err != nil {
-		results.Append(types.NewScanResult().SetTag(tag).SetError(err))
-		return results
+		return results.Append(types.NewScanResult().SetTag(tag).SetError(err))
 	}
 	// mount
 	mountPath, err := podman.Mount(ctx, image)
 	if err != nil {
-		results.Append(types.NewScanResult().SetTag(tag).SetError(err))
-		return results
+		return results.Append(types.NewScanResult().SetTag(tag).SetError(err))
 	}
 	defer func() {
 		_ = podman.Unmount(ctx, image)
@@ -227,8 +224,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 	}
 	// skip if bundle image
 	if component.IsBundle {
-		results.Append(types.NewScanResult().SetTag(tag).Skipped())
-		return results
+		return results.Append(types.NewScanResult().SetTag(tag).Skipped())
 	}
 
 	// does the image contain openssl
