@@ -252,7 +252,19 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 			}
 			return nil
 		}
+		// Skip over all non-regular files. This is a very fast check
+		// as it does not require calling stat(2).
 		if !file.Type().IsRegular() {
+			return nil
+		}
+		// Check if the file has any x bits set. This is a slower check
+		// as it calls lstat(2) under the hood.
+		fi, err := file.Info()
+		if err != nil {
+			return err
+		}
+		if fi.Mode().Perm()&0o111 == 0 {
+			// Not an executable.
 			return nil
 		}
 		if cfg.IgnoreFileWithTag(innerPath, tag) || cfg.IgnoreFileWithComponent(innerPath, component) {
