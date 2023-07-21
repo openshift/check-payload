@@ -28,11 +28,6 @@ filter_files = [
 filter_images = [ ]
 
 # these node exceptions via rpm have been manually validated
-[rpm.cri-o]
-filter_files = [
-  "/usr/bin/pinns",
-]
-
 [rpm.glibc]
 filter_files = [ "/sbin/ldconfig" ]
 
