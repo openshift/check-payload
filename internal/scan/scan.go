@@ -288,7 +288,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 		results.Append(res)
 		return nil
 	}); err != nil {
-		return results
+		return results.Append(types.NewScanResult().SetError(err))
 	}
 
 	return results
