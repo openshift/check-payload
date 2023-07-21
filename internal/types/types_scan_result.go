@@ -33,6 +33,20 @@ func (r *ScanResult) IsSuccess() bool {
 	return r.Error == nil
 }
 
+func (r *ScanResult) Status() string {
+	if r.Error == nil {
+		return "success"
+	}
+	switch r.Error.Level {
+	case Error:
+		return "failed"
+	case Warning:
+		return "warning"
+	}
+	// Should never happen.
+	return "<unknown>"
+}
+
 func (r *ScanResult) SetOpenssl(info OpensslInfo) *ScanResult {
 	if !info.Present {
 		r.SetError(errors.New("openssl library not present"))

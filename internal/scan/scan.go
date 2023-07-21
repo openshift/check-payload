@@ -228,7 +228,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 	// get openshift component
 	component, _ := podman.GetOpenshiftComponentFromImage(ctx, image)
 	if component != nil {
-		klog.InfoS("found operator", "component", component.Component, "source_location", component.SourceLocation, "maintainer_component", component.MaintainerComponent, "is_bundle", component.IsBundle)
+		klog.V(1).InfoS("found operator", "component", component.Component, "source_location", component.SourceLocation, "maintainer_component", component.MaintainerComponent, "is_bundle", component.IsBundle)
 	}
 	// skip if bundle image
 	if component.IsBundle {
@@ -270,10 +270,16 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 		}
 		if res.IsSuccess() {
 			klog.V(1).InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
-		} else if res.IsLevel(types.Warning) {
-			klog.V(1).InfoS("scanning warning", "image", image, "path", innerPath, "status", "warning")
 		} else {
-			klog.InfoS("scanning failed", "image", image, "path", innerPath, "error", res.Error.Error, "status", "failed")
+			status := res.Status()
+			klog.InfoS("scanning "+status,
+				"image", image,
+				"path", innerPath,
+				"error", res.Error.Error,
+				"component", getComponent(res),
+				"tag", res.Tag.Name,
+				"rpm", res.RPM,
+				"status", status)
 		}
 		results.Append(res)
 		return nil
