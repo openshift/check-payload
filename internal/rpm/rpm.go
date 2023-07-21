@@ -64,6 +64,12 @@ func GetAllRPMs(ctx context.Context, root string) ([]Info, error) {
 		}
 		rpms = append(rpms, Info{Name: f[0], NVRA: f[1]})
 	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading rpm -qa: %w", err)
+	}
+	if len(rpms) == 0 {
+		return nil, fmt.Errorf("no rpms found under %q", root)
+	}
 	return rpms, nil
 }
 
