@@ -24,15 +24,9 @@ filter_files = [
   "/usr/bin/cdi-containerimage-server",
   "/usr/bin/dumb-init", # https://github.com/Yelp/dumb-init
   "/app/bin/dumb-init", # https://github.com/Yelp/dumb-init
-  "/usr/bin/cpb",
-  "/usr/bin/pinns",
-  "/usr/bin/pod",
   "/usr/bin/tini-static",
   "/usr/local/bin/catatonit",
-  "/usr/libexec/catatonit/catatonit",
-  "/usr/sbin/build-locale-archive",
   "/usr/sbin/glibc_post_upgrade.x86_64",
-  "/usr/sbin/ldconfig",
   "/usr/sbin/sln",
   "/usr/src/multus-cni/rhel7/bin/multus",
   "/usr/src/whereabouts/rhel7/bin/whereabouts",
@@ -42,21 +36,67 @@ filter_files = [
 # List of images to ignore.
 filter_images = [ ]
 
+# Per-RPM files to ignore.
+[rpm.glibc-common]
+filter_files = [ "/usr/sbin/build-locale-archive" ]
+
+[rpm.glibc]
+filter_files = [ "/usr/sbin/ldconfig" ]
+
+[rpm.cri-o]
+filter_files = [
+  "/usr/bin/crio",
+  "/usr/bin/crio-status",
+  "/usr/bin/pinns",
+]
+
+[rpm.cri-tools]
+filter_files = [ "/usr/bin/crictl" ]
+
+[rpm.containernetworking-plugins]
+filter_files = [
+  "/usr/libexec/cni/firewall",
+  "/usr/libexec/cni/host-device",
+  "/usr/libexec/cni/tuning",
+  "/usr/libexec/cni/vlan",
+  "/usr/libexec/cni/macvlan",
+  "/usr/libexec/cni/vrf",
+  "/usr/libexec/cni/bandwidth",
+  "/usr/libexec/cni/bridge",
+  "/usr/libexec/cni/host-local",
+  "/usr/libexec/cni/ipvlan",
+  "/usr/libexec/cni/ptp",
+  "/usr/libexec/cni/sample",
+  "/usr/libexec/cni/static",
+  "/usr/libexec/cni/dhcp",
+  "/usr/libexec/cni/loopback",
+  "/usr/libexec/cni/portmap",
+  "/usr/libexec/cni/sbr",
+]
+
+[rpm.podman]
+filter_files = [
+  "/usr/bin/podman",
+  "/usr/libexec/podman/rootlessport",
+]
+
+[rpm.podman-catatonit]
+filter_files = [ "/usr/libexec/catatonit/catatonit" ]
+
+[rpm.runc]
+filter_files = [ "/usr/bin/runc" ]
+
+[rpm.ignition]
+filter_files = [ "/usr/lib/dracut/modules.d/30ignition/ignition" ]
+
+[rpm.skopeo]
+filter_files = [ "/usr/bin/skopeo" ]
+
 # Payload Components
 
-## [payload.ose-agent-installer-node-agent-container]
-## filter_files = [
-##   "/usr/libexec/catatonit/catatonit",
-##   "/usr/bin/cpb",
-##   "/usr/bin/pod",
-## ]
-##
-## [payload.agent-installer-node-agent-container]
-## filter_files = [ "/usr/bin/cpb" ]
-##
-## [payload.operator-lifecycle-manager-container]
-## filter_files = [ "/usr/bin/cpb" ]
-##
-## [payload.openshift-enterprise-pod-container]
-## filter_files = [ "/usr/bin/pod" ]
+[payload.operator-lifecycle-manager-container]
+filter_files = [ "/usr/bin/cpb" ]
+
+[payload.openshift-enterprise-pod-container]
+filter_files = [ "/usr/bin/pod" ]
 
