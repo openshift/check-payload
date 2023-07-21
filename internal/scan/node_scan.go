@@ -45,19 +45,19 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 				// and regular files that has no x bit set.
 				continue
 			}
-			klog.V(1).InfoS("scanning path", "path", path)
+			klog.V(1).InfoS("scanning path", "path", innerPath)
 			res := validations.ScanBinary(ctx, root, innerPath)
 			if res.Skip {
 				// Do not add skipped binaries to results.
 				continue
 			}
 			if res.IsSuccess() {
-				klog.V(1).InfoS("scanning node success", "path", path, "status", "success")
+				klog.V(1).InfoS("scanning node success", "path", innerPath, "status", "success")
 			} else {
 				status := res.Status()
 				klog.InfoS("scanning node "+status,
 					"rpm", res.RPM,
-					"path", path,
+					"path", innerPath,
 					"error", res.Error,
 					"status", status)
 			}
