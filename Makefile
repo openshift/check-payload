@@ -7,6 +7,10 @@ all:
 .PHONY: verify
 verify: verify-space verify-golangci
 
+.PHONY: test
+test:
+	go test -v ./...
+
 .PHONY: verify-golangci
 verify-golangci:
 	golangci-lint run
