@@ -3,6 +3,7 @@ package scan
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -82,7 +83,8 @@ func getFilterPrefix(res *types.ScanResult) string {
 }
 
 func displayExceptions(results []*types.ScanResults) {
-	exceptions := make(map[string]mapset.Set[string])
+	// Per-prefix map of per-error map of files to be excluded.
+	exceptions := make(map[string]map[string]mapset.Set[string])
 	for _, result := range results {
 		for _, res := range result.Items {
 			if res.Error == nil || res.Path == "" {
@@ -90,29 +92,42 @@ func displayExceptions(results []*types.ScanResults) {
 				continue
 			}
 			prefix := getFilterPrefix(res)
-			if set, ok := exceptions[prefix]; ok {
+			errMap, ok := exceptions[prefix]
+			if !ok {
+				errMap = make(map[string]mapset.Set[string])
+				exceptions[prefix] = errMap
+			}
+
+			errName := types.KnownErrorName(res.Error.Error)
+			if set, ok := errMap[errName]; ok {
 				set.Add(res.Path)
 			} else {
-				exceptions[prefix] = mapset.NewSet(res.Path)
+				errMap[errName] = mapset.NewSet(res.Path)
 			}
 		}
 	}
 
-	for prefix, set := range exceptions {
-		if prefix != "" {
-			fmt.Printf("[%s]\n", prefix)
-		}
-		ss := set.ToSlice()
-		if len(ss) == 1 {
-			fmt.Printf("filter_files = [ %q ]\n", ss[0])
-		} else {
-			fmt.Println("filter_files = [")
-			for _, res := range ss {
-				fmt.Printf("  %q,\n", res)
+	for prefix, errMap := range exceptions {
+		for errName, set := range errMap {
+			if prefix != "" {
+				fmt.Printf("[[%s.ignore]]\n", prefix)
+			} else {
+				fmt.Println("[[ignore]]")
 			}
-			fmt.Println("]")
+			fmt.Printf("error = %q\n", errName)
+			ss := set.ToSlice()
+			if len(ss) == 1 {
+				fmt.Printf("files = [ %q ]\n", ss[0])
+			} else {
+				fmt.Println("files = [")
+				sort.Strings(ss)
+				for _, res := range ss {
+					fmt.Printf("  %q,\n", res)
+				}
+				fmt.Println("]")
+			}
+			fmt.Println("")
 		}
-		fmt.Println("")
 	}
 }
 
