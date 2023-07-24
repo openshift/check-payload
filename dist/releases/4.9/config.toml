@@ -1,55 +1,11 @@
-# List of directories to ignore. This is a prefix match,
-# i.e. everything under a matched directory is ignored.
-filter_dirs = [
-  "/lib/firmware",
-  "/lib/modules",
-  "/usr/lib/.build-id",
-  "/usr/lib/firmware",
-  "/usr/lib/grub",
-  "/usr/lib/modules",
-  "/usr/share/app-info",
-  "/usr/share/doc",
-  "/usr/share/fonts",
-  "/usr/share/icons",
-  "/usr/share/openshift",
-  "/usr/src/plugins",
-  "/rootfs",
-  "/sysroot",
-]
+[[payload.ose-egress-router-cni-alt-container.ignore]]
+error = "ErrNoLibcryptoSO"
+files = [ "/usr/src/egress-router-cni/rhel7/bin/egress-router" ]
 
-# List of files to ignore. This is a strict match.
-filter_files = [
-  "/usr/sbin/ldconfig",
-  "/usr/sbin/build-locale-archive",
-  "/sbin/ldconfig",
-]
+[[payload.multus-cni-alt-container.ignore]]
+error = "ErrNoLibcryptoSO"
+files = [ "/usr/src/multus-cni/rhel7/bin/multus" ]
 
-# List of images to ignore.
-filter_images = [ ]
-
-# these node exceptions via rpm have been manually validated
-[rpm.glibc]
-filter_files = [ "/sbin/ldconfig" ]
-
-[rpm.cri-o]
-filter_files = [ "/usr/bin/pinns" ]
-
-[rpm.podman-catatonit]
-filter_files = [ "/usr/libexec/catatonit/catatonit" ]
-
-# Payload Components
-
-[payload.multus-cni-alt-container]
-filter_files = [ "/usr/src/multus-cni/rhel7/bin/multus" ]
-
-[payload.operator-lifecycle-manager-container]
-filter_files = [ "/usr/bin/cpb" ]
-
-[payload.openshift-enterprise-pod-container]
-filter_files = [ "/usr/bin/pod" ]
-
-[payload.ose-egress-router-cni-alt-container]
-filter_files = [ "/usr/src/egress-router-cni/rhel7/bin/egress-router" ]
-
-[payload.ose-multus-whereabouts-ipam-cni-alt-container]
-filter_files = [ "/usr/src/whereabouts/rhel7/bin/whereabouts" ]
+[[payload.ose-multus-whereabouts-ipam-cni-alt-container.ignore]]
+error = "ErrNoLibcryptoSO"
+files = [ "/usr/src/whereabouts/rhel7/bin/whereabouts" ]

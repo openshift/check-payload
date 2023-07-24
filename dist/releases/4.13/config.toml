@@ -1,226 +1,86 @@
-# List of directories to ignore. This is a prefix match,
-# i.e. everything under a matched directory is ignored.
-filter_dirs = [
-  "/lib/firmware",
-  "/lib/modules",
-  "/usr/lib/.build-id",
-  "/usr/lib/firmware",
-  "/usr/lib/grub",
-  "/usr/lib/modules",
-  "/usr/share/app-info",
-  "/usr/share/doc",
-  "/usr/share/fonts",
-  "/usr/share/icons",
-  "/usr/share/openshift",
-  "/usr/src/plugins",
-  "/rootfs",
-  "/sysroot",
+[[payload.ose-network-interface-bond-cni-container.ignore]]
+error = "ErrNoLibcryptoSO"
+files = [
+  "/bondcni/bond",
+  "/bondcni/rhel9/bond",
 ]
 
-# List of files to ignore. This is a strict match.
-filter_files = [
-  "/usr/sbin/ldconfig",
-  "/usr/sbin/build-locale-archive",
-  "/usr/bin/crictl",
-  "/usr/bin/crio",
+[[payload.ose-network-tools-container.ignore]]
+error = "ErrNoLibcryptoSO"
+files = [ "/usr/bin/ovnkube-trace" ]
+
+[[rpm.cri-o.ignore]]
+error = "ErrGoMissingTag"
+files = [
   "/usr/bin/crio-status",
-  "/usr/bin/pinns",
-  "/usr/bin/podman",
-  "/usr/bin/runc",
-  "/usr/bin/skopeo",
-  "/usr/lib/dracut/modules.d/30ignition/ignition",
-  "/usr/libexec/catatonit/catatonit",
-  "/usr/libexec/cni/bandwidth",
-  "/usr/libexec/cni/bridge",
-  "/usr/libexec/cni/dhcp",
-  "/usr/libexec/cni/dummy",
-  "/usr/libexec/cni/firewall",
-  "/usr/libexec/cni/host-device",
-  "/usr/libexec/cni/host-local",
-  "/usr/libexec/cni/ipvlan",
-  "/usr/libexec/cni/loopback",
-  "/usr/libexec/cni/macvlan",
-  "/usr/libexec/cni/portmap",
-  "/usr/libexec/cni/ptp",
-  "/usr/libexec/cni/sample",
-  "/usr/libexec/cni/sbr",
-  "/usr/libexec/cni/static",
-  "/usr/libexec/cni/tuning",
-  "/usr/libexec/cni/vlan",
-  "/usr/libexec/cni/vrf",
-  "/usr/libexec/podman/rootlessport",
-  "/usr/libexec/podman/catatonit",
-  "/usr/libexec/podman/quadlet",
-]
-
-# List of images to ignore.
-filter_images = [ ]
-
-# Node Ignores
-# these node exceptions via rpm have been manually validated
-[rpm.runc]
-filter_files = [ "/usr/bin/runc" ]
-
-[rpm.cri-tools]
-filter_files = [ "/usr/bin/crictl" ]
-
-[rpm.glibc]
-filter_files = [ "/sbin/ldconfig" ]
-
-[rpm.cri-o]
-filter_files = [
   "/usr/bin/crio",
-  "/usr/bin/crio-status",
-  "/usr/bin/pinns",
 ]
 
-[rpm.podman]
-filter_files = [
-  "/usr/bin/podman",
-  "/usr/libexec/podman/rootlessport",
-]
+[[rpm.cri-o.ignore]]
+error = "ErrNotDynLinked"
+files = [ "/usr/bin/pinns" ]
 
-[rpm.ignition]
-filter_files = [
-  "/usr/lib/dracut/modules.d/30ignition/ignition"
-]
+[[rpm.skopeo.ignore]]
+error = "ErrGoMissingTag"
+files = [ "/usr/bin/skopeo" ]
 
-[rpm.skopeo]
-filter_files = [
-  "/usr/bin/skopeo"
-]
+[[payload.ose-machine-config-operator-container.ignore]]
+error = "ErrNoLibcryptoSO"
+files = [ "/usr/bin/machine-config-daemon.rhel9" ]
 
-[rpm.podman-catatonit]
-filter_files = [
-  "/usr/libexec/catatonit/catatonit"
-]
+[[rpm.containernetworking-plugins.ignore]]
+error = "ErrGoMissingTag"
+files = [ "/usr/libexec/cni/dummy" ]
 
-[rpm.containernetworking-plugins]
-filter_files = [
-"/usr/libexec/cni/bandwidth",
-"/usr/libexec/cni/bridge",
-"/usr/libexec/cni/dhcp",
-"/usr/libexec/cni/firewall",
-"/usr/libexec/cni/host-device",
-"/usr/libexec/cni/host-local",
-"/usr/libexec/cni/ipvlan",
-"/usr/libexec/cni/loopback",
-"/usr/libexec/cni/macvlan",
-"/usr/libexec/cni/portmap",
-"/usr/libexec/cni/ptp",
-"/usr/libexec/cni/sample",
-"/usr/libexec/cni/tuning",
-"/usr/libexec/cni/vlan",
-"/usr/libexec/cni/vrf",
-"/usr/libexec/cni/sbr",
-"/usr/libexec/cni/static",
-]
+[[payload.ose-node-container.ignore]]
+error = "ErrNoLibcryptoSO"
+files = [ "/opt/cni/bin/rhel9/openshift-sdn" ]
 
-# Payload Components
-
-[payload.operator-lifecycle-manager-container]
-filter_files = [ "/usr/bin/cpb" ]
-
-[payload.openshift-enterprise-pod-container]
-filter_files = [ "/usr/bin/pod" ]
-
-[payload.ose-ovn-kubernetes-container]
-filter_files = [
-  "/usr/libexec/cni/rhel8/ovn-k8s-cni-overlay",
-  "/usr/libexec/cni/host-local",
-  "/usr/libexec/cni/sample",
-  "/usr/libexec/cni/vrf",
-  "/usr/libexec/cni/tuning",
-  "/usr/libexec/cni/vlan",
-  "/usr/libexec/cni/bridge",
-  "/usr/libexec/cni/host-device",
-  "/usr/libexec/cni/loopback",
-  "/usr/libexec/cni/portmap",
-  "/usr/libexec/cni/firewall",
-  "/usr/libexec/cni/macvlan",
-  "/usr/libexec/cni/ptp",
-  "/usr/libexec/cni/sbr",
-  "/usr/libexec/cni/bandwidth",
-  "/usr/libexec/cni/dhcp",
-  "/usr/libexec/cni/ipvlan",
-  "/usr/libexec/cni/static",
-]
-
-[payload.ose-agent-installer-node-agent-container]
-filter_files = [
-  "/usr/libexec/catatonit/catatonit",
-  "/usr/libexec/cni/host-device",
-  "/usr/libexec/cni/host-local",
-  "/usr/libexec/cni/ipvlan",
-  "/usr/libexec/cni/ptp",
-  "/usr/libexec/cni/dhcp",
-  "/usr/libexec/cni/loopback",
-  "/usr/libexec/cni/macvlan",
-  "/usr/libexec/cni/sample",
-  "/usr/libexec/cni/sbr",
-  "/usr/libexec/cni/vlan",
-  "/usr/libexec/cni/bridge",
-  "/usr/libexec/cni/firewall",
-  "/usr/libexec/cni/portmap",
-  "/usr/libexec/cni/bandwidth",
-  "/usr/libexec/cni/static",
-  "/usr/libexec/cni/tuning",
-  "/usr/libexec/cni/vrf",
-  "/usr/bin/cpb",
-  "/usr/bin/pod",
-  "/usr/bin/runc",
-  "/usr/bin/podman",
-  "/usr/libexec/podman/rootlessport",
-]
-
-[payload.openshift-enterprise-builder-container]
-filter_files = [ "/usr/bin/runc" ]
-
-[payload.multus-cni-container]
-filter_files = [
+[[payload.multus-cni-container.ignore]]
+error = "ErrNoLibcryptoSO"
+files = [
+  "/usr/src/multus-cni/rhel9/bin/multus-daemon",
+  "/usr/src/multus-cni/rhel9/bin/multus-shim",
   "/usr/src/multus-cni/bin/multus",
   "/usr/src/multus-cni/bin/multus-daemon",
-  "/usr/src/multus-cni/rhel9/bin/multus",
   "/usr/src/multus-cni/bin/multus-shim",
-  "/usr/src/multus-cni/rhel9/bin/multus-shim",
-  "/usr/src/multus-cni/rhel9/bin/multus-daemon",
+  "/usr/src/multus-cni/rhel9/bin/multus",
 ]
 
-[payload.ose-machine-config-operator-container]
-filter_files = [ "/usr/bin/machine-config-daemon.rhel9" ]
+[[rpm.cri-tools.ignore]]
+error = "ErrGoMissingTag"
+files = [ "/usr/bin/crictl" ]
 
-[payload.ose-egress-router-cni-container]
-filter_files = [
+[[rpm.ignition.ignore]]
+error = "ErrGoMissingTag"
+files = [ "/usr/lib/dracut/modules.d/30ignition/ignition" ]
+
+[[payload.ose-ovn-kubernetes-container.ignore]]
+error = "ErrNoLibcryptoSO"
+files = [ "/usr/libexec/cni/rhel8/ovn-k8s-cni-overlay" ]
+
+[[payload.ose-egress-router-cni-container.ignore]]
+error = "ErrNoLibcryptoSO"
+files = [
   "/usr/src/egress-router-cni/bin/egress-router",
   "/usr/src/egress-router-cni/rhel9/bin/egress-router",
 ]
 
-[payload.ose-multus-whereabouts-ipam-cni-container]
-filter_files = [
-  "/usr/src/whereabouts/bin/ip-control-loop",
-  "/usr/src/whereabouts/bin/whereabouts"
+[[payload.ose-multus-whereabouts-ipam-cni-container.ignore]]
+error = "ErrNoLibcryptoSO"
+files = [
+  "/usr/src/whereabouts/rhel9/bin/whereabouts",
+  "/usr/src/whereabouts/rhel9/bin/ip-control-loop",
 ]
 
-[payload.ose-network-interface-bond-cni-container]
-filter_files = [ "/bondcni/bond" ]
-
-[payload.ose-network-tools-container]
-filter_files = [ "/usr/bin/ovnkube-trace" ]
-
-[payload.devspaces-code-rhel8-container]
-filter_files = [
-  ### static binaries, no crypto
-  "/checode-linux-libc/node_modules/@vscode/ripgrep/bin/rg"
+[[rpm.podman.ignore]]
+error = "ErrGoMissingTag"
+files = [
+  "/usr/bin/podman",
+  "/usr/libexec/podman/quadlet",
+  "/usr/libexec/podman/rootlessport",
 ]
 
-[payload.devspaces-udi-rhel8-container]
-filter_files = [
-  ### excluded in main config.toml so re-excluding it here
-  "/usr/libexec/catatonit/catatonit",
-  ### include golang compiler intentionally; exception needed until https://issues.redhat.com/browse/GT-130 is resolved
-  "/usr/lib/golang/pkg/tool/linux_amd64/compile",
-  "/usr/lib/golang/pkg/tool/linux_ppc64le/compile",
-  "/usr/lib/golang/pkg/tool/linux_s390x/compile",
-  ### helm is not FIPS compliant; exception needed until https://issues.redhat.com/browse/HELM-506 is resolved
-  "/usr/bin/helm"
-]
+[[rpm.podman.ignore]]
+error = "ErrNotDynLinked"
+files = [ "/usr/libexec/podman/catatonit" ]
