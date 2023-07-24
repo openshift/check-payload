@@ -231,6 +231,14 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 	opensslInfo := validations.ValidateOpenssl(ctx, mountPath)
 	results.Append(types.NewScanResult().SetOpenssl(opensslInfo).SetTag(tag))
 
+	errIgnoreLists := []types.ErrIgnoreList{cfg.ErrIgnores}
+	if i, ok := cfg.TagIgnores[tag.Name]; ok {
+		errIgnoreLists = append(errIgnoreLists, i.ErrIgnores)
+	}
+	if i, ok := cfg.PayloadIgnores[component.Component]; ok {
+		errIgnoreLists = append(errIgnoreLists, i.ErrIgnores)
+	}
+
 	// business logic for scan
 	if err := filepath.WalkDir(mountPath, func(path string, file fs.DirEntry, err error) error {
 		if err != nil {
@@ -262,7 +270,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 			return nil
 		}
 		klog.V(1).InfoS("scanning path", "path", path)
-		res := validations.ScanBinary(ctx, mountPath, innerPath)
+		res := validations.ScanBinary(ctx, mountPath, innerPath, cfg.RPMIgnores, errIgnoreLists...)
 		if res.Skip {
 			// Do not add skipped binaries to results.
 			return nil

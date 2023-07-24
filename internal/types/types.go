@@ -33,11 +33,20 @@ type Config struct {
 	PayloadIgnores map[string]IgnoreLists `toml:"payload"`
 	TagIgnores     map[string]IgnoreLists `toml:"tag"`
 	RPMIgnores     map[string]IgnoreLists `toml:"rpm"`
+	ErrIgnores     ErrIgnoreList          `json:"ignore" toml:"ignore"`
 }
 
+type ErrIgnore struct {
+	Error KnownError `toml:"error"`
+	Files []string   `toml:"files"`
+}
+
+type ErrIgnoreList []ErrIgnore
+
 type IgnoreLists struct {
-	FilterFiles []string `json:"filter_files" toml:"filter_files"`
-	FilterDirs  []string `json:"filter_dirs" toml:"filter_dirs"`
+	FilterFiles []string      `json:"filter_files" toml:"filter_files"`
+	FilterDirs  []string      `json:"filter_dirs" toml:"filter_dirs"`
+	ErrIgnores  ErrIgnoreList `json:"ignore" toml:"ignore"`
 }
 
 type ArtifactPod struct {

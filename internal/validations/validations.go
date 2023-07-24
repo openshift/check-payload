@@ -316,7 +316,7 @@ func isElfExe(path string) (bool, error) {
 	return false, nil
 }
 
-func ScanBinary(ctx context.Context, topDir, innerPath string) *types.ScanResult {
+func ScanBinary(ctx context.Context, topDir, innerPath string, rpmIgnores map[string]types.IgnoreLists, errIgnores ...types.ErrIgnoreList) *types.ScanResult {
 	baton := &Baton{TopDir: topDir}
 	res := types.NewScanResult().SetPath(innerPath)
 
@@ -342,8 +342,15 @@ func ScanBinary(ctx context.Context, topDir, innerPath string) *types.ScanResult
 		checks = validationFns["exe"]
 	}
 
+checks:
 	for _, fn := range checks {
 		if err := fn(ctx, path, baton); err != nil {
+			// See if the error is to be ignored.
+			for _, list := range errIgnores {
+				if list.Ignore(innerPath, err.Error) {
+					continue checks
+				}
+			}
 			if res.RPM == "" {
 				// Find out which rpm the file belongs to. For performance reasons,
 				// only do it for files that failed validation.
@@ -352,6 +359,14 @@ func ScanBinary(ctx context.Context, topDir, innerPath string) *types.ScanResult
 					klog.Info(rpmErr) // XXX: a minor warning.
 				} else {
 					res.SetRPM(rpm)
+				}
+			}
+			// See if the error is to be ignored for the rpm.
+			if res.RPM != "" && len(rpmIgnores) > 0 {
+				if i, ok := rpmIgnores[res.RPM]; ok {
+					if i.ErrIgnores.Ignore(innerPath, err.Error) {
+						continue
+					}
 				}
 			}
 			return res.SetValidationError(err)

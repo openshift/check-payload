@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"strings"
 
 	imagev1 "github.com/openshift/api/image/v1"
@@ -93,5 +94,25 @@ func (c *Config) IgnoreDirPrefix(path string) bool {
 			return true
 		}
 	}
+	return false
+}
+
+// Ignore checks if the particular error err is to be ignored for a specified file.
+func (i ErrIgnoreList) Ignore(file string, err error) bool {
+	if len(i) == 0 {
+		return false
+	}
+
+	for _, ie := range i {
+		if !errors.Is(err, ie.Error.Err) {
+			continue
+		}
+		for _, f := range ie.Files {
+			if file == f {
+				return true
+			}
+		}
+	}
+
 	return false
 }
