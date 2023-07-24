@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/openshift/check-payload/dist/releases"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 
+	"github.com/openshift/check-payload/dist/releases"
 	"github.com/openshift/check-payload/internal/scan"
 	"github.com/openshift/check-payload/internal/types"
 )
@@ -82,7 +82,7 @@ func main() {
 		Use:   "scan",
 		Short: "Run a scan",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := getConfig(&config); err != nil {
+			if err := getConfig(&config.ConfigFile); err != nil {
 				return err
 			}
 			config.FailOnWarnings = failOnWarnings
@@ -218,60 +218,51 @@ func main() {
 	}
 }
 
-func getConfig(config *types.Config) (retErr error) {
-	var (
-		res toml.MetaData
-		err error
-	)
-
-	// Check if the configuration was fully parsed.
-	defer func() {
-		if retErr != nil {
-			return
-		}
-		un := res.Undecoded()
-		if len(un) != 0 {
-			retErr = fmt.Errorf("unknown keys in config: %+v", un)
-		}
-	}()
-
-	// Handle --config-for-version first.
-	if configForVersion != "" {
-		if configFile != "" {
-			return errors.New("can't use both --config and --config-for-version")
-		}
-		cfg, err := releases.GetConfigFor(configForVersion)
-		if err != nil {
-			return err
-		}
-		res, err = toml.Decode(string(cfg), &config)
-		if err != nil { // Should never happen.
-			panic("invalid embedded config: " + err.Error())
-		}
-		return nil
-	}
-
+func getConfig(config *types.ConfigFile) error {
 	// Handle --config.
 	file := configFile
 	if file == "" {
 		file = defaultConfigFile
 	}
-	res, err = toml.DecodeFile(file, &config)
+	res, err := toml.DecodeFile(file, &config)
 	if err == nil {
 		klog.Infof("using config file: %v", file)
-		return nil
-	}
-
-	// When neither --config not --config-for-version are specified, and
-	// defaultConfigFile is not found, fall back to embedded config.
-	if errors.Is(err, os.ErrNotExist) && configFile == "" {
+		if un := res.Undecoded(); len(un) != 0 {
+			return fmt.Errorf("unknown keys in config: %+v", un)
+		}
+	} else if errors.Is(err, os.ErrNotExist) && configFile == "" {
+		// When --config not specified and defaultConfigFile is not found,
+		// fall back to embedded config.
 		klog.Info("using embedded config")
 		res, err = toml.Decode(embeddedConfig, &config)
 		if err != nil { // Should never happen.
 			panic("invalid embedded config: " + err.Error())
 		}
-		return nil
+		if un := res.Undecoded(); len(un) != 0 {
+			panic(fmt.Errorf("unknown keys in config: %+v", un))
+		}
+	} else {
+		// Otherwise, error out.
+		return fmt.Errorf("can't parse config file %q: %w", file, err)
 	}
-	// Otherwise, error out.
-	return fmt.Errorf("can't parse config file %q: %w", file, err)
+
+	if configForVersion != "" {
+		// Append to the main config.
+		cfg, err := releases.GetConfigFor(configForVersion)
+		if err != nil {
+			return err
+		}
+		klog.Infof("adding rules from embedded config for %s", configForVersion)
+		addConfig := &types.ConfigFile{}
+		res, err = toml.Decode(string(cfg), &addConfig)
+		if err != nil { // Should never happen.
+			panic("invalid embedded config: " + err.Error())
+		}
+		if un := res.Undecoded(); len(un) != 0 {
+			panic(fmt.Errorf("unknown keys in config: %+v", un))
+		}
+		config.Add(addConfig)
+	}
+
+	return nil
 }
