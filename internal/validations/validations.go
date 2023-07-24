@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	v1 "github.com/openshift/api/image/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/openshift/check-payload/internal/golang"
@@ -317,9 +316,9 @@ func isElfExe(path string) (bool, error) {
 	return false, nil
 }
 
-func ScanBinary(ctx context.Context, component *types.OpenshiftComponent, tag *v1.TagReference, topDir, innerPath string) *types.ScanResult {
+func ScanBinary(ctx context.Context, topDir, innerPath string) *types.ScanResult {
 	baton := &Baton{TopDir: topDir}
-	res := types.NewScanResult().SetComponent(component).SetTag(tag).SetPath(innerPath)
+	res := types.NewScanResult().SetPath(innerPath)
 
 	path := filepath.Join(topDir, innerPath)
 

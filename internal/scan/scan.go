@@ -49,12 +49,7 @@ func RunOperatorScan(ctx context.Context, cfg *types.Config) []*types.ScanResult
 			Name: cfg.ContainerImage,
 		},
 	}
-
-	results := validateTag(ctx, tag, cfg)
-
-	var runs []*types.ScanResults
-	runs = append(runs, results)
-	return runs
+	return []*types.ScanResults{validateTag(ctx, tag, cfg)}
 }
 
 func RunPayloadScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
@@ -206,21 +201,18 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 	for _, ignoredImage := range cfg.FilterImages {
 		if ignoredImage == image {
 			klog.InfoS("Ignoring image", "image", image)
-			results.Append(types.NewScanResult().SetTag(tag).Success())
-			return results
+			return results.Append(types.NewScanResult().SetTag(tag).Success())
 		}
 	}
 
 	// pull
 	if err := podman.Pull(ctx, image, cfg.InsecurePull); err != nil {
-		results.Append(types.NewScanResult().SetTag(tag).SetError(err))
-		return results
+		return results.Append(types.NewScanResult().SetTag(tag).SetError(err))
 	}
 	// mount
 	mountPath, err := podman.Mount(ctx, image)
 	if err != nil {
-		results.Append(types.NewScanResult().SetTag(tag).SetError(err))
-		return results
+		return results.Append(types.NewScanResult().SetTag(tag).SetError(err))
 	}
 	defer func() {
 		_ = podman.Unmount(ctx, image)
@@ -232,8 +224,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 	}
 	// skip if bundle image
 	if component.IsBundle {
-		results.Append(types.NewScanResult().SetTag(tag).Skipped())
-		return results
+		return results.Append(types.NewScanResult().SetTag(tag).Skipped())
 	}
 
 	// does the image contain openssl
@@ -271,7 +262,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 			return nil
 		}
 		klog.V(1).InfoS("scanning path", "path", path)
-		res := validations.ScanBinary(ctx, component, tag, mountPath, innerPath)
+		res := validations.ScanBinary(ctx, mountPath, innerPath)
 		if res.Skip {
 			// Do not add skipped binaries to results.
 			return nil
@@ -280,6 +271,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 		if !res.IsSuccess() && res.RPM != "" && cfg.IgnoreFileByRpm(innerPath, res.RPM) {
 			return nil
 		}
+		res.SetTag(tag).SetComponent(component)
 		if res.IsSuccess() {
 			klog.V(1).InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
 		} else {
@@ -289,14 +281,14 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 				"path", innerPath,
 				"error", res.Error.Error,
 				"component", getComponent(res),
-				"tag", res.Tag.Name,
+				"tag", getTag(res),
 				"rpm", res.RPM,
 				"status", status)
 		}
 		results.Append(res)
 		return nil
 	}); err != nil {
-		return results
+		return results.Append(types.NewScanResult().SetError(err))
 	}
 
 	return results
