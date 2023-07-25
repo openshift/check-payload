@@ -46,7 +46,7 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 				continue
 			}
 			klog.V(1).InfoS("scanning path", "path", innerPath)
-			res := validations.ScanBinary(ctx, root, innerPath)
+			res := validations.ScanBinary(ctx, root, innerPath, cfg.RPMIgnores, cfg.ErrIgnores)
 			if res.Skip {
 				// Do not add skipped binaries to results.
 				continue

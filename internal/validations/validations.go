@@ -75,7 +75,7 @@ func validateGoSymbols(_ context.Context, path string, baton *Baton) *types.Vali
 	}
 
 	if !golang.ExpectedSyms(requiredGolangSymbols, symtable) {
-		return types.NewValidationError(fmt.Errorf("go: expected symbols not found for %v", filepath.Base(path)))
+		return types.NewValidationError(types.ErrGoMissingSymbols)
 	}
 	return nil
 }
@@ -98,7 +98,7 @@ func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationE
 			return nil
 		}
 	}
-	return types.NewValidationError(fmt.Errorf("go: binary is not CGO_ENABLED"))
+	return types.NewValidationError(types.ErrGoNotCgoEnabled)
 }
 
 func validateGoTags(_ context.Context, _ string, baton *Baton) *types.ValidationError {
@@ -117,20 +117,20 @@ func validateGoTags(_ context.Context, _ string, baton *Baton) *types.Validation
 		}
 	}
 	if tags == "x" {
-		return types.NewValidationError(fmt.Errorf("go: binary has zero tags enabled (should have strictfipsruntime)")).SetWarning()
+		return types.NewValidationError(types.ErrGoNoTags).SetWarning()
 	}
 
 	// Check for invalid tags.
 	for _, tag := range badTags {
 		if strings.Contains(tags, ","+tag+",") {
-			return types.NewValidationError(fmt.Errorf("go: binary has invalid tag %v enabled", tag))
+			return types.NewValidationError(fmt.Errorf("%w: %v", types.ErrGoInvalidTag, tag))
 		}
 	}
 
 	// Check for required tags.
 	for _, tag := range goodTags {
 		if !strings.Contains(tags, ","+tag+",") {
-			return types.NewValidationError(fmt.Errorf("go: binary does not contain required tag %v", tag)).SetWarning()
+			return types.NewValidationError(fmt.Errorf("%w: %v", types.ErrGoMissingTag, tag)).SetWarning()
 		}
 	}
 
@@ -184,7 +184,7 @@ func validateGoCGOInit(_ context.Context, path string, _ *Baton) *types.Validati
 	}
 
 	if !cgoInitFound {
-		return types.NewValidationError(fmt.Errorf("x_cgo_init: not found"))
+		return types.NewValidationError(types.ErrGoNoCgoInit)
 	}
 
 	return nil
@@ -227,17 +227,17 @@ func validateStringsOpenssl(path string, baton *Baton) error {
 	}
 
 	if libcryptoVersion == "" {
-		return fmt.Errorf("openssl: did not find libcrypto library within binary")
+		return types.ErrLibcryptoMissing
 	}
 
 	if haveMultipleLibcrypto {
-		return errors.New("openssl: found multiple different libcrypto versions")
+		return types.ErrLibcryptoMany
 	}
 
 	// check for openssl library within container image
 	opensslInnerPath := filepath.Join(baton.TopDir, "usr", "lib64", libcryptoVersion)
 	if _, err := os.Lstat(opensslInnerPath); err != nil {
-		return fmt.Errorf("could not find dependent openssl version %v within container image", libcryptoVersion)
+		return fmt.Errorf("%w: %v", types.ErrLibcryptoSoMissing, libcryptoVersion)
 	}
 
 	return nil
@@ -255,7 +255,7 @@ func isDynamicallyLinked(ctx context.Context, path string) *types.ValidationErro
 		return types.NewValidationError(err)
 	}
 	if !bytes.Contains(stdout.Bytes(), []byte("dynamically linked")) {
-		return types.NewValidationError(fmt.Errorf("exe: executable is statically linked"))
+		return types.NewValidationError(types.ErrNotDynLinked)
 	}
 	return nil
 }
@@ -316,7 +316,7 @@ func isElfExe(path string) (bool, error) {
 	return false, nil
 }
 
-func ScanBinary(ctx context.Context, topDir, innerPath string) *types.ScanResult {
+func ScanBinary(ctx context.Context, topDir, innerPath string, rpmIgnores map[string]types.IgnoreLists, errIgnores ...types.ErrIgnoreList) *types.ScanResult {
 	baton := &Baton{TopDir: topDir}
 	res := types.NewScanResult().SetPath(innerPath)
 
@@ -342,8 +342,15 @@ func ScanBinary(ctx context.Context, topDir, innerPath string) *types.ScanResult
 		checks = validationFns["exe"]
 	}
 
+checks:
 	for _, fn := range checks {
 		if err := fn(ctx, path, baton); err != nil {
+			// See if the error is to be ignored.
+			for _, list := range errIgnores {
+				if list.Ignore(innerPath, err.Error) {
+					continue checks
+				}
+			}
 			if res.RPM == "" {
 				// Find out which rpm the file belongs to. For performance reasons,
 				// only do it for files that failed validation.
@@ -352,6 +359,14 @@ func ScanBinary(ctx context.Context, topDir, innerPath string) *types.ScanResult
 					klog.Info(rpmErr) // XXX: a minor warning.
 				} else {
 					res.SetRPM(rpm)
+				}
+			}
+			// See if the error is to be ignored for the rpm.
+			if res.RPM != "" && len(rpmIgnores) > 0 {
+				if i, ok := rpmIgnores[res.RPM]; ok {
+					if i.ErrIgnores.Ignore(innerPath, err.Error) {
+						continue
+					}
 				}
 			}
 			return res.SetValidationError(err)

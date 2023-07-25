@@ -27,13 +27,17 @@ A default built-in configuration ([config.toml](./config.toml)) is used if no
 options are specified, and no `./config.toml` file is available from the
 current working directory when running the tool.
 
-A built-in configuration tailored for a specific OpenShift version can be
-specified using `-V`, `--config-for-version` option, for example `-V 4.11`.
-These configuration files are embedded during build time from the directories
-under [dist/releases/](./dist/releases/).
-
 A specific configuration from a file can be specified using
-`--config path/to/config.toml` option.
+`--config path/to/config.toml` option. Use `--config /dev/null` to use an empty
+configuration.
+
+An additional built-in coniguration tailored for a specific OpenShift version
+can be specified using `-V`, `--config-for-version` option, for example `-V
+4.11`. When this option is specified, the settings from the additional
+configuration are added to (rather than override) the main configuration (see
+above). These additional for-version configurations are embedded into the
+binary during build time from the directories under
+[dist/releases/](./dist/releases/).
 
 ### Scan an OpenShift release payload
 
