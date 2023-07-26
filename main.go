@@ -28,14 +28,12 @@ const (
 var embeddedConfig string
 
 var applicationDeps = []string{
-	"file",
 	"nm",
 	"oc",
 	"podman",
 }
 
 var applicationDepsNodeScan = []string{
-	"file",
 	"nm",
 	"rpm",
 }

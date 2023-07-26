@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -38,6 +37,7 @@ var (
 
 type Baton struct {
 	TopDir      string
+	Static      bool
 	GoNoCrypto  bool
 	GoVersion   *semver.Version
 	GoBuildInfo *buildinfo.BuildInfo
@@ -55,7 +55,7 @@ var validationFns = map[string][]ValidationFn{
 		validateGoTags,
 	},
 	"exe": {
-		validateExe,
+		validateNotStatic,
 	},
 }
 
@@ -142,9 +142,7 @@ func validateGoStatic(ctx context.Context, path string, baton *Baton) *types.Val
 	if baton.GoNoCrypto {
 		return nil
 	}
-
-	// check for static go
-	return validateStaticGo(ctx, path)
+	return validateNotStatic(ctx, path, baton)
 }
 
 func validateGoOpenssl(_ context.Context, path string, baton *Baton) *types.ValidationError {
@@ -243,25 +241,11 @@ func validateStringsOpenssl(path string, baton *Baton) error {
 	return nil
 }
 
-func validateStaticGo(ctx context.Context, path string) *types.ValidationError {
-	return isDynamicallyLinked(ctx, path)
-}
-
-func isDynamicallyLinked(ctx context.Context, path string) *types.ValidationError {
-	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "file", "-s", path)
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return types.NewValidationError(err)
+func validateNotStatic(_ context.Context, _ string, baton *Baton) *types.ValidationError {
+	if !baton.Static {
+		return nil
 	}
-	if !bytes.Contains(stdout.Bytes(), []byte("dynamically linked")) {
-		return types.NewValidationError(types.ErrNotDynLinked)
-	}
-	return nil
-}
-
-func validateExe(ctx context.Context, path string, _ *Baton) *types.ValidationError {
-	return isDynamicallyLinked(ctx, path)
+	return types.NewValidationError(types.ErrNotDynLinked)
 }
 
 func isGoExecutable(path string, baton *Baton) (bool, error) {
@@ -288,9 +272,21 @@ func isGoExecutable(path string, baton *Baton) (bool, error) {
 	return true, nil
 }
 
+// isStatic tells if exe is a static binary.
+func isStatic(exe *elf.File) bool {
+	for _, p := range exe.Progs {
+		// Static binaries do not have a PT_INTERP program.
+		if p.Type == elf.PT_INTERP {
+			return false
+		}
+	}
+	return true
+}
+
 // isElfExe checks if path is an ELF executable (which most probably means
-// it is a Linux binary).
-func isElfExe(path string) (bool, error) {
+// it is a Linux binary). For ELF executables, it also checks if the binary
+// is dynamic or static, and sets baton.Dynamic accordingly.
+func isElfExe(path string, baton *Baton) (bool, error) {
 	exe, err := elf.Open(path)
 	if err != nil {
 		var elfErr *elf.FormatError
@@ -304,13 +300,15 @@ func isElfExe(path string) (bool, error) {
 	defer exe.Close()
 	switch exe.Type {
 	case elf.ET_EXEC:
+		baton.Static = isStatic(exe)
 		return true, nil
 	case elf.ET_DYN: // Either a binary or a shared object.
 		pie, err := golang.IsPie(exe)
-		if err != nil {
+		if err != nil || !pie {
 			return false, err
 		}
-		return pie, nil
+		baton.Static = isStatic(exe)
+		return true, nil
 	}
 	// Unknown ELF file, so not a binary.
 	return false, nil
@@ -323,7 +321,7 @@ func ScanBinary(ctx context.Context, topDir, innerPath string, rpmIgnores map[st
 	path := filepath.Join(topDir, innerPath)
 
 	// We are only interested in Linux binaries.
-	elf, err := isElfExe(path)
+	elf, err := isElfExe(path, baton)
 	if err != nil {
 		return res.SetError(err)
 	}
