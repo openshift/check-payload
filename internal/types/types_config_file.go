@@ -15,7 +15,7 @@ func (c *ConfigFile) Add(add *ConfigFile) error {
 	c.TagIgnores = mergeLists("tag", &err, c.TagIgnores, add.TagIgnores)
 	c.RPMIgnores = mergeLists("rpm", &err, c.RPMIgnores, add.RPMIgnores)
 
-	c.ErrIgnores = append(c.ErrIgnores, add.ErrIgnores...)
+	c.ErrIgnores = mergeErrIgnoreLists("[[ignore]]", &err, c.ErrIgnores, add.ErrIgnores)
 
 	return err
 }
@@ -57,14 +57,42 @@ func mergeLists(name string, perr *error, main, add map[string]IgnoreLists) map[
 
 	for k, v := range add {
 		if l, ok := main[k]; ok {
-			keyname := "[" + name + "." + k + "]"
-			l.FilterFiles = appendUniq(keyname+".filter_files", perr, l.FilterFiles, v.FilterFiles)
-			l.FilterDirs = appendUniq(keyname+".filter_dirs", perr, l.FilterDirs, v.FilterDirs)
-			l.ErrIgnores = append(l.ErrIgnores, v.ErrIgnores...)
+			keyname := "[" + name + "." + k
+			l.FilterFiles = appendUniq(keyname+"].filter_files", perr, l.FilterFiles, v.FilterFiles)
+			l.FilterDirs = appendUniq(keyname+"].filter_dirs", perr, l.FilterDirs, v.FilterDirs)
+			l.ErrIgnores = mergeErrIgnoreLists("["+keyname+".ignore]]", perr, l.ErrIgnores, v.ErrIgnores)
 			main[k] = l
 		} else {
 			main[k] = v
 		}
 	}
+	return main
+}
+
+func mergeErrIgnoreLists(name string, perr *error, main, add ErrIgnoreList) ErrIgnoreList {
+	if len(main) == 0 {
+		return add
+	}
+
+	for _, a := range add {
+		// See if the error is already in the list.
+		var found *ErrIgnore
+		for i := range main {
+			if main[i].Error.Str == a.Error.Str {
+				found = &main[i]
+				break
+			}
+		}
+		if found == nil {
+			// Error not found, so append to the end of the list.
+			main = append(main, a)
+			continue
+		}
+		// Item with the error found, add new files/dirs to the existing entry.
+		prefix := name + ".error=" + a.Error.Str
+		found.Files = appendUniq(prefix+".files", perr, found.Files, a.Files)
+		found.Dirs = appendUniq(prefix+".dirs", perr, found.Dirs, a.Dirs)
+	}
+
 	return main
 }
