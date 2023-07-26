@@ -107,6 +107,11 @@ func (i ErrIgnoreList) Ignore(file string, err error) bool {
 		if !errors.Is(err, ie.Error.Err) {
 			continue
 		}
+		for _, d := range ie.Dirs {
+			if strings.HasPrefix(file, d+"/") {
+				return true
+			}
+		}
 		for _, f := range ie.Files {
 			if file == f {
 				return true

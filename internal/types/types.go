@@ -74,6 +74,7 @@ func mergeLists(main, add map[string]IgnoreLists) map[string]IgnoreLists {
 type ErrIgnore struct {
 	Error KnownError `toml:"error"`
 	Files []string   `toml:"files"`
+	Dirs  []string   `toml:"dirs"`
 }
 
 type ErrIgnoreList []ErrIgnore

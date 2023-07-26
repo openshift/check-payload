@@ -35,26 +35,7 @@ files = [ "/usr/libexec/catatonit/catatonit" ]
 
 [[rpm.containernetworking-plugins.ignore]]
 error = "ErrGoMissingTag"
-files = [
-  "/usr/libexec/cni/bandwidth",
-  "/usr/libexec/cni/bridge",
-  "/usr/libexec/cni/dhcp",
-  "/usr/libexec/cni/dummy",
-  "/usr/libexec/cni/firewall",
-  "/usr/libexec/cni/host-device",
-  "/usr/libexec/cni/host-local",
-  "/usr/libexec/cni/ipvlan",
-  "/usr/libexec/cni/loopback",
-  "/usr/libexec/cni/macvlan",
-  "/usr/libexec/cni/portmap",
-  "/usr/libexec/cni/ptp",
-  "/usr/libexec/cni/sample",
-  "/usr/libexec/cni/sbr",
-  "/usr/libexec/cni/static",
-  "/usr/libexec/cni/tuning",
-  "/usr/libexec/cni/vlan",
-  "/usr/libexec/cni/vrf",
-]
+dirs = [ "/usr/libexec/cni" ]
 
 [[payload.openshift-enterprise-pod-container.ignore]]
 error = "ErrNotDynLinked"
