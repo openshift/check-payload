@@ -155,6 +155,9 @@ func main() {
 			defer cancel()
 			config.FromURL, _ = cmd.Flags().GetString("url")
 			config.FromFile, _ = cmd.Flags().GetString("file")
+			if config.FromURL == "" && config.FromFile == "" {
+				return errors.New("either -u, --url or -f, --file option is required")
+			}
 			config.PrintExceptions, _ = cmd.Flags().GetBool("print-exceptions")
 			results = scan.RunPayloadScan(ctx, &config)
 			return nil
