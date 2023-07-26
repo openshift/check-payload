@@ -262,7 +262,9 @@ func getConfig(config *types.ConfigFile) error {
 		if un := res.Undecoded(); len(un) != 0 {
 			panic(fmt.Errorf("unknown keys in config: %+v", un))
 		}
-		config.Add(addConfig)
+		if warn := config.Add(addConfig); warn != nil {
+			klog.Warning(warn)
+		}
 	}
 
 	return nil
