@@ -1,4 +1,4 @@
 [[payload.multus-cni-alt-container.ignore]]
-error = "ErrNoLibcryptoSO"
+error = "ErrLibcryptoSoMissing"
 files = [ "/usr/src/multus-cni/rhel7/bin/multus" ]
 

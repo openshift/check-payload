@@ -64,6 +64,7 @@ func mergeLists(main, add map[string]IgnoreLists) map[string]IgnoreLists {
 			l.FilterFiles = append(l.FilterFiles, v.FilterFiles...)
 			l.FilterDirs = append(l.FilterDirs, v.FilterDirs...)
 			l.ErrIgnores = append(l.ErrIgnores, v.ErrIgnores...)
+			main[k] = l
 		} else {
 			main[k] = v
 		}

@@ -28,5 +28,5 @@ verify-clean:
 
 .PHONY: verify-generate
 verify-generate: verify-clean
-	go generate internal/types
+	go generate ./internal/types
 	git diff --exit-code ## Did go generate produced anything new?
