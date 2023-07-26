@@ -38,13 +38,9 @@ files = [ "/opt/cni/bin/rhel9/openshift-sdn" ]
 
 [[payload.multus-cni-container.ignore]]
 error = "ErrNoLibcryptoSO"
-files = [
-  "/usr/src/multus-cni/rhel9/bin/multus-daemon",
-  "/usr/src/multus-cni/rhel9/bin/multus-shim",
-  "/usr/src/multus-cni/bin/multus",
-  "/usr/src/multus-cni/bin/multus-daemon",
-  "/usr/src/multus-cni/bin/multus-shim",
-  "/usr/src/multus-cni/rhel9/bin/multus",
+dirs = [
+  "/usr/src/multus-cni/rhel9/bin",
+  "/usr/src/multus-cni/bin"
 ]
 
 [[rpm.cri-tools.ignore]]
@@ -68,10 +64,7 @@ files = [
 
 [[payload.ose-multus-whereabouts-ipam-cni-container.ignore]]
 error = "ErrNoLibcryptoSO"
-files = [
-  "/usr/src/whereabouts/rhel9/bin/whereabouts",
-  "/usr/src/whereabouts/rhel9/bin/ip-control-loop",
-]
+dirs = [ "/usr/src/whereabouts/rhel9/bin" ]
 
 [[rpm.podman.ignore]]
 error = "ErrGoMissingTag"
