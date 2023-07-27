@@ -99,6 +99,15 @@ func main() {
 			config.Log()
 			klog.InfoS("scan", "version", Commit)
 
+			// Validate the configuration.
+			err, warn := config.Validate()
+			if warn != nil {
+				klog.Warning(warn)
+			}
+			if err != nil {
+				return fmt.Errorf("config has bad entries, please fix: %w", err)
+			}
+
 			if cpuProfile != "" {
 				f, err := os.Create(cpuProfile)
 				if err != nil {

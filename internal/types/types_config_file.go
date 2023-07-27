@@ -1,8 +1,116 @@
 package types
 
 import (
+	"path/filepath"
+	"strings"
+
 	"go.uber.org/multierr"
 )
+
+// Validate validates the configuration. Currently it checks that
+// all the file and directory paths are absolute and clean, and that
+// there are no overlaps between each entry files and dirs.
+// It returns errors and warnings; errors are considered fatal,
+// while warnings are more like FYI.
+func (c *ConfigFile) Validate() (err, warn error) {
+	validateFileList("filter_files", &err, c.FilterFiles)
+	validateFileList("filter_dirs", &err, c.FilterDirs)
+	validateOverlaps("filter_", &warn, c.FilterFiles, c.FilterDirs)
+
+	validateIgnoreLists("payload", &err, &warn, c.PayloadIgnores)
+	validateIgnoreLists("tag", &err, &warn, c.TagIgnores)
+	validateIgnoreLists("rpm", &err, &warn, c.RPMIgnores)
+
+	validateErrIgnores("[[ignore]]", &err, &warn, c.ErrIgnores)
+
+	return
+}
+
+type errBadPath struct {
+	Listname  string
+	Path      string
+	CleanPath string
+}
+
+func (e *errBadPath) Error() string {
+	return `config entry ` + e.Listname + ` contains unclean path "` + e.Path + `" (should have been "` + e.CleanPath + `")`
+}
+
+type errNAbsPath struct {
+	Listname string
+	Path     string
+}
+
+func (e *errNAbsPath) Error() string {
+	return `config entry ` + e.Listname + ` contains non-absolute path "` + e.Path + `"`
+}
+
+type errOverlap struct {
+	Listname string
+	Path     string
+	By       string
+}
+
+func (e *errOverlap) Error() string {
+	return `config entry ` + e.Listname + ` contains a redundant path "` + e.Path + `", overlapped by "` + e.By + `"`
+}
+
+// validateFileList checks that the paths in the list are clean and absolute.
+func validateFileList(listname string, perr *error, list []string) {
+	for _, f := range list {
+		cf := filepath.Clean(f)
+		if f != cf {
+			multierr.AppendInto(perr, &errBadPath{listname, f, cf})
+		}
+		if f[0] != '/' {
+			multierr.AppendInto(perr, &errNAbsPath{listname, f})
+		}
+	}
+}
+
+func validateIgnoreLists(listname string, perr, pwarn *error, list map[string]IgnoreLists) {
+	for k, v := range list {
+		prefix := "[" + listname + "." + k
+		validateFileList(prefix+"].filter_files", perr, v.FilterFiles)
+		validateFileList(prefix+"].filter_dirs", perr, v.FilterDirs)
+		validateOverlaps(prefix+"].filter_", pwarn, v.FilterFiles, v.FilterDirs)
+		validateErrIgnores("["+prefix+".ignore]]", perr, pwarn, v.ErrIgnores)
+	}
+}
+
+func validateErrIgnores(section string, perr, pwarn *error, l ErrIgnoreList) {
+	for _, v := range l {
+		prefix := section + ".error=" + v.Error.Str
+		validateFileList(prefix+".files", perr, v.Files)
+		validateFileList(prefix+".dirs", perr, v.Dirs)
+		validateOverlaps(prefix+".", pwarn, v.Files, v.Dirs)
+	}
+}
+
+func validateOverlaps(listname string, perr *error, files, dirs []string) {
+	// First, check that dirs do not overlap.
+	for i := range dirs {
+		for j := range dirs {
+			if i == j {
+				continue
+			}
+			if strings.HasPrefix(dirs[i], dirs[j]+"/") {
+				multierr.AppendInto(perr, &errOverlap{listname + "dirs", dirs[i], dirs[j]})
+			}
+		}
+	}
+	// Now, check that files do not overlap with any dirs.
+	for i := range files {
+		for j := range dirs {
+			if i == j {
+				continue
+			}
+			if strings.HasPrefix(files[i], dirs[j]+"/") {
+				multierr.AppendInto(perr, &errOverlap{listname + "files", files[i], dirs[j]})
+			}
+		}
+	}
+}
 
 func (c *ConfigFile) Add(add *ConfigFile) error {
 	var err error

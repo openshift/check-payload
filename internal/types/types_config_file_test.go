@@ -16,6 +16,9 @@ func decode(t *testing.T, src string) *types.ConfigFile {
 	res, err := toml.Decode(src, &dst)
 	require.NoError(t, err)
 	require.Empty(t, res.Undecoded())
+	err, warn := dst.Validate()
+	require.NoError(t, err)
+	require.NoError(t, warn)
 
 	return dst
 }

@@ -26,9 +26,18 @@ func decodeConfig(t *testing.T, file string) *types.ConfigFile {
 // keys, and that versioned configs contain no entries that the main config
 // already has.
 func TestConfigs(t *testing.T) {
-	for _, dir := range releases.GetVersions() {
+	for i, dir := range releases.GetVersions() {
 		main := decodeConfig(t, mainConfig)
+		if i == 0 { // Validate main config only once.
+			err, warn := main.Validate()
+			if err != nil || warn != nil {
+				t.Errorf("main config validation failed: %v; %v", err, warn)
+			}
+		}
 		add := decodeConfig(t, dir+"/config.toml")
+		if err, warn := add.Validate(); err != nil || warn != nil {
+			t.Errorf("%s config failed validation: %v; %v", dir, err, warn)
+		}
 		err := main.Add(add)
 		if err != nil {
 			t.Errorf("%s config has duplicates: %v", dir, err)
