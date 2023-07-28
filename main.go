@@ -99,6 +99,15 @@ func main() {
 			config.Log()
 			klog.InfoS("scan", "version", Commit)
 
+			// Validate the configuration.
+			err, warn := config.Validate()
+			if warn != nil {
+				klog.Warning(warn)
+			}
+			if err != nil {
+				return fmt.Errorf("config has bad entries, please fix: %w", err)
+			}
+
 			if cpuProfile != "" {
 				f, err := os.Create(cpuProfile)
 				if err != nil {
@@ -155,6 +164,9 @@ func main() {
 			defer cancel()
 			config.FromURL, _ = cmd.Flags().GetString("url")
 			config.FromFile, _ = cmd.Flags().GetString("file")
+			if config.FromURL == "" && config.FromFile == "" {
+				return errors.New("either -u, --url or -f, --file option is required")
+			}
 			config.PrintExceptions, _ = cmd.Flags().GetBool("print-exceptions")
 			results = scan.RunPayloadScan(ctx, &config)
 			return nil
@@ -259,7 +271,9 @@ func getConfig(config *types.ConfigFile) error {
 		if un := res.Undecoded(); len(un) != 0 {
 			panic(fmt.Errorf("unknown keys in config: %+v", un))
 		}
-		config.Add(addConfig)
+		if warn := config.Add(addConfig); warn != nil {
+			klog.Warning(warn)
+		}
 	}
 
 	return nil
