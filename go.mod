@@ -10,7 +10,7 @@ require (
 	github.com/openshift/api v0.0.0-20230120195050-6ba31fa438f2
 	github.com/openshift/oc v0.0.0-alpha.0.0.20230323133703-92b1a3d0e5d0
 	github.com/spf13/cobra v1.7.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.4
 	go.uber.org/multierr v1.11.0
 	k8s.io/api v0.26.1
 	k8s.io/klog/v2 v2.100.1
