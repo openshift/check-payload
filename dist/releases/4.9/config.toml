@@ -1,3 +1,8 @@
+filter_files = [
+  "/usr/sbin/ldconfig",
+  "/usr/sbin/build-locale-archive"
+]
+
 [[payload.ose-egress-router-cni-alt-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = [ "/usr/src/egress-router-cni/rhel7/bin/egress-router" ]
@@ -9,3 +14,11 @@ files = [ "/usr/src/multus-cni/rhel7/bin/multus" ]
 [[payload.ose-multus-whereabouts-ipam-cni-alt-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = [ "/usr/src/whereabouts/rhel7/bin/whereabouts" ]
+
+[[payload.ose-node-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = [ "/opt/cni/bin/rhel7/openshift-sdn" ]
+
+[[payload.ose-ovn-kubernetes-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = [ "/usr/libexec/cni/rhel7/ovn-k8s-cni-overlay" ]
