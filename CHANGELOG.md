@@ -1,5 +1,105 @@
 # Changelog
 
+## [0.3.0] - 2023-08-01
+
+This is a major release, which allows more fine-grained exceptions
+configuration. Instead of merely excluding some files from being checked,
+it is now possible to ignore specific well known errors for some specific
+files or directories in a specific RPM packages, or components, or tags.
+
+In addition, per-rpm configuration rules ([rpm.xxx], previously known as
+[node.xxx]) are now applicable to payload and image scans, alleviating the need
+to duplicate the exclusions.
+
+The exceptions printing (`-p`) now prints exceptions in the new format (per-error,
+also per-rpm, if possible, or per-component, or per-tag), making it easier to
+maintain configurations.
+
+Another notable feature is that a versioned configuration is not merged into
+the main one, rather that replacing it, allowing to specify exclusions common
+to multiple OpenShift versions to a main configuration file.
+
+The configurations were rewritten mostly using the new rules. Due to this,
+some previously added exceptions might be lost and need to be re-added.
+
+Some validations of configuration were added, and invalid configurations might
+be rejected now (or warned about, depening on the severity). An example of such
+bad configuration is a non-canonical (non-clean or not absolute) file name.
+
+A bunch of performance optimizations has been made, and the tool no longer
+requires "file" and "go" binaries to be present on the system.
+
+### Features
+
+- Ensure the configuration is fully parsed
+- Remove dependency on go binary
+- Rename node ignores to rpm ignores in configs
+- Use rpm name only (not name-version-release.arch) in configs
+- Report rpm name in image/payload scan results
+- Use per-rpm config filters in image/payload scans
+- Add tag and rpm support to displayExceptions
+- Show component, tag, rpm in log
+- Unify node and payload/image reports
+- Add known errors
+- Add ability to ignore specific known errors for specific files/dirs
+- Display exceptions in the new per-error format
+- Major config facelift using (mostly) per-error exclusions
+- Make the versioned config (e.g. -V 4.12) added to the main one,
+  implement config merging with duplicate checks
+- Add configuration validation (absolute/clean URLs, etc)
+
+### Bug fixes
+
+- Node scan: use dbpath in all rpm calls for node
+- Add warning where there are no build tags in Golang binary
+- Fix "Successful run" message when there are warnings
+- Log the entire configuration, not a part of it
+- Check for and report errors from isGoExecutable
+- node scan: report warnings as such
+- Hide "found operator" messages under increased verbosity level
+- Do not ignore rpm -qa errors from node scan
+- Add/use getTag, getImage, getComponent to avoid potential nil dereferences
+- Report, do not lose error from filepath.WalkDir
+- Log inner path in node scan
+- scan payload: require either --url or -- file
+
+### Performance
+
+- Store semver in baton
+- Instantiate go semver constraint only once
+- Instantiate go tag mapsets only once
+- Optimize validateGoVersion, add a benchmark
+- Improve regexp use in validateGoTags, add a benchmark
+- validateGoTags: simplify and speedup
+- validateStringsOpenssl: simplify and speedup
+- ReadTable: do not build a map
+- Skip all files with no x bit set
+- Use debug/elf (rather than spawning file tool) to detect static binaries
+
+### Code cleanups
+
+- Removal unused code and variables
+- Unify loop in scanBinary
+- ExpectedSyms: document, refactor, return bool
+- Simplify displayExceptions
+- Remove tag argument from validation functions
+- Move rpm-related functionality to a separate package
+- Simplify file mode check in RunNodeScan
+- Simplify returns from validateTag
+- Simplify return from RunOperatorScan
+- Remove tag and component arguments from ScanBinary
+
+### Miscellaneous
+
+- Add OWNERS file
+- CI: add golangci-lint timeout
+- GH: add dependabot configuration
+- GH: add ok-to-test label to dependabot
+- Add vendor directory
+- CI: add make test
+- CI: test that embedded configs are sane
+- CI: tests for config merge
+
 ## [0.2.19] - 2023-07-11
 
 ### Bug Fixes
