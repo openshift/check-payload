@@ -23,7 +23,7 @@ files = [ "/usr/sbin/build-locale-archive" ]
 
 [[rpm.glibc.ignore]]
 error = "ErrNotDynLinked"
-files = [ "/usr/sbin/ldconfig" ]
+files = [ "/usr/sbin/ldconfig", "/sbin/ldconfig" ]
 
 [[rpm.runc.ignore]]
 error = "ErrGoMissingTag"
