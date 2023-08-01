@@ -1,5 +1,7 @@
 # check-payload
 
+![](https://img.shields.io/github/v/release/openshift/check-payload)
+
 ## About
 
 This application scans container images in an OpenShift release payload, RHEL based nodes, or an operator image for FIPS enabled binaries. The goal is to ensure binaries are compiled correctly for OpenShift.
