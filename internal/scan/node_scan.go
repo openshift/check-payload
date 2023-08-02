@@ -59,7 +59,7 @@ func rpmRootScan(ctx context.Context, cfg *types.Config, root string) *types.Sca
 				klog.InfoS("scanning node "+status,
 					"rpm", res.RPM,
 					"path", innerPath,
-					"error", res.Error,
+					"error", res.Error.Error,
 					"status", status)
 			}
 			results.Append(res)
