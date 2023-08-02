@@ -15,7 +15,6 @@ type Config struct {
 	FromURL                 string        `json:"from_url"`
 	InsecurePull            bool          `json:"insecure_pull"`
 	Limit                   int           `json:"limit"`
-	NodeScan                string        `json:"node_scan"`
 	ContainerImageComponent string        `json:"container_image_component"`
 	ContainerImage          string        `json:"container_image"`
 	OutputFile              string        `json:"output_file"`
@@ -25,6 +24,7 @@ type Config struct {
 	PullSecret              string        `json:"pull_secret"`
 	TimeLimit               time.Duration `json:"time_limit"`
 	Verbose                 bool          `json:"verbose"`
+	UseRPMScan              bool          `json:"use_rpm_scan"`
 
 	ConfigFile
 }

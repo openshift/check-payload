@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] - xxxx-xx-xx
+
+### Features
+
+- Add `--rpm-scan` flag to payload and image scan; if set, the scan is using
+  the same algorithm and rules as `scan node` (only scan files belonging to RPM
+  packages, and ignore per-payload and per-tag configuration entries)
+
 ## [0.3.0] - 2023-08-01
 
 This is a major release, which allows more fine-grained exceptions

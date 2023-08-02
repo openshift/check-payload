@@ -227,6 +227,13 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 		return results.Append(types.NewScanResult().SetTag(tag).Skipped())
 	}
 
+	if cfg.UseRPMScan {
+		// Same as "scan node", essentially meaning to
+		//  - only scan files from rpms;
+		//  - skip per-tag and per-component config rules.
+		return rpmRootScan(ctx, cfg, mountPath)
+	}
+
 	// does the image contain openssl
 	opensslInfo := validations.ValidateOpenssl(ctx, mountPath)
 	results.Append(types.NewScanResult().SetOpenssl(opensslInfo).SetTag(tag))
