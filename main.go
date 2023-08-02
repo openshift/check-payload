@@ -179,7 +179,7 @@ func main() {
 	scanPayload.Flags().Bool("rpm-scan", false, "use RPM scan (same as during node scan)")
 
 	scanNode := &cobra.Command{
-		Use:          "node [--root /myroot]",
+		Use:          "node --root /myroot [--walk-scan]",
 		SilenceUsage: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return scan.ValidateApplicationDependencies(applicationDepsNodeScan)
@@ -188,11 +188,14 @@ func main() {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			root, _ := cmd.Flags().GetString("root")
+			walkScan, _ := cmd.Flags().GetBool("walk-scan")
+			config.UseRPMScan = !walkScan
 			results = scan.RunNodeScan(ctx, &config, root)
 			return nil
 		},
 	}
 	scanNode.Flags().String("root", "", "root path to scan")
+	scanNode.Flags().Bool("walk-scan", false, "scan all files using directory tree walk")
 	_ = scanNode.MarkFlagRequired("root")
 
 	scanImage := &cobra.Command{

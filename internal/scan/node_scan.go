@@ -13,6 +13,10 @@ import (
 )
 
 func RunNodeScan(ctx context.Context, cfg *types.Config, root string) []*types.ScanResults {
+	if !cfg.UseRPMScan {
+		klog.Info("scanning a directory tree")
+		return []*types.ScanResults{walkDirScan(ctx, cfg, nil, nil, root)}
+	}
 	klog.Info("scanning node")
 	return []*types.ScanResults{rpmRootScan(ctx, cfg, root)}
 }

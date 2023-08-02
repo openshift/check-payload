@@ -4,9 +4,13 @@
 
 ### Features
 
-- Add `--rpm-scan` flag to payload and image scan; if set, the scan is using
+- Add `--walk-scan` flag to node scan. If set, the scan is using the same
+  algorithm as `scan payload` (walk the directory tree and scan all files).
+  Note that per-payload and per-tag configuration entries are still ignored
+  because neither tag nor component is set.
+- Add `--rpm-scan` flag to payload and image scan. If set, the scan is using
   the same algorithm and rules as `scan node` (only scan files belonging to RPM
-  packages, and ignore per-payload and per-tag configuration entries)
+  packages, and ignore per-payload and per-tag configuration entries).
 
 ### Bug fixes
 

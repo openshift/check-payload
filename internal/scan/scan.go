@@ -193,26 +193,24 @@ func ReadReleaseInfo(filename string) (*release.ReleaseInfo, error) {
 }
 
 func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *types.ScanResults {
-	results := types.NewScanResults()
-
 	image := tag.From.Name
 
 	// skip over ignored images
 	for _, ignoredImage := range cfg.FilterImages {
 		if ignoredImage == image {
 			klog.InfoS("Ignoring image", "image", image)
-			return results.Append(types.NewScanResult().SetTag(tag).Success())
+			return types.NewScanResults().Append(types.NewScanResult().SetTag(tag).Success())
 		}
 	}
 
 	// pull
 	if err := podman.Pull(ctx, image, cfg.InsecurePull); err != nil {
-		return results.Append(types.NewScanResult().SetTag(tag).SetError(err))
+		return types.NewScanResults().Append(types.NewScanResult().SetTag(tag).SetError(err))
 	}
 	// mount
 	mountPath, err := podman.Mount(ctx, image)
 	if err != nil {
-		return results.Append(types.NewScanResult().SetTag(tag).SetError(err))
+		return types.NewScanResults().Append(types.NewScanResult().SetTag(tag).SetError(err))
 	}
 	defer func() {
 		_ = podman.Unmount(ctx, image)
@@ -224,7 +222,7 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 	}
 	// skip if bundle image
 	if component.IsBundle {
-		return results.Append(types.NewScanResult().SetTag(tag).Skipped())
+		return types.NewScanResults().Append(types.NewScanResult().SetTag(tag).Skipped())
 	}
 
 	if cfg.UseRPMScan {
@@ -233,17 +231,27 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 		//  - skip per-tag and per-component config rules.
 		return rpmRootScan(ctx, cfg, mountPath)
 	}
+	return walkDirScan(ctx, cfg, tag, component, mountPath)
+}
+
+func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, component *types.OpenshiftComponent, mountPath string) *types.ScanResults {
+	results := types.NewScanResults()
 
 	// does the image contain openssl
 	opensslInfo := validations.ValidateOpenssl(ctx, mountPath)
 	results.Append(types.NewScanResult().SetOpenssl(opensslInfo).SetTag(tag))
 
 	errIgnoreLists := []types.ErrIgnoreList{cfg.ErrIgnores}
-	if i, ok := cfg.TagIgnores[tag.Name]; ok {
-		errIgnoreLists = append(errIgnoreLists, i.ErrIgnores)
+
+	if tag != nil {
+		if i, ok := cfg.TagIgnores[tag.Name]; ok {
+			errIgnoreLists = append(errIgnoreLists, i.ErrIgnores)
+		}
 	}
-	if i, ok := cfg.PayloadIgnores[component.Component]; ok {
-		errIgnoreLists = append(errIgnoreLists, i.ErrIgnores)
+	if component != nil {
+		if i, ok := cfg.PayloadIgnores[component.Component]; ok {
+			errIgnoreLists = append(errIgnoreLists, i.ErrIgnores)
+		}
 	}
 
 	// business logic for scan
@@ -288,11 +296,11 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 		}
 		res.SetTag(tag).SetComponent(component)
 		if res.IsSuccess() {
-			klog.V(1).InfoS("scanning success", "image", image, "path", innerPath, "status", "success")
+			klog.V(1).InfoS("scanning success", "image", getImage(res), "path", innerPath, "status", "success")
 		} else {
 			status := res.Status()
 			klog.InfoS("scanning "+status,
-				"image", image,
+				"image", getImage(res),
 				"path", innerPath,
 				"error", res.Error.Error,
 				"component", getComponent(res),
