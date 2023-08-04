@@ -5,6 +5,7 @@
 ### Features
 
 - Add 4.14 configuration.
+- Add semver sort of stored config versions
 - Add `--walk-scan` flag to node scan. If set, the scan is using the same
   algorithm as `scan payload` (walk the directory tree and scan all files).
   Note that per-payload and per-tag configuration entries are still ignored
