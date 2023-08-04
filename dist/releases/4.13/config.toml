@@ -9,17 +9,6 @@ files = [
 error = "ErrLibcryptoSoMissing"
 files = [ "/usr/bin/ovnkube-trace" ]
 
-[[rpm.cri-o.ignore]]
-error = "ErrGoMissingTag"
-files = [
-  "/usr/bin/crio-status",
-  "/usr/bin/crio",
-]
-
-[[rpm.cri-o.ignore]]
-error = "ErrNotDynLinked"
-files = [ "/usr/bin/pinns" ]
-
 [[rpm.skopeo.ignore]]
 error = "ErrGoMissingTag"
 files = [ "/usr/bin/skopeo" ]

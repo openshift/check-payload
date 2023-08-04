@@ -2,17 +2,6 @@
 error = "ErrGoMissingTag"
 files = [ "/usr/bin/crictl" ]
 
-[[rpm.cri-o.ignore]]
-error = "ErrGoMissingTag"
-files = [
-  "/usr/bin/crio",
-  "/usr/bin/crio-status",
-]
-
-[[rpm.cri-o.ignore]]
-error = "ErrNotDynLinked"
-files = [ "/usr/bin/pinns" ]
-
 [[rpm.skopeo.ignore]]
 error = "ErrGoMissingTag"
 files = [ "/usr/bin/skopeo" ]
