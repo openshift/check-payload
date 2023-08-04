@@ -23,7 +23,3 @@ files = [ "/usr/bin/pinns" ]
 [[rpm.skopeo.ignore]]
 error = "ErrGoMissingTag"
 files = [ "/usr/bin/skopeo" ]
-
-[[rpm.ignition.ignore]]
-error = "ErrGoMissingTag"
-files = [ "/usr/lib/dracut/modules.d/30ignition/ignition" ]

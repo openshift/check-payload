@@ -37,6 +37,10 @@ files = [ "/usr/libexec/catatonit/catatonit" ]
 error = "ErrGoMissingTag"
 dirs = [ "/usr/libexec/cni" ]
 
+[[rpm.ignition.ignore]]
+error = "ErrGoMissingTag"
+files = [ "/usr/lib/dracut/modules.d/30ignition/ignition" ]
+
 [[payload.openshift-enterprise-pod-container.ignore]]
 error = "ErrNotDynLinked"
 files = [ "/usr/bin/pod" ]

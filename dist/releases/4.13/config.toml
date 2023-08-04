@@ -43,10 +43,6 @@ dirs = [
 error = "ErrGoMissingTag"
 files = [ "/usr/bin/crictl" ]
 
-[[rpm.ignition.ignore]]
-error = "ErrGoMissingTag"
-files = [ "/usr/lib/dracut/modules.d/30ignition/ignition" ]
-
 [[payload.ose-ovn-kubernetes-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = [ "/usr/libexec/cni/rhel8/ovn-k8s-cni-overlay" ]
