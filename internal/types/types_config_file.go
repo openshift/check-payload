@@ -119,9 +119,6 @@ func validateOverlaps(listname string, perr *error, files, dirs []string) {
 	// Now, check that files do not overlap with any dirs.
 	for i := range files {
 		for j := range dirs {
-			if i == j {
-				continue
-			}
 			if strings.HasPrefix(files[i], dirs[j]+"/") {
 				multierr.AppendInto(perr, &errOverlap{listname + "files", files[i], dirs[j]})
 			}

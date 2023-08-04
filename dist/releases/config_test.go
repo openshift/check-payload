@@ -42,5 +42,10 @@ func TestConfigs(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s config has duplicates: %v", dir, err)
 		}
+		// Re-validate the combined config.
+		if err, warn := main.Validate(); err != nil || warn != nil {
+			t.Errorf("main+%s combined config failed validation: errors: %v; warnings: %v", dir, err, warn)
+		}
+
 	}
 }
