@@ -60,6 +60,10 @@ files = [
 error = "ErrNotDynLinked"
 files = [ "/usr/bin/pinns" ]
 
+[[rpm.cri-tools.ignore]]
+error = "ErrGoMissingTag"
+files = [ "/usr/bin/crictl" ]
+
 [[rpm.containernetworking-plugins.ignore]]
 error = "ErrGoMissingTag"
 dirs = [ "/usr/libexec/cni" ]

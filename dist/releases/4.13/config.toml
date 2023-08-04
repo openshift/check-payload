@@ -24,10 +24,6 @@ dirs = [
   "/usr/src/multus-cni/bin"
 ]
 
-[[rpm.cri-tools.ignore]]
-error = "ErrGoMissingTag"
-files = [ "/usr/bin/crictl" ]
-
 [[payload.ose-ovn-kubernetes-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = [ "/usr/libexec/cni/rhel8/ovn-k8s-cni-overlay" ]

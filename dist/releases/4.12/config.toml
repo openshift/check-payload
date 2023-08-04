@@ -1,3 +1,1 @@
-[[rpm.cri-tools.ignore]]
-error = "ErrGoMissingTag"
-files = [ "/usr/bin/crictl" ]
+# Intentionally empty.
