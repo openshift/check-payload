@@ -4,6 +4,9 @@ import (
 	"embed"
 	"fmt"
 	"path/filepath"
+	"sort"
+
+	semver "github.com/Masterminds/semver/v3"
 )
 
 //go:embed */*
@@ -20,7 +23,11 @@ func GetVersions() []string {
 	for i, d := range dirs {
 		names[i] = d.Name()
 	}
-
+	sort.Slice(names, func(i, j int) bool {
+		v1, _ := semver.NewVersion(names[i])
+		v2, _ := semver.NewVersion(names[j])
+		return v1.LessThan(v2)
+	})
 	return names
 }
 
