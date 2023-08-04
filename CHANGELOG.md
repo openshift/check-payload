@@ -4,6 +4,14 @@
 
 ### Features
 
+### Bug fixes
+
+## [0.3.1] - 2023-08-04
+
+### Features
+
+- Config de-duplication (moved some rules into the main config.toml)
+- Improve config validation for [[ignores]] sections
 - Add 4.14 configuration.
 - Add semver sort of stored config versions
 - Add `--walk-scan` flag to node scan. If set, the scan is using the same
@@ -17,6 +25,7 @@
 ### Bug fixes
 
 - Fix error text in message when logging scan node failure/warning
+- Fix checking for duplicates in config validation logic
 
 ## [0.3.0] - 2023-08-01
 
