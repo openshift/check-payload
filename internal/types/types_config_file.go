@@ -55,6 +55,15 @@ func (e *errOverlap) Error() string {
 	return `config entry ` + e.Listname + ` contains a redundant path "` + e.Path + `", overlapped by "` + e.By + `"`
 }
 
+type errEmpty struct {
+	Listname string
+	What     string
+}
+
+func (e *errEmpty) Error() string {
+	return `config entry ` + e.Listname + ` has no ` + e.What + ` set`
+}
+
 // validateFileList checks that the paths in the list are clean and absolute.
 func validateFileList(listname string, perr *error, list []string) {
 	for _, f := range list {
@@ -80,6 +89,14 @@ func validateIgnoreLists(listname string, perr, pwarn *error, list map[string]Ig
 
 func validateErrIgnores(section string, perr, pwarn *error, l ErrIgnoreList) {
 	for _, v := range l {
+		// Make sure error is set.
+		if v.Error.Str == "" {
+			multierr.AppendInto(perr, &errEmpty{section, "error="})
+		}
+		// Make sure files/dirs are not empty.
+		if len(v.Files)+len(v.Dirs) == 0 {
+			multierr.AppendInto(perr, &errEmpty{section, "files= nor dirs="})
+		}
 		prefix := section + ".error=" + v.Error.Str
 		validateFileList(prefix+".files", perr, v.Files)
 		validateFileList(prefix+".dirs", perr, v.Dirs)
