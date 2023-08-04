@@ -168,6 +168,7 @@ func main() {
 				return errors.New("either -u, --url or -f, --file option is required")
 			}
 			config.PrintExceptions, _ = cmd.Flags().GetBool("print-exceptions")
+			config.UseRPMScan, _ = cmd.Flags().GetBool("rpm-scan")
 			results = scan.RunPayloadScan(ctx, &config)
 			return nil
 		},
@@ -175,9 +176,10 @@ func main() {
 	scanPayload.Flags().StringP("url", "u", "", "payload url")
 	scanPayload.Flags().StringP("file", "f", "", "payload from json file")
 	scanPayload.MarkFlagsMutuallyExclusive("url", "file")
+	scanPayload.Flags().Bool("rpm-scan", false, "use RPM scan (same as during node scan)")
 
 	scanNode := &cobra.Command{
-		Use:          "node [--root /myroot]",
+		Use:          "node --root /myroot [--walk-scan]",
 		SilenceUsage: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return scan.ValidateApplicationDependencies(applicationDepsNodeScan)
@@ -185,12 +187,15 @@ func main() {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
-			config.NodeScan, _ = cmd.Flags().GetString("root")
-			results = scan.RunNodeScan(ctx, &config)
+			root, _ := cmd.Flags().GetString("root")
+			walkScan, _ := cmd.Flags().GetBool("walk-scan")
+			config.UseRPMScan = !walkScan
+			results = scan.RunNodeScan(ctx, &config, root)
 			return nil
 		},
 	}
 	scanNode.Flags().String("root", "", "root path to scan")
+	scanNode.Flags().Bool("walk-scan", false, "scan all files using directory tree walk")
 	_ = scanNode.MarkFlagRequired("root")
 
 	scanImage := &cobra.Command{
@@ -204,11 +209,13 @@ func main() {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			config.ContainerImage, _ = cmd.Flags().GetString("spec")
+			config.UseRPMScan, _ = cmd.Flags().GetBool("rpm-scan")
 			results = scan.RunOperatorScan(ctx, &config)
 			return nil
 		},
 	}
 	scanImage.Flags().String("spec", "", "payload url")
+	scanImage.Flags().Bool("rpm-scan", false, "use RPM scan (same as during node scan)")
 	_ = scanImage.MarkFlagRequired("spec")
 
 	scanCmd.AddCommand(scanPayload)

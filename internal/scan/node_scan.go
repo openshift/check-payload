@@ -12,16 +12,21 @@ import (
 	"github.com/openshift/check-payload/internal/validations"
 )
 
-func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
-	var runs []*types.ScanResults
-	results := types.NewScanResults()
-	runs = append(runs, results)
+func RunNodeScan(ctx context.Context, cfg *types.Config, root string) []*types.ScanResults {
+	if !cfg.UseRPMScan {
+		klog.Info("scanning a directory tree")
+		return []*types.ScanResults{walkDirScan(ctx, cfg, nil, nil, root)}
+	}
 	klog.Info("scanning node")
-	root := cfg.NodeScan
+	return []*types.ScanResults{rpmRootScan(ctx, cfg, root)}
+}
+
+func rpmRootScan(ctx context.Context, cfg *types.Config, root string) *types.ScanResults {
+	results := types.NewScanResults()
 	rpms, err := rpm.GetAllRPMs(ctx, root)
 	if err != nil {
 		results.Append(types.NewScanResult().SetError(err))
-		return runs
+		return results
 	}
 	for _, pkg := range rpms {
 		files, err := rpm.GetFilesFromRPM(ctx, root, pkg.NVRA)
@@ -34,7 +39,7 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 			if cfg.IgnoreFile(innerPath) || cfg.IgnoreDirPrefix(innerPath) || cfg.IgnoreFileByRpm(innerPath, pkg.Name) {
 				continue
 			}
-			path := filepath.Join(cfg.NodeScan, innerPath)
+			path := filepath.Join(root, innerPath)
 			fileInfo, err := os.Lstat(path)
 			if err != nil {
 				// some files are stripped from an rhcos image
@@ -58,11 +63,11 @@ func RunNodeScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
 				klog.InfoS("scanning node "+status,
 					"rpm", res.RPM,
 					"path", innerPath,
-					"error", res.Error,
+					"error", res.Error.Error,
 					"status", status)
 			}
 			results.Append(res)
 		}
 	}
-	return runs
+	return results
 }

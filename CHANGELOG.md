@@ -1,5 +1,21 @@
 # Changelog
 
+## [Unreleased] - xxxx-xx-xx
+
+### Features
+
+- Add `--walk-scan` flag to node scan. If set, the scan is using the same
+  algorithm as `scan payload` (walk the directory tree and scan all files).
+  Note that per-payload and per-tag configuration entries are still ignored
+  because neither tag nor component is set.
+- Add `--rpm-scan` flag to payload and image scan. If set, the scan is using
+  the same algorithm and rules as `scan node` (only scan files belonging to RPM
+  packages, and ignore per-payload and per-tag configuration entries).
+
+### Bug fixes
+
+- Fix error text in message when logging scan node failure/warning
+
 ## [0.3.0] - 2023-08-01
 
 This is a major release, which allows more fine-grained exceptions
