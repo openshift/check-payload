@@ -28,10 +28,6 @@ files = [ "/usr/bin/skopeo" ]
 error = "ErrLibcryptoSoMissing"
 files = [ "/usr/bin/machine-config-daemon.rhel9" ]
 
-[[rpm.containernetworking-plugins.ignore]]
-error = "ErrGoMissingTag"
-files = [ "/usr/libexec/cni/dummy" ]
-
 [[payload.ose-node-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = [ "/opt/cni/bin/rhel9/openshift-sdn" ]
