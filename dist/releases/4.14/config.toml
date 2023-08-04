@@ -21,7 +21,7 @@ files = [ "/opt/cni/bin/rhel9/openshift-sdn" ]
 error = "ErrLibcryptoSoMissing"
 dirs = [
   "/usr/src/multus-cni/rhel9/bin",
-  "/usr/src/multus-cni/bin"
+  "/usr/src/multus-cni/bin",
 ]
 
 [[payload.ose-ovn-kubernetes-container.ignore]]
@@ -37,4 +37,7 @@ files = [
 
 [[payload.ose-multus-whereabouts-ipam-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
-dirs = [ "/usr/src/whereabouts/rhel9/bin" ]
+dirs = [
+  "/usr/src/whereabouts/bin",
+  "/usr/src/whereabouts/rhel9/bin",
+]
