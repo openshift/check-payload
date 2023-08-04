@@ -1,0 +1,43 @@
+[[payload.ose-network-interface-bond-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = [
+  "/bondcni/bond",
+  "/bondcni/rhel9/bond",
+]
+
+[[payload.ose-network-tools-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = [ "/usr/bin/ovnkube-trace" ]
+
+[[payload.ose-machine-config-operator-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = [ "/usr/bin/machine-config-daemon.rhel9" ]
+
+[[payload.ose-node-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = [ "/opt/cni/bin/rhel9/openshift-sdn" ]
+
+[[payload.multus-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+dirs = [
+  "/usr/src/multus-cni/rhel9/bin",
+  "/usr/src/multus-cni/bin",
+]
+
+[[payload.ose-ovn-kubernetes-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = [ "/usr/libexec/cni/rhel8/ovn-k8s-cni-overlay" ]
+
+[[payload.ose-egress-router-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = [
+  "/usr/src/egress-router-cni/bin/egress-router",
+  "/usr/src/egress-router-cni/rhel9/bin/egress-router",
+]
+
+[[payload.ose-multus-whereabouts-ipam-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+dirs = [
+  "/usr/src/whereabouts/bin",
+  "/usr/src/whereabouts/rhel9/bin",
+]
