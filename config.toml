@@ -45,6 +45,10 @@ files = [ "/usr/libexec/podman/catatonit" ]
 error = "ErrNotDynLinked"
 files = [ "/usr/libexec/catatonit/catatonit" ]
 
+[[rpm.skopeo.ignore]]
+error = "ErrGoMissingTag"
+files = [ "/usr/bin/skopeo" ]
+
 [[rpm.cri-o.ignore]]
 error = "ErrGoMissingTag"
 files = [

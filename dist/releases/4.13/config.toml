@@ -9,10 +9,6 @@ files = [
 error = "ErrLibcryptoSoMissing"
 files = [ "/usr/bin/ovnkube-trace" ]
 
-[[rpm.skopeo.ignore]]
-error = "ErrGoMissingTag"
-files = [ "/usr/bin/skopeo" ]
-
 [[payload.ose-machine-config-operator-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = [ "/usr/bin/machine-config-daemon.rhel9" ]

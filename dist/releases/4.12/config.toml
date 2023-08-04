@@ -1,7 +1,3 @@
 [[rpm.cri-tools.ignore]]
 error = "ErrGoMissingTag"
 files = [ "/usr/bin/crictl" ]
-
-[[rpm.skopeo.ignore]]
-error = "ErrGoMissingTag"
-files = [ "/usr/bin/skopeo" ]
