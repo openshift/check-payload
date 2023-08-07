@@ -6,6 +6,8 @@
 
 ### Bug fixes
 
+- Chore: remove cliff.toml configuration
+
 ## [0.3.1] - 2023-08-04
 
 ### Features
