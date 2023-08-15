@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.14 AS builder
+FROM golang:1.21 as builder
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ RUN go mod download
 COPY . ./
 RUN make
 
-FROM registry.ci.openshift.org/ocp/4.14:base
+FROM fedora:38
 RUN dnf -y update && dnf install -y binutils go file && dnf clean all
 COPY --from=builder /app/check-payload /check-payload
 
