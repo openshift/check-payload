@@ -12,3 +12,4 @@ RUN dnf -y update && dnf install -y binutils go file && dnf clean all
 COPY --from=builder /app/check-payload /check-payload
 
 ENTRYPOINT ["/check-payload"]
+LABEL com.redhat.component="check-payload"
