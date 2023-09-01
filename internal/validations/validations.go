@@ -33,6 +33,12 @@ var (
 	}
 
 	goLessThan118 = newSemverConstraint("< 1.18")
+
+	// correlates to java 1.8
+	JavaClassLessThan52 = newSemverConstraint("< 52")
+
+	// correlates to java 1.11
+	JavaClassLessThan55 = newSemverConstraint("< 55")
 )
 
 type Baton struct {

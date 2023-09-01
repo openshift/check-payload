@@ -1,2 +1,3 @@
 check-payload
 bin/
+*.class

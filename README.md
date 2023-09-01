@@ -138,6 +138,14 @@ Golang validations run through a pipeline:
 1. validateGoOpenssl - ensure openssl matches the dynamic library within the system
 1. validateGoTags - ensure golang tags are set
 
+#### Java Development Kit
+
+JDK validations run through a pipeline:
+
+1. validateFipsHost - ensures the `check-payload` tool is being run on a FIPS enabled host
+1. validateSystemProperties - ensures pertinent [FIPS property values](https://access.redhat.com/documentation/en-us/openjdk/8/html/configuring_openjdk_8_on_rhel_with_fips/config-fips-in-openjdk) are not being set at runtime
+1. validateAlgorithms - ensures unacceptable algorithms and protocols are disabled at runtime
+
 ### Printer
 
 The printer aggregates all the results and formats into a table, csv, markdown, etc. If any errors are found then the process exits non-zero. A successful run returns 0.

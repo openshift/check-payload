@@ -17,6 +17,17 @@ filter_dirs = [
   "/sysroot",
 ]
 
+java_fips_disabled_algorithms = [
+  "DH keySize < 2048", "TLSv1.1", "TLSv1", "SSLv3", "SSLv2",
+  "TLS_RSA_WITH_AES_256_CBC_SHA256", "TLS_RSA_WITH_AES_256_CBC_SHA",
+  "TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_AES_128_CBC_SHA",
+  "TLS_RSA_WITH_AES_256_GCM_SHA384", "TLS_RSA_WITH_AES_128_GCM_SHA256",
+  "DHE_DSS", "RSA_EXPORT", "DHE_DSS_EXPORT", "DHE_RSA_EXPORT",
+  "DH_DSS_EXPORT", "DH_RSA_EXPORT", "DH_anon", "ECDH_anon", "DH_RSA",
+  "DH_DSS", "ECDH", "3DES_EDE_CBC", "DES_CBC", "RC4_40", "RC4_128",
+  "DES40_CBC", "RC2", "HmacMD5",
+]
+
 [[rpm.glibc-common.ignore]]
 error = "ErrNotDynLinked"
 files = [ "/usr/sbin/build-locale-archive" ]
