@@ -8,7 +8,7 @@ COPY . ./
 RUN make
 
 FROM registry.ci.openshift.org/ocp/4.14:base
-RUN dnf -y update && dnf install -y binutils go file && dnf clean all
+RUN dnf -y update && dnf install -y binutils file go podman && dnf clean all
 COPY --from=builder /app/check-payload /check-payload
 
 ENTRYPOINT ["/check-payload"]
