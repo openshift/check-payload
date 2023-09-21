@@ -77,7 +77,10 @@ error = "ErrNotDynLinked"
 files = [ "/usr/bin/pod" ]
 
 [payload.operator-lifecycle-manager-container]
-filter_files = [ "/usr/bin/cpb" ]
+filter_files = [
+  "/usr/bin/cpb",
+  "/usr/bin/copy-content",
+]
 
 [payload.ose-olm-rukpak-container]
 filter_files = [ "/unpack" ]
