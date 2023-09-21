@@ -78,3 +78,6 @@ files = [ "/usr/bin/pod" ]
 
 [payload.operator-lifecycle-manager-container]
 filter_files = [ "/usr/bin/cpb" ]
+
+[payload.ose-olm-rukpak-container]
+filter_files = [ "/unpack" ]
