@@ -231,6 +231,23 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 		//  - skip per-tag and per-component config rules.
 		return rpmRootScan(ctx, cfg, mountPath)
 	}
+
+	if cfg.Java {
+		disabledAlgorithms := []string{
+			"DH keySize < 2048", "TLSv1.1", "TLSv1", "SSLv3", "SSLv2",
+			"TLS_RSA_WITH_AES_256_CBC_SHA256", "TLS_RSA_WITH_AES_256_CBC_SHA", "TLS_RSA_WITH_AES_128_CBC_SHA256",
+			"TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_GCM_SHA384", "TLS_RSA_WITH_AES_128_GCM_SHA256", "DHE_DSS",
+			"RSA_EXPORT", "DHE_DSS_EXPORT", "DHE_RSA_EXPORT", "DH_DSS_EXPORT", "DH_RSA_EXPORT", "DH_anon", "ECDH_anon",
+			"DH_RSA", "DH_DSS", "ECDH", "3DES_EDE_CBC", "DES_CBC", "RC4_40", "RC4_128", "DES40_CBC", "RC2", "HmacMD5",
+		}
+		if len(cfg.JavaDisabledAlgorithms) > 0 {
+			disabledAlgorithms = cfg.JavaDisabledAlgorithms
+		}
+		if err := podman.ScanJava(ctx, image, disabledAlgorithms); err != nil {
+			return types.NewScanResults().Append(types.NewScanResult().SetTag(tag).SetError(err))
+		}
+	}
+
 	return walkDirScan(ctx, cfg, tag, component, mountPath)
 }
 
@@ -239,7 +256,13 @@ func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, c
 
 	// does the image contain openssl
 	opensslInfo := validations.ValidateOpenssl(ctx, mountPath)
-	results.Append(types.NewScanResult().SetOpenssl(opensslInfo).SetTag(tag))
+	scanResult := types.NewScanResult().SetOpenssl(opensslInfo).SetTag(tag)
+
+	// Because java uses a native implementation of SSL, any openssl related results should be warnings for java.
+	if cfg.Java && scanResult.Error != nil {
+		scanResult.Error.SetWarning()
+	}
+	results.Append(scanResult)
 
 	errIgnoreLists := []types.ErrIgnoreList{cfg.ErrIgnores}
 

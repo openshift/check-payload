@@ -1,13 +1,19 @@
 package podman
 
 import (
+	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
+	"github.com/openshift/check-payload/dist/releases"
 	"github.com/openshift/check-payload/internal/types"
+	"github.com/openshift/check-payload/internal/validations"
 	"k8s.io/klog/v2"
 )
 
@@ -58,9 +64,81 @@ func runPodman(ctx context.Context, args ...string) (bytes.Buffer, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		// Exit code 8 is used to differentiate valid java scan returns from other execution errors.
+		const javaExitCode = 8
+		var exiterr *exec.ExitError
+		if errors.As(err, &exiterr); exiterr.ExitCode() == javaExitCode {
+			return stdout, errors.New(stderr.String())
+		}
 		return stdout, fmt.Errorf("podman error (args=%v) (stderr=%v) (error=%w)", args, stderr.String(), err)
 	}
 	return stdout, nil
+}
+
+func ScanJava(ctx context.Context, image string, javaDisabledAlgorithms []string) error {
+	data, err := Inspect(ctx, image, "--format", "{{index  .Config.Entrypoint}}|{{index  .Config.Cmd}}|{{index  .Config.WorkingDir}}")
+	if err != nil {
+		return err
+	}
+	parts := strings.Split(data, "|")
+
+	jInfo := &types.JavaComponent{
+		Entrypoint: strings.Split(strings.Trim(parts[0], "[]"), ","),
+		Cmd:        strings.Split(strings.Trim(parts[1], "[]"), ","),
+		WorkingDir: strings.TrimSpace(parts[2]),
+	}
+
+	// This was done because java versions before 1.8 cannot use the java class `java.util.stream.Collectors`.
+	// Also, java versions prior to 1.11 cannot execute .Java source files without compiling first.
+	cmdArgs := []string{"run", "-it", "--rm", "--entrypoint", "", image, "java", "-XshowSettings:properties", "-version"}
+	stdout, err := runPodman(ctx, cmdArgs...)
+	if err != nil {
+		return err
+	}
+
+	jClassVer := ""
+	scanner := bufio.NewScanner(strings.NewReader(stdout.String()))
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), "java.class.version =") {
+			jClassVer = strings.TrimSpace(strings.Split(scanner.Text(), "=")[1])
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	javaFilePath, _, err := releases.GetJavaFile()
+	if err != nil {
+		return err
+	}
+	defer os.Remove(javaFilePath)
+	algFilePath, algFile, err := releases.GetAlgorithmFile(javaDisabledAlgorithms)
+	if err != nil {
+		return err
+	}
+	defer os.Remove(algFilePath)
+
+	cmdArgs = []string{"run", "--rm", "--entrypoint", "", "-v", javaFilePath + ":" + jInfo.WorkingDir + "/" + releases.JavaFips + ":z", "-v", algFilePath + ":" + jInfo.WorkingDir + "/" + algFile + ":z", image}
+	javaClassVersion, err := semver.NewVersion(jClassVer)
+	if err != nil {
+		return err
+	}
+
+	if validations.JavaClassLessThan52.Check(javaClassVersion) {
+		return errors.New("this scan tool supports java 1.8+")
+	}
+	if validations.JavaClassLessThan55.Check(javaClassVersion) {
+		cmdArgs = append(cmdArgs, []string{"/bin/sh", "-c", "javac " + releases.JavaFips + " && java FIPS " + algFile}...)
+	} else {
+		cmdArgs = append(cmdArgs, []string{"java", releases.JavaFips, algFile}...)
+	}
+	stdout, err = runPodman(ctx, cmdArgs...)
+	if err != nil {
+		klog.Infoln(stdout.String())
+		return err
+	}
+
+	return nil
 }
 
 func GetOpenshiftComponentFromImage(ctx context.Context, image string) (*types.OpenshiftComponent, error) {

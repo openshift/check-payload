@@ -46,6 +46,7 @@ var (
 	cpuProfile                            string
 	failOnWarnings                        bool
 	filterFiles, filterDirs, filterImages []string
+	javaDisabledAlgorithms                []string
 	insecurePull                          bool
 	limit                                 int
 	outputFile                            string
@@ -218,7 +219,31 @@ func main() {
 	scanImage.Flags().Bool("rpm-scan", false, "use RPM scan (same as during node scan)")
 	_ = scanImage.MarkFlagRequired("spec")
 
+	scanJavaImage := &cobra.Command{
+		Use:          "java-image [image pull spec]",
+		Aliases:      []string{"java"},
+		SilenceUsage: true,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return scan.ValidateApplicationDependencies(applicationDeps)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
+			defer cancel()
+			config.ContainerImage, _ = cmd.Flags().GetString("spec")
+			config.UseRPMScan, _ = cmd.Flags().GetBool("rpm-scan")
+			config.JavaDisabledAlgorithms = append(config.JavaDisabledAlgorithms, javaDisabledAlgorithms...)
+			config.Java = true
+			results = scan.RunOperatorScan(ctx, &config)
+			return nil
+		},
+	}
+	scanJavaImage.Flags().String("spec", "", "java payload url")
+	scanJavaImage.Flags().Bool("rpm-scan", false, "use RPM scan (same as during node scan)")
+	scanJavaImage.Flags().StringSliceVar(&javaDisabledAlgorithms, "disabled-algorithms", nil, "additional algorithms that java should be disabling in FIPS mode")
+	_ = scanJavaImage.MarkFlagRequired("spec")
+
 	scanCmd.AddCommand(scanPayload)
+	scanCmd.AddCommand(scanJavaImage)
 	scanCmd.AddCommand(scanNode)
 	scanCmd.AddCommand(scanImage)
 

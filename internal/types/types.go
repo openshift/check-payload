@@ -20,6 +20,7 @@ type Config struct {
 	OutputFile              string        `json:"output_file"`
 	OutputFormat            string        `json:"output_format"`
 	Parallelism             int           `json:"parallelism"`
+	Java                    bool          `json:"java"`
 	PrintExceptions         bool          `json:"print_exceptions"`
 	PullSecret              string        `json:"pull_secret"`
 	TimeLimit               time.Duration `json:"time_limit"`
@@ -32,9 +33,10 @@ type Config struct {
 // ConfigFile is a part of Config. It contains fields that can be set via a
 // configuration files.
 type ConfigFile struct {
-	FilterFiles  []string `json:"filter_files" toml:"filter_files"`
-	FilterDirs   []string `json:"filter_dirs" toml:"filter_dirs"`
-	FilterImages []string `json:"filter_images" toml:"filter_images"`
+	FilterFiles            []string `json:"filter_files" toml:"filter_files"`
+	FilterDirs             []string `json:"filter_dirs" toml:"filter_dirs"`
+	FilterImages           []string `json:"filter_images" toml:"filter_images"`
+	JavaDisabledAlgorithms []string `json:"java_fips_disabled_algorithms" toml:"java_fips_disabled_algorithms"`
 
 	PayloadIgnores map[string]IgnoreLists `toml:"payload"`
 	TagIgnores     map[string]IgnoreLists `toml:"tag"`
@@ -79,6 +81,12 @@ type OpenshiftComponent struct {
 	SourceLocation      string `json:"source_location"`
 	MaintainerComponent string `json:"maintainer_component"`
 	IsBundle            bool   `json:"is_bundle"`
+}
+
+type JavaComponent struct {
+	Entrypoint []string
+	Cmd        []string
+	WorkingDir string
 }
 
 type OpensslInfo struct {
