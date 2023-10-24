@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/openshift/check-payload/dist/releases"
@@ -60,10 +61,22 @@ func runPodman(ctx context.Context, args ...string) (bytes.Buffer, error) {
 	klog.V(1).InfoS("podman "+args[0], "args", args[1:])
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
+	retry := true
 	cmd := exec.CommandContext(ctx, "podman", args...)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+again:
 	if err := cmd.Run(); err != nil {
+		// Retry once on Internal Server Error to improve resilience.
+		if retry && strings.Contains(stderr.String(), "Internal Server Error") {
+			klog.InfoS("got HTTP 500, will retry once", "stderr", stderr.String())
+			stdout.Reset()
+			stderr.Reset()
+			retry = false
+			time.Sleep(time.Second)
+			goto again
+		}
+
 		// Exit code 8 is used to differentiate valid java scan returns from other execution errors.
 		const javaExitCode = 8
 		var exiterr *exec.ExitError
