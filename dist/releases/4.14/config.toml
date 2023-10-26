@@ -26,7 +26,10 @@ dirs = [
 
 [[payload.ose-ovn-kubernetes-container.ignore]]
 error = "ErrLibcryptoSoMissing"
-files = [ "/usr/libexec/cni/rhel8/ovn-k8s-cni-overlay" ]
+files = [
+  "/usr/libexec/cni/rhel8/ovn-k8s-cni-overlay",
+  "/usr/lib/rhel8/ovnkube-trace"
+]
 
 [[payload.ose-egress-router-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
