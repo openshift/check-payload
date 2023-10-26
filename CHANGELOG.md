@@ -7,6 +7,7 @@
 ### Bug fixes
 
 - Chore: remove cliff.toml configuration
+- Bump: for OpenShift image creation
 
 ## [0.3.1] - 2023-08-04
 
