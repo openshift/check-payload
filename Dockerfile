@@ -7,7 +7,7 @@ RUN go mod download
 COPY . ./
 RUN make
 
-FROM registry.ci.openshift.org/ocp/4.14:base
+FROM registry.ci.openshift.org/ocp/4.14:base-rhel9
 RUN dnf -y update && dnf install -y binutils file go podman && dnf clean all
 COPY --from=builder /app/check-payload /check-payload
 
