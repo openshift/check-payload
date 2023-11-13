@@ -9,7 +9,7 @@ RUN make
 
 FROM registry.ci.openshift.org/ocp/4.14:base-rhel9
 ARG OC_VERSION=latest
-RUN dnf -y update && dnf install -y binutils file go podman && dnf clean all
+RUN dnf -y update && dnf install -y binutils file go podman runc && dnf clean all
 RUN wget -O "openshift-client-linux-${OC_VERSION}.tar.gz" "https://mirror.openshift.com/pub/openshift-v4/amd64/clients/ocp/${OC_VERSION}/openshift-client-linux.tar.gz" \
   && tar -C /usr/local/bin -xzvf "openshift-client-linux-$OC_VERSION.tar.gz" oc
 RUN curl --fail --retry 3 -LJO https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest-4.14/opm-linux.tar.gz && \
