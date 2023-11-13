@@ -45,7 +45,7 @@ binary during build time from the directories under
 
 ```sh
  sudo ./check-payload scan payload -V 4.11 \
-   --url quay.io/openshift-release-dev/ocp-release:4.11.44-x86_64
+   --url quay.io/openshift-release-dev/ocp-release:4.11.44-x86_64 \
    --output-file report.txt
 ```
 
