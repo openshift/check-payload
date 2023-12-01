@@ -264,6 +264,15 @@ func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, c
 	}
 	results.Append(scanResult)
 
+	// validate base image version
+	imageCheck := validations.ValidateRhelImage(ctx, mountPath)
+	result := types.NewScanResult().SetTag(tag).SetImageInfo(imageCheck)
+	if result.Error != nil {
+		// Warn on base image scans for now
+		result.Error.SetWarning()
+	}
+	results.Append(result)
+
 	errIgnoreLists := []types.ErrIgnoreList{cfg.ErrIgnores}
 
 	if tag != nil {

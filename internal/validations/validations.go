@@ -389,3 +389,21 @@ func newSemverConstraint(str string) *semver.Constraints {
 	}
 	return c
 }
+
+func ValidateRhelImage(_ context.Context, path string) types.ImageInfo {
+	info := types.ImageInfo{}
+	releasePath := filepath.Join(path, "etc", "redhat-release")
+	releaseInfo, err := os.ReadFile(releasePath)
+	if err != nil {
+		info.Error = types.NewValidationError(fmt.Errorf("image: could not find /etc/redhat-release file: %w", err))
+		return info
+	}
+	info.Version = string(releaseInfo)
+	// Red Hat Enterprise Linux release 9.2
+	re := regexp.MustCompile(`Red Hat Enterprise Linux release (.*) `)
+	if matches := re.FindAllStringSubmatch(string(releaseInfo), -1); len(matches) == 1 {
+		info.IsRhel = true
+		info.Version = matches[0][1]
+	}
+	return info
+}

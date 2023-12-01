@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"fmt"
 
 	v1 "github.com/openshift/api/image/v1"
 )
@@ -45,6 +46,16 @@ func (r *ScanResult) Status() string {
 	}
 	// Should never happen.
 	return "<unknown>"
+}
+
+func (r *ScanResult) SetImageInfo(info ImageInfo) *ScanResult {
+	if !info.IsRhel {
+		r.SetError(fmt.Errorf("not RHEL image: %v", info.Version))
+	}
+	if info.Version == "8.6" {
+		r.SetError(errors.New("RHEL 8.6 images are invalid"))
+	}
+	return r
 }
 
 func (r *ScanResult) SetOpenssl(info OpensslInfo) *ScanResult {

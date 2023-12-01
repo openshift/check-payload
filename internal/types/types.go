@@ -89,6 +89,12 @@ type JavaComponent struct {
 	WorkingDir string
 }
 
+type ImageInfo struct {
+	Version string
+	IsRhel  bool
+	Error   *ValidationError
+}
+
 type OpensslInfo struct {
 	Present bool
 	FIPS    bool
