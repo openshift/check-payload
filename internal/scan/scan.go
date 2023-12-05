@@ -273,6 +273,10 @@ func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, c
 	}
 	results.Append(result)
 
+	// Validate Packages
+	packageResults := validations.ValidatePackages(ctx, cfg, tag, mountPath)
+	results.AppendResults(packageResults)
+
 	errIgnoreLists := []types.ErrIgnoreList{cfg.ErrIgnores}
 
 	if tag != nil {

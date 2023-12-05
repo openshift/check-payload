@@ -52,9 +52,6 @@ func (r *ScanResult) SetImageInfo(info ImageInfo) *ScanResult {
 	if !info.IsRhel {
 		r.SetError(fmt.Errorf("not RHEL image: %v", info.Version))
 	}
-	if info.Version == "8.6" {
-		r.SetError(errors.New("RHEL 8.6 images are invalid"))
-	}
 	return r
 }
 

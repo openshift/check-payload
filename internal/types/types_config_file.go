@@ -139,6 +139,8 @@ func (c *ConfigFile) Add(add *ConfigFile) error {
 
 	c.ErrIgnores = mergeErrIgnoreLists("[[ignore]]", &err, c.ErrIgnores, add.ErrIgnores)
 
+	c.ExpectedPackages = mergeExpectedPackages("expected_packages", &err, c.ExpectedPackages, add.ExpectedPackages)
+
 	return err
 }
 
@@ -169,6 +171,14 @@ func appendUniq(listname string, perr *error, main, add []string) []string {
 		main = append(main, a)
 	}
 
+	return main
+}
+
+func mergeExpectedPackages(name string, perr *error, main, add []ExpectedPackage) []ExpectedPackage {
+	if main == nil {
+		return add
+	}
+	main = append(main, add...)
 	return main
 }
 

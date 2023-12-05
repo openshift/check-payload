@@ -1,1 +1,6 @@
-# Intentionally empty.
+[[expected_packages]]
+files = [
+	{ sha256 = "e738905a097eff89b2731101577949baedfaeca7da30b9d5cf42aaeec8aa81d6", path = "/usr/lib64/libcrypto.so.1.1.1k" },
+]
+rpm = "openssl-libs-1.1.1k-9.el8_6.x86_64"
+required = false
