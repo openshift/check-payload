@@ -42,6 +42,19 @@ type ConfigFile struct {
 	TagIgnores     map[string]IgnoreLists `toml:"tag"`
 	RPMIgnores     map[string]IgnoreLists `toml:"rpm"`
 	ErrIgnores     ErrIgnoreList          `json:"ignore" toml:"ignore"`
+
+	ExpectedPackages []ExpectedPackage `toml:"expected_packages" json:"expected_packages"`
+}
+
+type ExpectedPackage struct {
+	IsRequired bool   `toml:"required"`
+	RPM        string `toml:"rpm"`
+	Files      []File `toml:"files"`
+}
+
+type File struct {
+	Path   string `toml:"path"`
+	SHA256 string `toml:"sha256"`
 }
 
 type ErrIgnore struct {
@@ -87,6 +100,12 @@ type JavaComponent struct {
 	Entrypoint []string
 	Cmd        []string
 	WorkingDir string
+}
+
+type ImageInfo struct {
+	Version string
+	IsRhel  bool
+	Error   *ValidationError
 }
 
 type OpensslInfo struct {

@@ -19,7 +19,7 @@ type Info struct {
 }
 
 func GetFilesFromRPM(ctx context.Context, root, rpm string) ([]string, error) {
-	klog.Infof("rpm -ql %v", rpm)
+	klog.V(4).Infof("rpm -ql %v", rpm)
 	dbpath, err := rpmDBPath(root)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func GetFilesFromRPM(ctx context.Context, root, rpm string) ([]string, error) {
 }
 
 func GetAllRPMs(ctx context.Context, root string) ([]Info, error) {
-	klog.Info("rpm -qa")
+	klog.V(4).Info("rpm -qa")
 	dbpath, err := rpmDBPath(root)
 	if err != nil {
 		return nil, err
