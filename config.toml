@@ -18,27 +18,48 @@ filter_dirs = [
 ]
 
 java_fips_disabled_algorithms = [
-  "DH keySize < 2048", "TLSv1.1", "TLSv1", "SSLv3", "SSLv2",
-  "TLS_RSA_WITH_AES_256_CBC_SHA256", "TLS_RSA_WITH_AES_256_CBC_SHA",
-  "TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_AES_128_CBC_SHA",
-  "TLS_RSA_WITH_AES_256_GCM_SHA384", "TLS_RSA_WITH_AES_128_GCM_SHA256",
-  "DHE_DSS", "RSA_EXPORT", "DHE_DSS_EXPORT", "DHE_RSA_EXPORT",
-  "DH_DSS_EXPORT", "DH_RSA_EXPORT", "DH_anon", "ECDH_anon", "DH_RSA",
-  "DH_DSS", "ECDH", "3DES_EDE_CBC", "DES_CBC", "RC4_40", "RC4_128",
-  "DES40_CBC", "RC2", "HmacMD5",
+  "DH keySize < 2048",
+  "TLSv1.1",
+  "TLSv1",
+  "SSLv3",
+  "SSLv2",
+  "TLS_RSA_WITH_AES_256_CBC_SHA256",
+  "TLS_RSA_WITH_AES_256_CBC_SHA",
+  "TLS_RSA_WITH_AES_128_CBC_SHA256",
+  "TLS_RSA_WITH_AES_128_CBC_SHA",
+  "TLS_RSA_WITH_AES_256_GCM_SHA384",
+  "TLS_RSA_WITH_AES_128_GCM_SHA256",
+  "DHE_DSS",
+  "RSA_EXPORT",
+  "DHE_DSS_EXPORT",
+  "DHE_RSA_EXPORT",
+  "DH_DSS_EXPORT",
+  "DH_RSA_EXPORT",
+  "DH_anon",
+  "ECDH_anon",
+  "DH_RSA",
+  "DH_DSS",
+  "ECDH",
+  "3DES_EDE_CBC",
+  "DES_CBC",
+  "RC4_40",
+  "RC4_128",
+  "DES40_CBC",
+  "RC2",
+  "HmacMD5",
 ]
 
 [[rpm.glibc-common.ignore]]
 error = "ErrNotDynLinked"
-files = [ "/usr/sbin/build-locale-archive" ]
+files = ["/usr/sbin/build-locale-archive"]
 
 [[rpm.glibc.ignore]]
 error = "ErrNotDynLinked"
-files = [ "/usr/sbin/ldconfig", "/sbin/ldconfig" ]
+files = ["/usr/sbin/ldconfig", "/sbin/ldconfig"]
 
 [[rpm.runc.ignore]]
 error = "ErrGoMissingTag"
-files = [ "/usr/bin/runc" ]
+files = ["/usr/bin/runc"]
 
 [[rpm.podman.ignore]]
 error = "ErrGoMissingTag"
@@ -50,48 +71,42 @@ files = [
 
 [[rpm.podman.ignore]]
 error = "ErrNotDynLinked"
-files = [ "/usr/libexec/podman/catatonit" ]
+files = ["/usr/libexec/podman/catatonit"]
 
 [[rpm.podman-catatonit.ignore]]
 error = "ErrNotDynLinked"
-files = [ "/usr/libexec/catatonit/catatonit" ]
+files = ["/usr/libexec/catatonit/catatonit"]
 
 [[rpm.skopeo.ignore]]
 error = "ErrGoMissingTag"
-files = [ "/usr/bin/skopeo" ]
+files = ["/usr/bin/skopeo"]
 
 [[rpm.cri-o.ignore]]
 error = "ErrGoMissingTag"
-files = [
-  "/usr/bin/crio",
-  "/usr/bin/crio-status",
-]
+files = ["/usr/bin/crio", "/usr/bin/crio-status"]
 
 [[rpm.cri-o.ignore]]
 error = "ErrNotDynLinked"
-files = [ "/usr/bin/pinns" ]
+files = ["/usr/bin/pinns"]
 
 [[rpm.cri-tools.ignore]]
 error = "ErrGoMissingTag"
-files = [ "/usr/bin/crictl" ]
+files = ["/usr/bin/crictl"]
 
 [[rpm.containernetworking-plugins.ignore]]
 error = "ErrGoMissingTag"
-dirs = [ "/usr/libexec/cni" ]
+dirs = ["/usr/libexec/cni"]
 
 [[rpm.ignition.ignore]]
 error = "ErrGoMissingTag"
-files = [ "/usr/lib/dracut/modules.d/30ignition/ignition" ]
+files = ["/usr/lib/dracut/modules.d/30ignition/ignition"]
 
 [[payload.openshift-enterprise-pod-container.ignore]]
 error = "ErrNotDynLinked"
-files = [ "/usr/bin/pod" ]
+files = ["/usr/bin/pod"]
 
 [payload.operator-lifecycle-manager-container]
-filter_files = [
-  "/usr/bin/cpb",
-  "/usr/bin/copy-content",
-]
+filter_files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
 
 [payload.ose-olm-rukpak-container]
-filter_files = [ "/unpack" ]
+filter_files = ["/unpack"]

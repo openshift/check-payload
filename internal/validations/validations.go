@@ -58,7 +58,7 @@ var validationFns = map[string][]ValidationFn{
 		validateGoSymbols,
 		validateGoStatic,
 		validateGoOpenssl,
-		validateGoTags,
+		validateGoTagsAndExperiment,
 	},
 	"exe": {
 		validateNotStatic,
@@ -107,7 +107,7 @@ func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationE
 	return types.NewValidationError(types.ErrGoNotCgoEnabled)
 }
 
-func validateGoTags(_ context.Context, _ string, baton *Baton) *types.ValidationError {
+func validateGoTagsAndExperiment(_ context.Context, _ string, baton *Baton) *types.ValidationError {
 	badTags := []string{"no_openssl"}
 	goodTags := []string{"strictfipsruntime"}
 
@@ -115,29 +115,49 @@ func validateGoTags(_ context.Context, _ string, baton *Baton) *types.Validation
 		return nil
 	}
 
-	tags := "x"
-	for _, bs := range baton.GoBuildInfo.Settings {
-		if bs.Key == "-tags" {
-			tags = "," + bs.Value + ","
-			break
+	// check for tags
+	tagResult := func() *types.ValidationError {
+		tags := "x"
+		for _, bs := range baton.GoBuildInfo.Settings {
+			if bs.Key == "-tags" {
+				tags = "," + bs.Value + ","
+				break
+			}
 		}
-	}
-	if tags == "x" {
-		return types.NewValidationError(types.ErrGoNoTags).SetWarning()
+		if tags == "x" {
+			return types.NewValidationError(types.ErrGoNoTags).SetWarning()
+		}
+
+		// Check for invalid tags.
+		for _, tag := range badTags {
+			if strings.Contains(tags, ","+tag+",") {
+				return types.NewValidationError(fmt.Errorf("%w: %v", types.ErrGoInvalidTag, tag))
+			}
+		}
+
+		// Check for required tags.
+		for _, tag := range goodTags {
+			if !strings.Contains(tags, ","+tag+",") {
+				return types.NewValidationError(fmt.Errorf("%w: %v", types.ErrGoMissingTag, tag)).SetWarning()
+			}
+		}
+
+		return nil
+	}()
+
+	// check for GOEXPERIMENT``
+	expResult := func() *types.ValidationError {
+		for _, bs := range baton.GoBuildInfo.Settings {
+			if bs.Key == "GOEXPERIMENT" && !strings.Contains(bs.Value, "strictfipsruntime") {
+				return types.NewValidationError(types.ErrGoNotGoExperiment)
+			}
+		}
+		return nil
 	}
 
-	// Check for invalid tags.
-	for _, tag := range badTags {
-		if strings.Contains(tags, ","+tag+",") {
-			return types.NewValidationError(fmt.Errorf("%w: %v", types.ErrGoInvalidTag, tag))
-		}
-	}
-
-	// Check for required tags.
-	for _, tag := range goodTags {
-		if !strings.Contains(tags, ","+tag+",") {
-			return types.NewValidationError(fmt.Errorf("%w: %v", types.ErrGoMissingTag, tag)).SetWarning()
-		}
+	// see https://github.com/openshift/check-payload/pull/143#issuecomment-1847671130
+	if tagResult != nil && expResult != nil {
+		return tagResult
 	}
 
 	return nil

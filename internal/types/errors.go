@@ -13,6 +13,7 @@ var (
 	ErrGoNoCgoInit        = errors.New("x_cgo_init not found")
 	ErrGoNoTags           = errors.New("go binary has no build tags set (should have strictfipsruntime)")
 	ErrGoNotCgoEnabled    = errors.New("go binary is not CGO_ENABLED")
+	ErrGoNotGoExperiment  = errors.New("go binary does not enable GOEXPERIMENT=strictfipsruntime")
 	ErrLibcryptoMany      = errors.New("openssl: found multiple different libcrypto versions")
 	ErrLibcryptoMissing   = errors.New("openssl: did not find libcrypto library within binary")
 	ErrLibcryptoSoMissing = errors.New("could not find dependent openssl version within container image")
