@@ -9,6 +9,7 @@ var KnownErrors = map[string]error {
 	"ErrGoNoCgoInit": ErrGoNoCgoInit,
 	"ErrGoNoTags": ErrGoNoTags,
 	"ErrGoNotCgoEnabled": ErrGoNotCgoEnabled,
+	"ErrGoNotGoExperiment": ErrGoNotGoExperiment,
 	"ErrLibcryptoMany": ErrLibcryptoMany,
 	"ErrLibcryptoMissing": ErrLibcryptoMissing,
 	"ErrLibcryptoSoMissing": ErrLibcryptoSoMissing,
