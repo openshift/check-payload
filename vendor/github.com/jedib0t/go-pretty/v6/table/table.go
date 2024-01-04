@@ -1,6 +1,7 @@
 package table
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"strings"
@@ -106,6 +107,8 @@ type Table struct {
 	// suppressEmptyColumns hides columns which have no content on all regular
 	// rows
 	suppressEmptyColumns bool
+	// supressTrailingSpaces removes all trailing spaces from the end of the last column
+	supressTrailingSpaces bool
 	// title contains the text to appear above the table
 	title string
 }
@@ -295,6 +298,11 @@ func (t *Table) Style() *Style {
 // regular rows.
 func (t *Table) SuppressEmptyColumns() {
 	t.suppressEmptyColumns = true
+}
+
+// SuppressTrailingSpaces removes all trailing spaces from the output.
+func (t *Table) SuppressTrailingSpaces() {
+	t.supressTrailingSpaces = true
 }
 
 func (t *Table) getAlign(colIdx int, hint renderHint) text.Align {
@@ -679,6 +687,14 @@ func (t *Table) isIndexColumn(colIdx int, hint renderHint) bool {
 
 func (t *Table) render(out *strings.Builder) string {
 	outStr := out.String()
+	if t.supressTrailingSpaces {
+		var trimmed []string
+		sc := bufio.NewScanner(strings.NewReader(outStr))
+		for sc.Scan() {
+			trimmed = append(trimmed, strings.TrimSpace(sc.Text()))
+		}
+		outStr = strings.Join(trimmed, "\n")
+	}
 	if t.outputMirror != nil && len(outStr) > 0 {
 		_, _ = t.outputMirror.Write([]byte(outStr))
 		_, _ = t.outputMirror.Write([]byte("\n"))
