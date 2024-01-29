@@ -201,7 +201,7 @@ func validateGoCGOInit(_ context.Context, path string, _ *Baton) *types.Validati
 		if n == 0 || err == io.EOF {
 			break
 		}
-		if bytes.Contains(buf, []byte("cgo_init")) {
+		if bytes.Contains(buf, []byte("cgo_init")) || bytes.Contains(buf, []byte("_cgo_topofstack")) {
 			cgoInitFound = true
 			break
 		}
