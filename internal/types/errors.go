@@ -10,7 +10,7 @@ var (
 	ErrGoInvalidTag       = errors.New("go binary has invalid build tag(s) set")
 	ErrGoMissingSymbols   = errors.New("go binary does not contain required symbol(s)")
 	ErrGoMissingTag       = errors.New("go binary does not contain required tag(s)")
-	ErrGoNoCgoInit        = errors.New("x_cgo_init not found")
+	ErrGoNoCgoInit        = errors.New("x_cgo_init or _cgo_topofstack not found")
 	ErrGoNoTags           = errors.New("go binary has no build tags set (should have strictfipsruntime)")
 	ErrGoNotCgoEnabled    = errors.New("go binary is not CGO_ENABLED")
 	ErrGoNotGoExperiment  = errors.New("go binary does not enable GOEXPERIMENT=strictfipsruntime")
