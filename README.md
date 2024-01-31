@@ -79,7 +79,7 @@ This command will scan the local image bundle located in `./test/resources/bundl
 
 #### Use Case
 
-This feature is useful for verifying FIPS compliance of container images in a local development environment, 
+This feature is useful for verifying FIPS compliance of container images in a local development environment,
 without requiring access to `podman mount` which is blocked in some pipeline build systems.
 
 ### Scan a container or operator image
