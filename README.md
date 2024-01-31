@@ -54,6 +54,34 @@ Here
 * `--url` specifies a payload URL;
 * `--output-file` specifies a file to write the scan report to.
 
+### Scan a Local Unpacked Image Bundle
+
+The `scan local` subcommand allows you to scan a local unpacked image bundle for FIPS compliance. This is particularly useful for testing or analyzing local images that have been unpacked using tools like `umoci`.
+
+#### Usage
+
+To scan a local unpacked image bundle, use the following command:
+
+```sh
+./check-payload scan local --path /path/to/local/bundle
+```
+
+Here:
+* `--path` specifies the path to the local unpacked image bundle.
+
+#### Example
+
+```sh
+./check-payload scan local --path ./test/resources/bundle-1
+```
+
+This command will scan the local image bundle located in `./test/resources/bundle-1`.
+
+#### Use Case
+
+This feature is useful for verifying FIPS compliance of container images in a local development environment, 
+without requiring access to `podman mount` which is blocked in some pipeline build systems.
+
 ### Scan a container or operator image
 
 ```sh
