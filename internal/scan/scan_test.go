@@ -2,8 +2,9 @@ package scan
 
 import (
 	"context"
-	"github.com/openshift/check-payload/internal/types"
 	"testing"
+
+	"github.com/openshift/check-payload/internal/types"
 )
 
 // TestRunLocalScan tests the RunLocalScan function with mock bundles.
