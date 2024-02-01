@@ -17,8 +17,8 @@ func TestRunLocalScan(t *testing.T) {
 		bundlePath     string
 		expectedResult bool // true if scan should pass, false if it should fail
 	}{
-		{"GoodBundle", "../test/resources/bundle-1", true},
-		//{"BadBundle", "../test/resources/bundle-2", false},
+		{"GoodBundle", "../../test/resources/bundle-1", true},
+		{"BadBundle", "../../test/resources/bundle-2", false},
 	}
 
 	// Iterate over test cases

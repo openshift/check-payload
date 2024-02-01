@@ -19,7 +19,9 @@ create_bundle() {
         rm -rf "$BUNDLE_DIR"
     fi
 
-    # Create the specified subdirectories and add a .gitkeep file in each
+    mkdir -p "$BUNDLE_DIR"
+
+    # Shift to process subdirectories
     shift
     for SUBDIR in "$@"; do
         local FULL_PATH="$BUNDLE_DIR/$SUBDIR"
@@ -27,15 +29,24 @@ create_bundle() {
         touch "$FULL_PATH/.gitkeep"
         echo "Created $FULL_PATH with .gitkeep"
     done
-
-    # Add mock config.json and umoci.json files
-    touch "$BUNDLE_DIR/config.json"
-    touch "$BUNDLE_DIR/umoci.json"
-    echo "Added mock config files to $BUNDLE_DIR"
 }
 
-# Create each bundle
-create_bundle "bundle-1" "rootfs/etc" "rootfs/usr" "rootfs/var"
-create_bundle "bundle-2" "rootfs/bin" "rootfs/lib" "rootfs/sbin"
+# Create the bundle directories and subdirectories
+create_bundle "bundle-1" "etc" "usr" "usr/lib64"
+create_bundle "bundle-2" "bin" "lib" "sbin"
+
+# After ensuring the directories are created, copy the binaries for bundle-1
+echo "Copying binaries to bundle-1..."
+cp "$TEST_RESOURCES_DIR/fips_compliant_app" "$TEST_RESOURCES_DIR/bundle-1/usr/fips_compliant_app"
+cp "$TEST_RESOURCES_DIR/libcrypto.so" "$TEST_RESOURCES_DIR/bundle-1/usr/lib64/libcrypto.so"
+cp "$TEST_RESOURCES_DIR/libcrypto.so" "$TEST_RESOURCES_DIR/bundle-1/usr/lib64/libcrypto.so.1.1"
+echo "Copied binaries to bundle-1"
+
+# Add mock config.json and umoci.json files to both bundles
+for BUNDLE in "bundle-1" "bundle-2"; do
+    touch "$TEST_RESOURCES_DIR/$BUNDLE/config.json"
+    touch "$TEST_RESOURCES_DIR/$BUNDLE/umoci.json"
+    echo "Added mock config files to $TEST_RESOURCES_DIR/$BUNDLE"
+done
 
 echo "Mock bundle directories created successfully."
