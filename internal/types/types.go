@@ -132,8 +132,8 @@ func (ve *ValidationError) IsWarning() bool {
 	return ve.Level == Warning
 }
 
-// SetupDefault initializes the configuration with default values for testing.
-func (c *Config) SetupDefault() {
+// NewDefaultConfig initializes the configuration with default values for testing.
+func (c *Config) NewDefaultConfig() {
 	// Set default values for testing
 	c.Components = []string{} // or any default components
 	c.FailOnWarnings = false  // depending on your test cases

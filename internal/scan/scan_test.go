@@ -29,7 +29,7 @@ func TestRunLocalScan(t *testing.T) {
 			defer cancel()
 
 			var cfg types.Config
-			cfg.SetupDefault() // Assuming a method to set up default config
+			cfg.NewDefaultConfig() // Assuming a method to set up default config
 
 			// Run the local scan
 			results := RunLocalScan(ctx, &cfg, tc.bundlePath)
