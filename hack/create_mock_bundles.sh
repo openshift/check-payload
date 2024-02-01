@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eou pipefail
+
 # Define the path to the test resources directory relative to the script location
 TEST_RESOURCES_DIR="$(dirname "$0")/../test/resources"
 
