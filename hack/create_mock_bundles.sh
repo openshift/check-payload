@@ -42,6 +42,33 @@ cp "$TEST_RESOURCES_DIR/libcrypto.so" "$TEST_RESOURCES_DIR/bundle-1/usr/lib64/li
 cp "$TEST_RESOURCES_DIR/libcrypto.so" "$TEST_RESOURCES_DIR/bundle-1/usr/lib64/libcrypto.so.1.1"
 echo "Copied binaries to bundle-1"
 
+# Define symlink path
+SYMLINK_PATH="$TEST_RESOURCES_DIR/bundle-1/usr/lib64/libcrypto.so.1.1"
+
+# Check if the symlink or file already exists
+if [ -e "$SYMLINK_PATH" ] || [ -L "$SYMLINK_PATH" ]; then
+    echo "Existing symlink or file found at $SYMLINK_PATH. Removing..."
+    rm -f "$SYMLINK_PATH"
+else
+    echo "No existing symlink or file found at $SYMLINK_PATH."
+fi
+
+# Now attempt to create the symlink
+echo "Creating symlink for libcrypto.so.1.1 to libcrypto.so in bundle-1/usr/lib64..."
+ln -s "$TEST_RESOURCES_DIR/bundle-1/usr/lib64/libcrypto.so" "$SYMLINK_PATH"
+if [ $? -eq 0 ]; then
+    echo "Symlink created successfully."
+else
+    echo "Failed to create symlink. Investigating..."
+    # Check if the target file exists
+    if [ ! -e "$TEST_RESOURCES_DIR/bundle-1/usr/lib64/libcrypto.so" ]; then
+        echo "Target file does not exist: $TEST_RESOURCES_DIR/bundle-1/usr/lib64/libcrypto.so"
+    else
+        echo "Target file exists. Other issue preventing symlink creation."
+    fi
+fi
+
+
 # Add mock config.json and umoci.json files to both bundles
 for BUNDLE in "bundle-1" "bundle-2"; do
     touch "$TEST_RESOURCES_DIR/$BUNDLE/config.json"
