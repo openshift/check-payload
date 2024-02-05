@@ -7,18 +7,16 @@ import (
 	"github.com/openshift/check-payload/internal/types"
 )
 
-// TestRunLocalScan tests the RunLocalScan function with mock bundles.
-// TODO add non-FIPS compliant compiled binary to BadBundle to make a fail test case
-// TODO add FIPS compliant compiled binary to GoodBundle to make a better pass test case
+// TestRunLocalScan tests the RunLocalScan function with mock unpacked directories.
 func TestRunLocalScan(t *testing.T) {
 	// Define test cases
 	testCases := []struct {
-		name           string
-		bundlePath     string
-		expectedResult bool // true if scan should pass, false if it should fail
+		name                string
+		mockUnpackedDirPath string
+		expectedResult      bool // true if scan should pass, false if it should fail
 	}{
-		{"GoodBundle", "../../test/resources/bundle-1", true},
-		{"BadBundle", "../../test/resources/bundle-2", false},
+		{"GoodMockUnpackedDir", "../../test/resources/mock_unpacked_dir-1", true},
+		{"BadMockUnpackedDir", "../../test/resources/mock_unpacked_dir-2", false},
 	}
 
 	// Iterate over test cases
@@ -32,7 +30,7 @@ func TestRunLocalScan(t *testing.T) {
 			cfg.NewDefaultConfig() // Assuming a method to set up default config
 
 			// Run the local scan
-			results := RunLocalScan(ctx, &cfg, tc.bundlePath)
+			results := RunLocalScan(ctx, &cfg, tc.mockUnpackedDirPath)
 
 			// Check if results meet expected criteria
 			passed := !IsFailed(results)
