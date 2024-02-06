@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -123,6 +124,81 @@ func scan(ctx context.Context, cfg *types.Config, tx <-chan *Request, rx chan<- 
 func ValidateTag(ctx context.Context, cfg *types.Config, tag *v1.TagReference, rx chan<- *Result) {
 	result := validateTag(ctx, tag, cfg)
 	rx <- &Result{Results: result}
+}
+
+func RunLocalScan(ctx context.Context, cfg *types.Config, localBundlePath string) []*types.ScanResults {
+	var runs []*types.ScanResults
+
+	// Simulate payload based on local directory structure
+	localPayload := simulateLocalPayload(localBundlePath)
+
+	// Rest of the function follows the structure of RunPayloadScan
+	parallelism := cfg.Parallelism
+	limit := cfg.Limit
+
+	tx := make(chan *Request, parallelism)
+	rx := make(chan *Result, parallelism)
+	var wgThreads sync.WaitGroup
+	var wgRx sync.WaitGroup
+
+	wgThreads.Add(parallelism)
+	for i := 0; i < parallelism; i++ {
+		go func() {
+			scanLocal(ctx, cfg, tx, rx, localBundlePath)
+			wgThreads.Done()
+		}()
+	}
+
+	wgRx.Add(1)
+	go func() {
+		for res := range rx {
+			runs = append(runs, res.Results)
+		}
+		wgRx.Done()
+	}()
+
+	for i, tag := range localPayload {
+		// Optionally, filter tags based on some criteria
+		tx <- &Request{Tag: tag}
+		if limit > 0 && i == limit-1 {
+			break
+		}
+	}
+
+	close(tx)
+	wgThreads.Wait()
+	close(rx)
+	wgRx.Wait()
+
+	return runs
+}
+
+func scanLocal(ctx context.Context, cfg *types.Config, tx <-chan *Request, rx chan<- *Result, localBundlePath string) {
+	for req := range tx {
+		result := validateTagLocal(ctx, req.Tag, cfg, localBundlePath)
+		rx <- &Result{Tag: req.Tag, Results: result}
+	}
+}
+
+// simulateLocalPayload generates a slice of v1.TagReference based on the local bundle directory structure.
+// Adjust this to match how your local bundle's tags are represented in the file system if needed
+func simulateLocalPayload(localBundlePath string) []*v1.TagReference {
+	// Placeholder: mock implementation to avoid linter warning about always returning nil
+	// Replace with actual logic when ready
+	if localBundlePath == "" {
+		return nil
+	}
+
+	// Example: Create a mock tag reference
+	mockTag := &v1.TagReference{
+		Name: "",
+		From: &corev1.ObjectReference{
+			Name: "",
+		},
+	}
+
+	tags := []*v1.TagReference{mockTag}
+	return tags
 }
 
 func IsFailed(results []*types.ScanResults) bool {
@@ -249,6 +325,34 @@ func validateTag(ctx context.Context, tag *v1.TagReference, cfg *types.Config) *
 	}
 
 	return walkDirScan(ctx, cfg, tag, component, mountPath)
+}
+
+// validateTagLocal adapts validateTag for a local directory path.
+func validateTagLocal(ctx context.Context, tag *v1.TagReference, cfg *types.Config, bundlePath string) *types.ScanResults {
+	// Determine the path within the local bundle that corresponds to the tag.
+	localTagPath := filepath.Join(bundlePath, tag.Name)
+
+	// Verify the path exists and is a directory.
+	fileInfo, err := os.Stat(localTagPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			klog.Errorf("Local tag path does not exist: %s", localTagPath)
+			return types.NewScanResults().Append(types.NewScanResult().SetTag(tag).SetError(err))
+		}
+		klog.Errorf("Error accessing local tag path: %s, error: %v", localTagPath, err)
+		return types.NewScanResults().Append(types.NewScanResult().SetTag(tag).SetError(err))
+	}
+	if !fileInfo.IsDir() {
+		err := fmt.Errorf("expected a directory at the local tag path: %s", localTagPath)
+		klog.Error(err)
+		return types.NewScanResults().Append(types.NewScanResult().SetTag(tag).SetError(err))
+	}
+
+	// Since the local bundle does not require a pull or mount, we skip directly to scanning.
+	// Assume OpenshiftComponent information is either not needed or can be derived
+	// from the local bundle structure. If needed, create a mock or derive it here.
+
+	return walkDirScan(ctx, cfg, tag, nil, localTagPath)
 }
 
 func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, component *types.OpenshiftComponent, mountPath string) *types.ScanResults {

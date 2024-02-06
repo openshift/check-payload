@@ -56,6 +56,7 @@ var (
 	pullSecretFile                        string
 	timeLimit                             time.Duration
 	verbose                               bool
+	localBundlePath                       string
 )
 
 func main() {
@@ -178,6 +179,29 @@ func main() {
 	scanPayload.Flags().StringP("file", "f", "", "payload from json file")
 	scanPayload.MarkFlagsMutuallyExclusive("url", "file")
 	scanPayload.Flags().Bool("rpm-scan", false, "use RPM scan (same as during node scan)")
+
+	// Define the 'local' subcommand for scanning local unpacked images
+	localCmd := &cobra.Command{
+		Use:   "local",
+		Short: "Scan a local unpacked image bundle",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if localBundlePath == "" {
+				return fmt.Errorf("path to local bundle is required")
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx, cancel := context.WithTimeout(context.Background(), config.TimeLimit)
+			defer cancel()
+			results = scan.RunLocalScan(ctx, &config, localBundlePath)
+			return nil
+		},
+	}
+
+	localCmd.Flags().StringVar(&localBundlePath, "path", "", "Path to the local unpacked image bundle")
+
+	// Add the 'local' subcommand to 'scanCmd'
+	scanCmd.AddCommand(localCmd)
 
 	scanNode := &cobra.Command{
 		Use:          "node --root /myroot [--walk-scan]",
