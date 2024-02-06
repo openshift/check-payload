@@ -1,10 +1,10 @@
 package table
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"strings"
+	"unicode"
 
 	"github.com/jedib0t/go-pretty/v6/text"
 )
@@ -689,9 +689,8 @@ func (t *Table) render(out *strings.Builder) string {
 	outStr := out.String()
 	if t.supressTrailingSpaces {
 		var trimmed []string
-		sc := bufio.NewScanner(strings.NewReader(outStr))
-		for sc.Scan() {
-			trimmed = append(trimmed, strings.TrimSpace(sc.Text()))
+		for _, line := range strings.Split(outStr, "\n") {
+			trimmed = append(trimmed, strings.TrimRightFunc(line, unicode.IsSpace))
 		}
 		outStr = strings.Join(trimmed, "\n")
 	}
