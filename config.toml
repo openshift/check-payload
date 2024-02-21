@@ -49,6 +49,10 @@ java_fips_disabled_algorithms = [
   "HmacMD5",
 ]
 
+[[rpm.tini.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/tini-static"]
+
 [[rpm.glibc-common.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/sbin/build-locale-archive"]
