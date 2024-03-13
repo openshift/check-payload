@@ -4,9 +4,11 @@ approvers:
   - rphillips
   - mrunalp
   - kolyshkin
+  - rhmdnd
 reviewers:
   - rphillips
   - mrunalp
   - kolyshkin
+  - rhmdnd
 
 component: "Node"
