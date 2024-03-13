@@ -12,11 +12,15 @@ files = ["/usr/bin/machine-config-daemon.rhel9"]
 
 [[payload.ose-node-container.ignore]]
 error = "ErrLibcryptoSoMissing"
-files = ["/opt/cni/bin/rhel9/openshift-sdn"]
+files = ["/opt/cni/bin/rhel9/openshift-sdn", "/opt/cni/bin/rhel8/openshift-sdn"]
 
 [[payload.multus-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
-dirs = ["/usr/src/multus-cni/rhel9/bin", "/usr/src/multus-cni/bin"]
+dirs = [
+  "/usr/src/multus-cni/rhel8/bin",
+  "/usr/src/multus-cni/rhel9/bin",
+  "/usr/src/multus-cni/bin",
+]
 
 [[payload.ose-ovn-kubernetes-container.ignore]]
 error = "ErrLibcryptoSoMissing"
@@ -50,3 +54,11 @@ dirs = ["/usr/libexec/podman"]
 [[payload.openshift-enterprise-builder-container.ignore]]
 error = "ErrGoNotGoExperiment"
 files = ["/usr/bin/runc"]
+
+[[payload.ose-multus-whereabouts-ipam-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+dirs = ["/usr/src/whereabouts/rhel8/bin"]
+
+[[payload.oc-mirror-plugin-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/oc-mirror.rhel8"]
