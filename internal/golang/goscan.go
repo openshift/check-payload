@@ -23,6 +23,20 @@ const (
 // Select the magic number based on the Go version
 func magicNumber(goVersion string) []byte {
 	bs := make([]byte, 4)
+	magic := _magicNumber(goVersion)
+	binary.LittleEndian.PutUint32(bs, magic)
+	return bs
+}
+
+// Select the magic number based on the Go version
+func magicNumberBigEndian(goVersion string) []byte {
+	bs := make([]byte, 4)
+	magic := _magicNumber(goVersion)
+	binary.BigEndian.PutUint32(bs, magic)
+	return bs
+}
+
+func _magicNumber(goVersion string) uint32 {
 	var magic uint32
 	if strings.Compare(goVersion, "go1.20") >= 0 {
 		magic = go120magic
@@ -33,8 +47,7 @@ func magicNumber(goVersion string) []byte {
 	} else {
 		magic = go12magic
 	}
-	binary.LittleEndian.PutUint32(bs, magic)
-	return bs
+	return magic
 }
 
 // Open a Go ELF executable and read .gopclntab
@@ -77,7 +90,11 @@ func ReadTable(fileName string, bi *buildinfo.BuildInfo) (*gosym.Table, error) {
 	magic := magicNumber(bi.GoVersion)
 	pclntabIndex := bytes.Index(tableData, magic)
 	if pclntabIndex < 0 {
-		return nil, fmt.Errorf("could not find magic number in %s ", fileName)
+		magic = magicNumberBigEndian(bi.GoVersion)
+		pclntabIndex = bytes.Index(tableData, magic)
+		if pclntabIndex < 0 {
+			return nil, fmt.Errorf("could not find magic number in %s ", fileName)
+		}
 	}
 	tableData = tableData[pclntabIndex:]
 	addr := exe.Section(".text").Addr
