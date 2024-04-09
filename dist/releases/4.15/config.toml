@@ -50,3 +50,11 @@ dirs = ["/usr/libexec/podman"]
 [[payload.openshift-enterprise-builder-container.ignore]]
 error = "ErrGoNotGoExperiment"
 files = ["/usr/bin/runc"]
+
+[[payload.oc-mirror-plugin-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/oc-mirror.rhel8"]
+
+[[payload.ose-node-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/opt/cni/bin/rhel8/openshift-sdn"]
