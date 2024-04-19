@@ -72,10 +72,10 @@ Here:
 #### Example
 
 ```sh
-./check-payload scan local --path ./test/resources/bundle-1
+./check-payload scan local --path ./test/resources/mock_unpacked_dir-1
 ```
 
-This command will scan the local image bundle located in `./test/resources/bundle-1`.
+This command will scan the local image bundle located in `./test/resources/mock_unpacked_dir-1`.
 
 #### Use Case
 
