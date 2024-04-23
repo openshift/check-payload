@@ -114,3 +114,11 @@ filter_files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
 
 [payload.ose-olm-rukpak-container]
 filter_files = ["/unpack"]
+
+[[payload.openshift-virtualization-virt-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
+
+[[payload.openshift-virtualization-cdi-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/cdi-containerimage-server"]
