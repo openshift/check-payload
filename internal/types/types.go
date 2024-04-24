@@ -37,6 +37,7 @@ type ConfigFile struct {
 	FilterDirs             []string `json:"filter_dirs" toml:"filter_dirs"`
 	FilterImages           []string `json:"filter_images" toml:"filter_images"`
 	JavaDisabledAlgorithms []string `json:"java_fips_disabled_algorithms" toml:"java_fips_disabled_algorithms"`
+	CertifiedDistributions []string `json:"certified_distributions" toml:"certified_distributions"`
 
 	PayloadIgnores map[string]IgnoreLists `toml:"payload"`
 	TagIgnores     map[string]IgnoreLists `toml:"tag"`
@@ -48,6 +49,10 @@ type ErrIgnore struct {
 	Error KnownError `toml:"error"`
 	Files []string   `toml:"files"`
 	Dirs  []string   `toml:"dirs"`
+	// `Tags` is only useful for ignoring certified distributions by
+	// component tag. It is not factored into consideration when evaluating
+	// binaries, which should continue using `Files` and `Dirs`.
+	Tags []string `toml:"tags"`
 }
 
 type ErrIgnoreList []ErrIgnore
@@ -94,6 +99,12 @@ type OpensslInfo struct {
 	FIPS    bool
 	Error   error
 	Path    string
+}
+
+type OSInfo struct {
+	Certified bool
+	Error     error
+	Path      string
 }
 
 type ValidationError struct {

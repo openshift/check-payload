@@ -134,6 +134,15 @@ filter_images = [ "some", "images", "more" ]
   error = "ErrGoNotCgoEnabled"
   files = [ "/one/11", "/one/22" ]
 `
+	cd1 = `
+certified_distributions = [ "Red Hat Enterprise Linux release 9.2 (Plow)" ]
+`
+	cd2 = `
+certified_distributions = [ "Red Hat Enterprise Linux release 9.4 (Plow)" ]
+`
+	cd1cd2 = `
+certified_distributions = [ "Red Hat Enterprise Linux release 9.2 (Plow)", "Red Hat Enterprise Linux release 9.4 (Plow)" ]
+`
 )
 
 func TestConfigMerge(t *testing.T) {
@@ -192,6 +201,19 @@ func TestConfigMerge(t *testing.T) {
 			add:      ign2,
 			expected: ign1ign2,
 			expWarns: true, // There are intentional duplicates.
+		},
+		{
+			name:     "cd1 + cd1",
+			main:     cd1,
+			add:      cd1,
+			expected: cd1,
+			expWarns: true,
+		},
+		{
+			name:     "cd1 + cd2",
+			main:     cd1,
+			add:      cd2,
+			expected: cd1cd2,
 		},
 	}
 

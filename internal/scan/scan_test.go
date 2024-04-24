@@ -18,6 +18,7 @@ func TestRunLocalScan(t *testing.T) {
 	}{
 		{"GoodMockUnpackedDir", "../../test/resources/mock_unpacked_dir-1", true},
 		{"BadMockUnpackedDir", "../../test/resources/mock_unpacked_dir-2", false},
+		{"BadMockUnsupportedOperatingSystem", "../../test/resources/mock_unsupported_os", false},
 	}
 
 	cfg := &types.Config{
@@ -26,9 +27,10 @@ func TestRunLocalScan(t *testing.T) {
 		TimeLimit:    30 * time.Second, // or a suitable duration
 		Verbose:      true,             // if you want verbose output during testing
 		ConfigFile: types.ConfigFile{
-			PayloadIgnores: make(map[string]types.IgnoreLists),
-			TagIgnores:     make(map[string]types.IgnoreLists),
-			RPMIgnores:     make(map[string]types.IgnoreLists),
+			PayloadIgnores:         make(map[string]types.IgnoreLists),
+			TagIgnores:             make(map[string]types.IgnoreLists),
+			RPMIgnores:             make(map[string]types.IgnoreLists),
+			CertifiedDistributions: []string{"Red Hat Enterprise Linux release 9.2 (Plow)"},
 		},
 	}
 	// Iterate over test cases

@@ -121,3 +121,24 @@ func (i ErrIgnoreList) Ignore(file string, err error) bool {
 
 	return false
 }
+
+func (i ErrIgnoreList) IgnoreTag(tag string, err error) bool {
+	if len(i) == 0 {
+		return false
+	}
+	for _, ie := range i {
+		if !errors.Is(err, ie.Error.Err) {
+			continue
+		}
+		for _, t := range ie.Tags {
+			if t == tag {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (c *Config) GetCertifiedDistributions() []string {
+	return c.ConfigFile.CertifiedDistributions
+}

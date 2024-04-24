@@ -35,11 +35,12 @@ create_mock_unpacked_dir() {
 create_mock_unpacked_dir "mock_unpacked_dir-1" "etc" "usr" "usr/lib64"
 create_mock_unpacked_dir "mock_unpacked_dir-2" "bin" "lib" "sbin"
 
-# After ensuring the directories are created, copy the binaries for mock_unpacked_dir-1
+# After ensuring the directories are created, copy the binaries and test files for mock_unpacked_dir-1
 echo "Copying binaries to mock_unpacked_dir-1..."
 cp "$TEST_RESOURCES_DIR/fips_compliant_app" "$TEST_RESOURCES_DIR/mock_unpacked_dir-1/usr/fips_compliant_app"
 cp "$TEST_RESOURCES_DIR/libcrypto.so" "$TEST_RESOURCES_DIR/mock_unpacked_dir-1/usr/lib64/libcrypto.so"
 cp "$TEST_RESOURCES_DIR/libcrypto.so" "$TEST_RESOURCES_DIR/mock_unpacked_dir-1/usr/lib64/libcrypto.so.1.1"
+cp "$TEST_RESOURCES_DIR/redhat-release" "$TEST_RESOURCES_DIR/mock_unpacked_dir-1/etc/redhat-release"
 echo "Copied binaries to mock_unpacked_dir-1"
 
 # Define symlink path

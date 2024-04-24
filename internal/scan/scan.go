@@ -358,6 +358,23 @@ func validateTagLocal(ctx context.Context, tag *v1.TagReference, cfg *types.Conf
 func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, component *types.OpenshiftComponent, mountPath string) *types.ScanResults {
 	results := types.NewScanResults()
 
+	// Check the operating system release against a known list of certified
+	// distributions. Here we're primarily concerned about warning against
+	// operating systems that haven't been certified, yet.
+	osInfo := validations.ValidateOS(cfg, mountPath)
+	osScanResult := types.NewScanResult().SetOS(osInfo).SetComponent(component).SetTag(tag)
+	if component != nil && osScanResult.Error != nil {
+		if i, ok := cfg.PayloadIgnores[component.Component]; ok {
+			if tag != nil {
+				if !i.ErrIgnores.IgnoreTag(tag.Name, osScanResult.Error.Error) {
+					results.Append(osScanResult)
+				}
+			}
+		}
+	} else {
+		results.Append(osScanResult)
+	}
+
 	// does the image contain openssl
 	opensslInfo := validations.ValidateOpenssl(ctx, mountPath)
 	scanResult := types.NewScanResult().SetOpenssl(opensslInfo).SetTag(tag)
