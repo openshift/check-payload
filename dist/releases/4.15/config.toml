@@ -58,3 +58,19 @@ files = ["/usr/bin/oc-mirror.rhel8"]
 [[payload.ose-node-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = ["/opt/cni/bin/rhel8/openshift-sdn"]
+
+[[payload.ib-sriov-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/rhel8/ib-sriov"]
+
+[[payload.openshift-enterprise-operator-sdk-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/lib/golang/pkg/tool/linux_amd64/cgo"]
+
+[[payload.openshift-enterprise-operator-sdk-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/lib/golang/pkg/tool/linux_amd64/cgo"]
+
+[[payload.openshift-enterprise-operator-sdk-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/lib/golang/pkg/tool/linux_amd64/cgo"]
