@@ -66,3 +66,18 @@ files = ["/usr/bin/oc-mirror.rhel8"]
 [[payload.ose-network-interface-bond-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = ["/bondcni/rhel8/bond"]
+
+# VolSync packages diskrsync which uses x/crypto/blake2b for local hashing only
+# for comparing blocks of data (non-cryptographic)
+# Actual network transfer is handled by the ssh executable in the image
+[[payload.volsync-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/local/bin/diskrsync"]
+
+[[payload.volsync-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/local/bin/diskrsync"]
+
+[[payload.volsync-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/local/bin/diskrsync"]
