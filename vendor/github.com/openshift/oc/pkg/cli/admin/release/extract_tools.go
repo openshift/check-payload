@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -26,14 +28,23 @@ import (
 
 	"k8s.io/klog/v2"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/cli-runtime/pkg/genericiooptions"
+	appsv1client "k8s.io/client-go/kubernetes/typed/apps/v1"
+	"k8s.io/client-go/rest"
+	"k8s.io/utils/pointer"
+	"sigs.k8s.io/yaml"
 
 	"github.com/MakeNowJust/heredoc"
+	configv1 "github.com/openshift/api/config/v1"
+	configv1client "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
 	imagereference "github.com/openshift/library-go/pkg/image/reference"
+	"github.com/openshift/library-go/pkg/manifest"
 	"github.com/openshift/oc/pkg/cli/admin/internal/codesign"
 	"github.com/openshift/oc/pkg/cli/image/extract"
 	"github.com/openshift/oc/pkg/cli/image/imagesource"
+	"github.com/openshift/oc/pkg/version"
 )
 
 // extractTarget describes how a file in the release image can be extracted to disk.
@@ -48,14 +59,50 @@ type extractTarget struct {
 	InjectReleaseVersion bool
 	SignMachOBinary      bool
 
-	ArchiveFormat string
-	AsArchive     bool
-	AsZip         bool
-	Readme        string
-	LinkTo        []string
+	ArchiveFormat     string
+	AsArchive         bool
+	AsZip             bool
+	Readme            string
+	LinkTo            []string
+	TargetCommandName string
 
 	Mapping extract.Mapping
 }
+
+// installConfig is a stub for loading what we need from install-configs without having to vendor all of github.com/openshift/installer/pkg/types.
+type installConfig struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata"`
+	Platform          map[string]interface{}                   `json:"platform"`
+	Capabilities      *configv1.ClusterVersionCapabilitiesSpec `json:"capabilities,omitempty"`
+	FeatureSet        configv1.FeatureSet                      `json:"featureSet,omitempty"`
+}
+
+// manifestInclusionConfiguration configures manifest inclusion, so
+// callers can opt in to new filtering options instead of having to
+// update existing call-sites, even if they do not need a new
+// filtering option.
+type manifestInclusionConfiguration struct {
+	// ExcludeIdentifier, if non-nil, excludes manifests that match the exclusion identifier.
+	ExcludeIdentifier *string
+
+	// RequiredFeatureSet, if non-nil, excludes manifests unless they match the desired feature set.
+	RequiredFeatureSet *string
+
+	// Profile, if non-nil, excludes manifests unless they match the cluster profile.
+	Profile *string
+
+	// Capabilities, if non-nil, excludes manifests unless they match the enabled cluster capabilities.
+	Capabilities *configv1.ClusterVersionCapabilitiesStatus
+
+	// Overrides excludes manifests for overridden resources.
+	Overrides []configv1.ComponentOverride
+
+	// Platform, if non-nil, excludes CredentialsRequests manifests unless they match the infrastructure platform.
+	Platform *string
+}
+
+type includer func(m *manifest.Manifest) error
 
 // extractTools extracts all referenced commands as archives in the target dir.
 func (o *ExtractOptions) extractTools() error {
@@ -222,6 +269,30 @@ func (o *ExtractOptions) extractCommand(command string) error {
 		},
 		{
 			OS:      "linux",
+			Arch:    "amd64",
+			Command: "oc.rhel9",
+			Mapping: extract.Mapping{Image: "cli-artifacts", From: "usr/share/openshift/linux_amd64/oc.rhel9"},
+
+			LinkTo:               []string{"kubectl"},
+			Readme:               readmeCLIUnix,
+			InjectReleaseVersion: true,
+			ArchiveFormat:        "openshift-client-linux-amd64-rhel9-%s.tar.gz",
+			TargetCommandName:    "oc",
+		},
+		{
+			OS:      "linux",
+			Arch:    "amd64",
+			Command: "oc.rhel8",
+			Mapping: extract.Mapping{Image: "cli-artifacts", From: "usr/share/openshift/linux_amd64/oc.rhel8"},
+
+			LinkTo:               []string{"kubectl"},
+			Readme:               readmeCLIUnix,
+			InjectReleaseVersion: true,
+			ArchiveFormat:        "openshift-client-linux-amd64-rhel8-%s.tar.gz",
+			TargetCommandName:    "oc",
+		},
+		{
+			OS:      "linux",
 			Arch:    "arm64",
 			Command: "oc",
 			NewArch: true,
@@ -231,6 +302,32 @@ func (o *ExtractOptions) extractCommand(command string) error {
 			Readme:               readmeCLIUnix,
 			InjectReleaseVersion: true,
 			ArchiveFormat:        "openshift-client-linux-arm64-%s.tar.gz",
+		},
+		{
+			OS:      "linux",
+			Arch:    "arm64",
+			Command: "oc.rhel9",
+			NewArch: true,
+			Mapping: extract.Mapping{Image: "cli-artifacts", From: "usr/share/openshift/linux_arm64/oc.rhel9"},
+
+			LinkTo:               []string{"kubectl"},
+			Readme:               readmeCLIUnix,
+			InjectReleaseVersion: true,
+			ArchiveFormat:        "openshift-client-linux-arm64-rhel9-%s.tar.gz",
+			TargetCommandName:    "oc",
+		},
+		{
+			OS:      "linux",
+			Arch:    "arm64",
+			Command: "oc.rhel8",
+			NewArch: true,
+			Mapping: extract.Mapping{Image: "cli-artifacts", From: "usr/share/openshift/linux_arm64/oc.rhel8"},
+
+			LinkTo:               []string{"kubectl"},
+			Readme:               readmeCLIUnix,
+			InjectReleaseVersion: true,
+			ArchiveFormat:        "openshift-client-linux-arm64-rhel8-%s.tar.gz",
+			TargetCommandName:    "oc",
 		},
 		{
 			OS:      "windows",
@@ -453,6 +550,7 @@ func (o *ExtractOptions) extractCommand(command string) error {
 	}
 	exactReleaseImage := refExact.String()
 
+	targetArchCommands := make(map[string]struct{})
 	// resolve target image references to their pull specs
 	missing := sets.NewString()
 	var validTargets []extractTarget
@@ -467,9 +565,23 @@ func (o *ExtractOptions) extractCommand(command string) error {
 				continue
 			}
 		}
+
+		if target.Arch == targetReleaseArch {
+			targetArchCommands[target.Command] = struct{}{}
+		}
+
 		if target.OS == "linux" && target.Arch == releaseArch {
-			klog.V(2).Infof("Skipping duplicate %s", target.ArchiveFormat)
-			continue
+			if _, ok := targetArchCommands[target.Command]; ok {
+				// Some target commands have release-arch types that defines extracting
+				// the command in whatever release architecture type is set(e.g. linux/amd64)
+				// But there is also another target type for these commands specifically set to
+				// each architecture type(linux/amd64, linux/arm64) and it is expected that
+				// one of these arch types collide with release-arch type. Thus,
+				// to prevent duplicate extraction, we have to skip the one colliding with release-arch type.
+				// However, we need to skip per command name because some command may not have release-arch type.
+				klog.V(2).Infof("Skipping duplicate %s", target.ArchiveFormat)
+				continue
+			}
 		}
 		spec, err := findImageSpec(release.References, target.Mapping.Image, o.From)
 		if err != nil && !target.NewArch {
@@ -483,6 +595,11 @@ func (o *ExtractOptions) extractCommand(command string) error {
 		}
 		target.Mapping.Image = spec
 		target.Mapping.ImageRef = imagesource.TypedImageReference{Ref: ref, Type: imagesource.DestinationRegistry}
+		// if the name of the extracted binary is set to different from the
+		// actual command name, we set it to new target command name.
+		if target.TargetCommandName != "" {
+			target.Command = target.TargetCommandName
+		}
 		if target.AsArchive {
 			willArchive = true
 			target.Mapping.Name = fmt.Sprintf(target.ArchiveFormat, releaseName)
@@ -508,7 +625,7 @@ func (o *ExtractOptions) extractCommand(command string) error {
 	}
 
 	// will extract in parallel
-	opts := extract.NewExtractOptions(genericclioptions.IOStreams{Out: o.Out, ErrOut: o.ErrOut})
+	opts := extract.NewExtractOptions(genericiooptions.IOStreams{Out: o.Out, ErrOut: o.ErrOut})
 	opts.ParallelOptions = o.ParallelOptions
 	opts.SecurityOptions = o.SecurityOptions
 	opts.FilterOptions = o.FilterOptions
@@ -783,6 +900,13 @@ func (o *ExtractOptions) extractCommand(command string) error {
 			if target.NewArch {
 				continue
 			}
+			if command == "" && (strings.Contains(target.Mapping.From, "rhel9") || strings.Contains(target.Mapping.From, "rhel8")) {
+				// if user explicitly wants to extract oc.rhel9(or installer.rhel9) via --command=oc.rhel9 and
+				// if release does not have this binary, we can safely return error.
+				// On the other hand, if user wants to extract all the tooling in older versions via --tools flag,
+				// we shouldn't print any error indicating that oc.rhel9 does not exist in this release payload.
+				continue
+			}
 			missing = append(missing, target.Mapping.From)
 		}
 		sort.Strings(missing)
@@ -906,5 +1030,123 @@ func copyAndReplace(errorOutput io.Writer, w io.Writer, r io.Reader, bufferSize 
 		// can search for matches that span buffers
 		copy(buf[:writeTo], buf[writeTo:end])
 		offset = end - writeTo
+	}
+}
+
+func findClusterIncludeConfigFromInstallConfig(ctx context.Context, installConfigPath string) (manifestInclusionConfiguration, error) {
+	config := manifestInclusionConfiguration{}
+
+	clientVersion, reportedVersion, err := version.ExtractVersion()
+	if err != nil {
+		return config, err
+	}
+	if reportedVersion == "" {
+		reportedVersion = clientVersion.String()
+	}
+
+	installConfigBytes, err := os.ReadFile(installConfigPath)
+	if err != nil {
+		return config, err
+	}
+
+	data := installConfig{}
+
+	if err := yaml.Unmarshal(installConfigBytes, &data); err != nil {
+		return config, fmt.Errorf("failed to parse %s: %w", installConfigPath, err)
+	}
+
+	if data.APIVersion != "v1" {
+		return config, fmt.Errorf("unrecognized %s API version: %q (expected %q)", installConfigPath, data.APIVersion, "v1")
+	}
+
+	config.RequiredFeatureSet = pointer.String(string(data.FeatureSet))
+	config.Profile = pointer.String(manifest.DefaultClusterProfile) // assumption, but there's no install-config data about profile to give us more insight
+	for key := range data.Platform {
+		config.Platform = pointer.String(key)
+	}
+
+	if data.Capabilities != nil {
+		config.Capabilities = &configv1.ClusterVersionCapabilitiesStatus{}
+		if enabled, ok := configv1.ClusterVersionCapabilitySets[data.Capabilities.BaselineCapabilitySet]; !ok {
+			return config, fmt.Errorf("unrecognized baselineCapabilitySet %q", data.Capabilities.BaselineCapabilitySet)
+		} else {
+			if data.Capabilities.BaselineCapabilitySet == configv1.ClusterVersionCapabilitySetCurrent {
+				klog.Infof("If the eventual cluster will not be the same minor version as this %s 'oc', the actual %s capability set may differ.", reportedVersion, data.Capabilities.BaselineCapabilitySet)
+			}
+			config.Capabilities.EnabledCapabilities = append(config.Capabilities.EnabledCapabilities, enabled...)
+		}
+		config.Capabilities.EnabledCapabilities = append(config.Capabilities.EnabledCapabilities, data.Capabilities.AdditionalEnabledCapabilities...)
+
+		klog.Infof("If the eventual cluster will not be the same minor version as this %s 'oc', the known capability sets may differ.", reportedVersion)
+		config.Capabilities.KnownCapabilities = configv1.KnownClusterVersionCapabilities
+	}
+
+	return config, nil
+}
+
+func findClusterIncludeConfig(ctx context.Context, restConfig *rest.Config) (manifestInclusionConfiguration, error) {
+	config := manifestInclusionConfiguration{}
+
+	client, err := configv1client.NewForConfig(restConfig)
+	if err != nil {
+		return config, err
+	}
+
+	if featureGate, err := client.FeatureGates().Get(ctx, "cluster", metav1.GetOptions{}); err != nil {
+		return config, err
+	} else {
+		config.RequiredFeatureSet = pointer.String(string(featureGate.Spec.FeatureSet))
+	}
+
+	if clusterVersion, err := client.ClusterVersions().Get(ctx, "version", metav1.GetOptions{}); err != nil {
+		return config, err
+	} else {
+		config.Overrides = clusterVersion.Spec.Overrides
+		config.Capabilities = &clusterVersion.Status.Capabilities
+
+		// FIXME: eventually pull in GetImplicitlyEnabledCapabilities from https://github.com/openshift/cluster-version-operator/blob/86e24d66119a73f50282b66a8d6f2e3518aa0e15/pkg/payload/payload.go#L237-L240 for cases where a minor update would implicitly enable some additional capabilities.  For now, 4.13 to 4.14 will always enable MachineAPI.
+		currentVersion := clusterVersion.Status.Desired.Version
+		matches := regexp.MustCompile(`^(\d+[.]\d+)[.].*`).FindStringSubmatch(currentVersion)
+		if len(matches) < 2 {
+			return config, fmt.Errorf("failed to parse major.minor version from ClusterVersion status.desired.version %q", currentVersion)
+		} else if matches[1] == "4.13" {
+			machineAPI := configv1.ClusterVersionCapability("MachineAPI")
+			config.Capabilities.EnabledCapabilities = append(config.Capabilities.EnabledCapabilities, machineAPI)
+			config.Capabilities.KnownCapabilities = append(config.Capabilities.KnownCapabilities, machineAPI)
+		}
+	}
+
+	if infrastructure, err := client.Infrastructures().Get(ctx, "cluster", metav1.GetOptions{}); err != nil {
+		return config, err
+	} else if infrastructure.Status.PlatformStatus == nil {
+		return config, fmt.Errorf("cluster infrastructure does not declare status.platformStatus: %v", infrastructure.Status)
+	} else {
+		config.Platform = pointer.String(strings.ToLower(string(infrastructure.Status.PlatformStatus.Type)))
+	}
+
+	appsClient, err := appsv1client.NewForConfig(restConfig)
+	if err != nil {
+		return config, err
+	}
+
+	if deployment, err := appsClient.Deployments("openshift-cluster-version").Get(ctx, "cluster-version-operator", metav1.GetOptions{}); err != nil {
+		return config, err
+	} else {
+		for _, container := range deployment.Spec.Template.Spec.Containers {
+			for _, env := range container.Env {
+				if env.Name == "CLUSTER_PROFILE" {
+					config.Profile = pointer.String(env.Value)
+					break
+				}
+			}
+		}
+	}
+
+	return config, nil
+}
+
+func newIncluder(config manifestInclusionConfiguration) includer {
+	return func(m *manifest.Manifest) error {
+		return m.Include(config.ExcludeIdentifier, config.RequiredFeatureSet, config.Profile, config.Capabilities, config.Overrides)
 	}
 }
