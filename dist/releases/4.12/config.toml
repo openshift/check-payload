@@ -1,1 +1,11 @@
-# Intentionally empty.
+[[payload.openshift-enterprise-operator-sdk-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/lib/golang/pkg/tool/linux_amd64/cgo"]
+
+[[payload.openshift-enterprise-operator-sdk-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/lib/golang/pkg/tool/linux_amd64/cgo"]
+
+[[payload.openshift-enterprise-operator-sdk-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/lib/golang/pkg/tool/linux_amd64/cgo"]
