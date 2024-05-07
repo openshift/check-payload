@@ -55,10 +55,6 @@ dirs = ["/usr/libexec/podman"]
 error = "ErrGoNotGoExperiment"
 files = ["/usr/bin/runc"]
 
-[[payload.openshift-enterprise-builder-container.ignore]]
-error = "ErrGoMissingTag"
-files = ["/usr/bin/git-lfs"]
-
 [[payload.ose-multus-whereabouts-ipam-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 dirs = ["/usr/src/whereabouts/rhel8/bin"]
