@@ -89,3 +89,7 @@ files = ["/usr/lib/golang/pkg/tool/linux_amd64/cgo"]
 [[payload.openshift-enterprise-operator-sdk-container.ignore]]
 error = "ErrLibcryptoMissing"
 files = ["/usr/lib/golang/pkg/tool/linux_amd64/cgo"]
+
+[[payload.sriov-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/rhel8/sriov"]
