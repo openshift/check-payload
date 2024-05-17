@@ -109,12 +109,6 @@ files = ["/usr/lib/dracut/modules.d/30ignition/ignition"]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/pod"]
 
-[payload.operator-lifecycle-manager-container]
-filter_files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
-
-[payload.ose-olm-rukpak-container]
-filter_files = ["/unpack"]
-
 [[payload.openshift-virtualization-virt-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
