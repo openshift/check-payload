@@ -116,3 +116,11 @@ files = ["/usr/bin/container-disk"]
 [[payload.openshift-virtualization-cdi-container.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
+
+[[payload.ose-olm-rukpak-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/unpack"]
