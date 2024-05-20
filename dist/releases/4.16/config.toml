@@ -411,3 +411,7 @@ files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
 [[payload.operator-lifecycle-manager-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = ["/usr/bin/cpb"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/bin/cpb"]
