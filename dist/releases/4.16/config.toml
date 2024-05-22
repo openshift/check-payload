@@ -178,7 +178,7 @@ files = [
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ovirt",
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-time",
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphere",
-  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate"
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate",
 ]
 
 [[payload.ose-installer-terraform-providers-container.ignore]]
@@ -213,7 +213,7 @@ files = [
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ovirt",
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-time",
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphere",
-  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate"
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate",
 ]
 
 [[payload.ose-installer-terraform-providers-container.ignore]]
@@ -248,7 +248,7 @@ files = [
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ovirt",
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-time",
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphere",
-  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate"
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate",
 ]
 
 [[payload.ose-installer-terraform-providers-container.ignore]]
@@ -283,7 +283,7 @@ files = [
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ovirt",
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-time",
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphere",
-  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate"
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate",
 ]
 
 [[payload.ose-installer-terraform-providers-container.ignore]]
@@ -318,7 +318,7 @@ files = [
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ovirt",
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-time",
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphere",
-  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate"
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate",
 ]
 
 [[payload.ose-installer-terraform-providers-container.ignore]]
@@ -353,7 +353,7 @@ files = [
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ovirt",
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-time",
   "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphere",
-  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate"
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate",
 ]
 
 [[payload.ib-sriov-cni-container.ignore]]
@@ -387,3 +387,35 @@ files = ["/usr/bin/machine-config-daemon.rhel8"]
 [[payload.sriov-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = ["/usr/bin/rhel8/sriov"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrGoMissingTag"
+files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrGoNoTags"
+files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/cpb"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/bin/cpb"]
+
+[[payload.ose-olm-rukpak-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/unpack"]
