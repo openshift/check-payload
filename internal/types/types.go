@@ -131,36 +131,3 @@ func (ve *ValidationError) IsError() bool {
 func (ve *ValidationError) IsWarning() bool {
 	return ve.Level == Warning
 }
-
-// NewDefaultConfig initializes the configuration with default values for testing.
-func (c *Config) NewDefaultConfig() {
-	// Set default values for testing
-	c.Components = []string{} // or any default components
-	c.FailOnWarnings = false  // depending on your test cases
-	c.FilterFile = ""
-	c.FromFile = ""
-	c.FromURL = ""
-	c.InsecurePull = false
-	c.Limit = -1 // or a suitable default
-	c.ContainerImageComponent = ""
-	c.ContainerImage = ""
-	c.OutputFile = ""
-	c.OutputFormat = "table" // or another suitable format
-	c.Parallelism = 1        // for test simplicity, you might want to run sequentially
-	c.Java = false
-	c.PrintExceptions = false
-	c.PullSecret = ""
-	c.TimeLimit = 30 * time.Second // or a suitable duration
-	c.Verbose = true               // if you want verbose output during testing
-	c.UseRPMScan = false
-
-	// also set up default values for the ConfigFile part of Config if needed
-	c.FilterFiles = []string{}
-	c.FilterDirs = []string{}
-	c.FilterImages = []string{}
-	c.JavaDisabledAlgorithms = []string{}
-	c.PayloadIgnores = make(map[string]IgnoreLists)
-	c.TagIgnores = make(map[string]IgnoreLists)
-	c.RPMIgnores = make(map[string]IgnoreLists)
-	c.ErrIgnores = []ErrIgnore{}
-}
