@@ -27,12 +27,19 @@ var (
 	// Compile regular expressions once during initialization.
 	validateStringsOpensslRegexp = regexp.MustCompile(`libcrypto.so(\.?\d+)*`)
 
-	requiredGolangSymbols = []string{
+	// Use these symbols for all go versions up to 1.22. These symbols
+	// changed in version 1.22, so we can't use them if we're dealing with
+	// 1.22 or greater.
+	requiredGolangSymbolsPre122 = []string{
 		"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 		"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 	}
+	requiredGolangSymbolsPost122 = []string{
+		"vendor/github.com/golang-fips/openssl/v2.dlopen",
+	}
 
 	goLessThan118 = newSemverConstraint("< 1.18")
+	goLessThan122 = newSemverConstraint("< 1.22")
 
 	// correlates to java 1.8
 	JavaClassLessThan52 = newSemverConstraint("< 52")
@@ -76,13 +83,17 @@ func validateGoSymbols(_ context.Context, path string, baton *Baton) *types.Vali
 		return nil
 	}
 
+	requiredGolangSymbols := requiredGolangSymbolsPre122
+	if goLessThan122.Check(baton.GoVersion) {
+		requiredGolangSymbols = requiredGolangSymbolsPost122
+	}
 	if goLessThan118.Check(baton.GoVersion) {
 		return nil
 	}
-
 	if !golang.ExpectedSyms(requiredGolangSymbols, symtable) {
 		return types.NewValidationError(types.ErrGoMissingSymbols)
 	}
+
 	return nil
 }
 
