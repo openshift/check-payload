@@ -83,9 +83,9 @@ func validateGoSymbols(_ context.Context, path string, baton *Baton) *types.Vali
 		return nil
 	}
 
-	requiredGolangSymbols := requiredGolangSymbolsPre122
+	requiredGolangSymbols := requiredGolangSymbolsPost122
 	if goLessThan122.Check(baton.GoVersion) {
-		requiredGolangSymbols = requiredGolangSymbolsPost122
+		requiredGolangSymbols = requiredGolangSymbolsPre122
 	}
 	if goLessThan118.Check(baton.GoVersion) {
 		return nil
