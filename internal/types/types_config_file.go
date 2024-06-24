@@ -93,9 +93,9 @@ func validateErrIgnores(section string, perr, pwarn *error, l ErrIgnoreList) {
 		if v.Error.Str == "" {
 			multierr.AppendInto(perr, &errEmpty{section, "error="})
 		}
-		// Make sure files/dirs are not empty.
-		if len(v.Files)+len(v.Dirs) == 0 {
-			multierr.AppendInto(perr, &errEmpty{section, "files= nor dirs="})
+		// Make sure files/dirs/tags are not empty.
+		if len(v.Files)+len(v.Dirs)+len(v.Tags) == 0 {
+			multierr.AppendInto(perr, &errEmpty{section, "files= nor dirs= nor tags="})
 		}
 		prefix := section + ".error=" + v.Error.Str
 		validateFileList(prefix+".files", perr, v.Files)
@@ -132,6 +132,7 @@ func (c *ConfigFile) Add(add *ConfigFile) error {
 	c.FilterFiles = appendUniq("filter_files", &err, c.FilterFiles, add.FilterFiles)
 	c.FilterDirs = appendUniq("filter_dirs", &err, c.FilterDirs, add.FilterDirs)
 	c.FilterImages = appendUniq("filter_images", &err, c.FilterImages, add.FilterImages)
+	c.CertifiedDistributions = appendUniq("certified_distributions", &err, c.CertifiedDistributions, add.CertifiedDistributions)
 
 	c.PayloadIgnores = mergeLists("payload", &err, c.PayloadIgnores, add.PayloadIgnores)
 	c.TagIgnores = mergeLists("tag", &err, c.TagIgnores, add.TagIgnores)

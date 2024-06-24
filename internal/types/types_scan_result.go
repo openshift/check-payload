@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"os"
 
 	v1 "github.com/openshift/api/image/v1"
 )
@@ -53,6 +54,23 @@ func (r *ScanResult) SetOpenssl(info OpensslInfo) *ScanResult {
 	} else if !info.FIPS {
 		r.SetError(errors.New("openssl library is missing FIPS support"))
 	}
+	r.Path = info.Path
+	return r
+}
+
+func (r *ScanResult) SetOS(info OSInfo) *ScanResult {
+	if errors.Is(info.Error, os.ErrNotExist) {
+		r.SetError(ErrDistributionFileMissing)
+	} else if info.Error != nil {
+		r.SetError(ErrDistributionFileMissing)
+	} else if !info.Certified {
+		r.SetError(ErrOSNotCertified)
+	}
+
+	// We currently only support checking a specific file for the
+	// distribution information. This may need to evolve to be more
+	// flexible in the future if distribution detection becomes more
+	// advanced.
 	r.Path = info.Path
 	return r
 }

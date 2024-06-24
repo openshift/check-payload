@@ -1,3 +1,9 @@
+certified_distributions = [ "Red Hat Enterprise Linux release 9.2 (Plow)" ]
+
+[[payload.ubi9-container.ignore]]
+error = "ErrOSNotCertified"
+tags = ["rhel-coreos-extensions"]
+
 [[payload.ose-network-interface-bond-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = ["/bondcni/bond", "/bondcni/rhel9/bond"]
