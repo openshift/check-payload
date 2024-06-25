@@ -72,7 +72,7 @@ func main() {
 	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			fmt.Println(Commit)
 			return nil
 		},
@@ -81,7 +81,7 @@ func main() {
 	scanCmd := &cobra.Command{
 		Use:   "scan",
 		Short: "Run a scan",
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 			if err := getConfig(&config.ConfigFile); err != nil {
 				return err
 			}
@@ -123,7 +123,7 @@ func main() {
 
 			return nil
 		},
-		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPostRunE: func(_ *cobra.Command, _ []string) error {
 			if cpuProfile != "" {
 				pprof.StopCPUProfile()
 				klog.Info("CPU profile saved to ", cpuProfile)
@@ -158,10 +158,10 @@ func main() {
 	scanPayload := &cobra.Command{
 		Use:          "payload [image pull spec]",
 		SilenceUsage: true,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return scan.ValidateApplicationDependencies(applicationDeps)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			config.FromURL, _ = cmd.Flags().GetString("url")
@@ -184,13 +184,13 @@ func main() {
 	localCmd := &cobra.Command{
 		Use:   "local",
 		Short: "Scan a local unpacked image bundle",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			if localBundlePath == "" {
 				return fmt.Errorf("path to local bundle is required")
 			}
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), config.TimeLimit)
 			defer cancel()
 			results = scan.RunLocalScan(ctx, &config, localBundlePath)
@@ -206,10 +206,10 @@ func main() {
 	scanNode := &cobra.Command{
 		Use:          "node --root /myroot [--walk-scan]",
 		SilenceUsage: true,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return scan.ValidateApplicationDependencies(applicationDepsNodeScan)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			root, _ := cmd.Flags().GetString("root")
@@ -227,10 +227,10 @@ func main() {
 		Use:          "image [image pull spec]",
 		Aliases:      []string{"operator"},
 		SilenceUsage: true,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return scan.ValidateApplicationDependencies(applicationDeps)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			config.ContainerImage, _ = cmd.Flags().GetString("spec")
@@ -247,10 +247,10 @@ func main() {
 		Use:          "java-image [image pull spec]",
 		Aliases:      []string{"java"},
 		SilenceUsage: true,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return scan.ValidateApplicationDependencies(applicationDeps)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			config.ContainerImage, _ = cmd.Flags().GetString("spec")

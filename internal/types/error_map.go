@@ -3,6 +3,7 @@
 package types
 
 var KnownErrors = map[string]error {
+	"ErrCertifiedDistributionsEmpty": ErrCertifiedDistributionsEmpty,
 	"ErrDistributionFileMissing": ErrDistributionFileMissing,
 	"ErrGoInvalidTag": ErrGoInvalidTag,
 	"ErrGoMissingSymbols": ErrGoMissingSymbols,

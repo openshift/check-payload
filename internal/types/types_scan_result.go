@@ -2,7 +2,6 @@ package types
 
 import (
 	"errors"
-	"os"
 
 	v1 "github.com/openshift/api/image/v1"
 )
@@ -59,10 +58,8 @@ func (r *ScanResult) SetOpenssl(info OpensslInfo) *ScanResult {
 }
 
 func (r *ScanResult) SetOS(info OSInfo) *ScanResult {
-	if errors.Is(info.Error, os.ErrNotExist) {
-		r.SetError(ErrDistributionFileMissing)
-	} else if info.Error != nil {
-		r.SetError(ErrDistributionFileMissing)
+	if info.Error != nil {
+		r.SetValidationError(info.Error)
 	} else if !info.Certified {
 		r.SetError(ErrOSNotCertified)
 	}

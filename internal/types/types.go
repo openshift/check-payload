@@ -103,7 +103,7 @@ type OpensslInfo struct {
 
 type OSInfo struct {
 	Certified bool
-	Error     error
+	Error     *ValidationError
 	Path      string
 }
 
