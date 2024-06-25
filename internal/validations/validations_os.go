@@ -22,8 +22,9 @@ func ValidateOS(cfg *types.Config, mountPath string) (info types.OSInfo) {
 	}
 
 	for _, d := range cd {
-	    cd_bytes = []byte(d)
-		if f != "" && cd_bytes != "" && bytes.HasPrefix(f, cd_bytes) {
+	    cd_bytes := []byte(d)
+
+		if len(f) != 0 && len(cd_bytes) != 0 && bytes.HasPrefix(f, cd_bytes) {
 			info.Certified = true
 			break
 		}
