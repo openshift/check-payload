@@ -118,3 +118,7 @@ files = ["/usr/bin/container-disk"]
 [[payload.openshift-virtualization-cdi-container.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.openshift-istio-cni-rhel8-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/opt/cni/bin/istio-cni-rhel9"]
