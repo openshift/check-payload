@@ -30,16 +30,17 @@ func PrintResults(cfg *types.Config, results []*types.ScanResults) {
 
 	isWarnings := IsWarnings(results)
 	isFailed := IsFailed(results)
-	if isFailed {
-		fmt.Println("---- Failure Report")
-		fmt.Println(failureReport)
-		combinedReport = failureReport
-	}
 
 	if isWarnings {
 		fmt.Println("---- Warning Report")
 		fmt.Println(warningReport)
 		combinedReport += "\n\n ---- Warning Report\n" + warningReport
+	}
+
+	if isFailed {
+		fmt.Println("---- Failure Report")
+		fmt.Println(failureReport)
+		combinedReport = failureReport
 	}
 
 	if cfg.Verbose {

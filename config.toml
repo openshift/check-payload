@@ -1,3 +1,5 @@
+certified_distributions = []
+
 # List of directories to ignore. This is a prefix match,
 # i.e. everything under a matched directory is ignored.
 filter_dirs = [
