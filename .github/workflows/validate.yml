@@ -8,7 +8,7 @@ on:
       - release-*
   pull_request:
 env:
-  GO_VERSION: 1.20.x
+  GO_VERSION: 1.22.x
 
 jobs:
   lint:
@@ -24,5 +24,5 @@ jobs:
           cache: false # golangci-lint-action does its own caching
       - uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.53
+          version: v1.59.1
           args: --timeout=3m
