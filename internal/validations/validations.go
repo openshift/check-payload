@@ -38,8 +38,9 @@ var (
 		"vendor/github.com/golang-fips/openssl/v2.dlopen",
 	}
 
-	goLessThan118 = newSemverConstraint("< 1.18")
-	goLessThan122 = newSemverConstraint("< 1.22")
+	goLessThan118             = newSemverConstraint("< 1.18")
+	goLessThan122             = newSemverConstraint("< 1.22")
+	goGreaterThanOrEqualTo122 = newSemverConstraint(">= 1.22")
 
 	// correlates to java 1.8
 	JavaClassLessThan52 = newSemverConstraint("< 52")
@@ -185,6 +186,8 @@ func validateGoStatic(ctx context.Context, path string, baton *Baton) *types.Val
 func validateGoOpenssl(_ context.Context, path string, baton *Baton) *types.ValidationError {
 	// if there is no crypto then skip openssl test
 	if baton.GoNoCrypto {
+		return nil
+	} else if goGreaterThanOrEqualTo122.Check(baton.GoVersion) {
 		return nil
 	}
 	// check for openssl strings
