@@ -348,11 +348,22 @@ func validateTagLocal(ctx context.Context, tag *v1.TagReference, cfg *types.Conf
 		return types.NewScanResults().Append(types.NewScanResult().SetTag(tag).SetError(err))
 	}
 
-	// Since the local bundle does not require a pull or mount, we skip directly to scanning.
-	// Assume OpenshiftComponent information is either not needed or can be derived
-	// from the local bundle structure. If needed, create a mock or derive it here.
+	// Since the local bundle does not require a pull or mount, we skip
+	// directly to scanning. In this case, OpenshiftComponent information
+	// is either not supplied, or a list of one that maps to the unpacked
+	// image from the local bundle structure. At this point, validation
+	// logic will have prevented users from passing in more than one
+	// component.
+	component := &types.OpenshiftComponent{}
+	switch len(cfg.Components) {
+	case 0:
+		// Scan without any component filtering to maintain backwards
+		// compatibility.
+	case 1:
+		component.Component = cfg.Components[0]
+	}
 
-	return walkDirScan(ctx, cfg, tag, nil, localTagPath)
+	return walkDirScan(ctx, cfg, tag, component, localTagPath)
 }
 
 func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, component *types.OpenshiftComponent, mountPath string) *types.ScanResults {

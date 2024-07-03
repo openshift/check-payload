@@ -99,6 +99,7 @@ func main() {
 			config.TimeLimit = timeLimit
 			config.Verbose = verbose
 			config.Log()
+			config.Components = components
 			klog.InfoS("scan", "version", Commit)
 
 			// Validate the configuration.
@@ -143,7 +144,7 @@ func main() {
 	scanCmd.PersistentFlags().StringSliceVar(&filterFiles, "filter-files", nil, "")
 	scanCmd.PersistentFlags().StringSliceVar(&filterDirs, "filter-dirs", nil, "")
 	scanCmd.PersistentFlags().StringSliceVar(&filterImages, "filter-images", nil, "")
-	scanCmd.PersistentFlags().StringSliceVar(&components, "components", nil, "")
+	scanCmd.PersistentFlags().StringSliceVar(&components, "components", nil, "Filter scans by component. Payload scans support a list of components. Local scans support at most one component, which is intended to match the local unpacked image.")
 	scanCmd.PersistentFlags().BoolVar(&failOnWarnings, "fail-on-warnings", false, "fail on warnings")
 	scanCmd.PersistentFlags().BoolVar(&insecurePull, "insecure-pull", false, "use insecure pull")
 	scanCmd.PersistentFlags().IntVar(&limit, "limit", -1, "limit the number of pods scanned")
@@ -187,6 +188,18 @@ func main() {
 		PreRunE: func(_ *cobra.Command, _ []string) error {
 			if localBundlePath == "" {
 				return fmt.Errorf("path to local bundle is required")
+			}
+			// If the user passes in more than one component for a
+			// local scan, we're dealing with too much ambiguity.
+			// Otherwise, the local scan needs to run for each
+			// component supplied, when it only maps to a single
+			// component. In this case, the user needs to either
+			// use an empty list (no component filtering) or reduce
+			// their filter to a list of one to remove ambiguity
+			// and allow check payload to safely determine the
+			// component to filter against.
+			if len(components) > 1 {
+				return fmt.Errorf("local scans do not support multiple components, use one or none: %s", components)
 			}
 			return nil
 		},
