@@ -67,6 +67,11 @@ files = ["/usr/sbin/ldconfig", "/sbin/ldconfig"]
 error = "ErrGoMissingTag"
 files = ["/usr/bin/runc"]
 
+[[rpm.runc.ignore]]
+# See OCPBUGS-36541.
+error = "ErrGoMissingSymbols"
+files = ["/usr/bin/runc"]
+
 [[rpm.podman.ignore]]
 error = "ErrGoMissingTag"
 files = [
