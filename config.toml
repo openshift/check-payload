@@ -68,6 +68,10 @@ error = "ErrGoMissingTag"
 files = ["/usr/bin/runc"]
 
 [[rpm.runc.ignore]]
+error = "ErrGoInvalidTag"
+files = ["/usr/bin/runc"]
+
+[[rpm.runc.ignore]]
 # See OCPBUGS-36541.
 error = "ErrGoMissingSymbols"
 files = ["/usr/bin/runc"]
