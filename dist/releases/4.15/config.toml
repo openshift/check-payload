@@ -8,7 +8,12 @@ files = ["/usr/bin/ovnkube-trace"]
 
 [[payload.ose-machine-config-operator-container.ignore]]
 error = "ErrLibcryptoSoMissing"
-files = ["/usr/bin/machine-config-daemon.rhel9"]
+files = [
+  "/usr/bin/machine-config-daemon.rhel9",
+  "/usr/bin/machine-config-controller.rhel9",
+  "/usr/bin/machine-config-operator.rhel9",
+  "/usr/bin/machine-config-server.rhel9",
+]
 
 [[payload.ose-node-container.ignore]]
 error = "ErrLibcryptoSoMissing"
