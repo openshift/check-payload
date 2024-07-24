@@ -425,3 +425,7 @@ files = ["/usr/bin/cpb"]
 [[payload.ose-olm-rukpak-container.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = ["/unpack"]
+
+[[payload.ose-operator-framework-tools-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/tools/opm-rhel8"]
