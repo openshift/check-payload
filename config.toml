@@ -76,6 +76,11 @@ files = ["/usr/bin/runc"]
 error = "ErrGoMissingSymbols"
 files = ["/usr/bin/runc"]
 
+[[rpm.runc.ignore]]
+# See OCPBUGS-36541.
+error = "ErrLibcryptoMissing"
+files = ["/usr/bin/runc"]
+
 [[rpm.podman.ignore]]
 error = "ErrGoMissingTag"
 files = [
