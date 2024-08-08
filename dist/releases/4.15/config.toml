@@ -85,15 +85,30 @@ files = ["/usr/bin/rhel8/ib-sriov"]
 
 [[payload.openshift-enterprise-operator-sdk-container.ignore]]
 error = "ErrGoMissingSymbols"
-files = ["/usr/lib/golang/pkg/tool/linux_amd64/cgo"]
+files = [
+  "/usr/lib/golang/pkg/tool/linux_amd64/cgo",
+  "/usr/lib/golang/pkg/tool/linux_amd64/compile",
+  "/usr/lib/golang/pkg/tool/linux_amd64/covdata",
+  "/usr/lib/golang/pkg/tool/linux_amd64/cover"
+]
 
 [[payload.openshift-enterprise-operator-sdk-container.ignore]]
 error = "ErrNotDynLinked"
-files = ["/usr/lib/golang/pkg/tool/linux_amd64/cgo"]
+files = [
+  "/usr/lib/golang/pkg/tool/linux_amd64/cgo",
+  "/usr/lib/golang/pkg/tool/linux_amd64/compile",
+  "/usr/lib/golang/pkg/tool/linux_amd64/covdata",
+  "/usr/lib/golang/pkg/tool/linux_amd64/cover"
+]
 
 [[payload.openshift-enterprise-operator-sdk-container.ignore]]
 error = "ErrLibcryptoMissing"
-files = ["/usr/lib/golang/pkg/tool/linux_amd64/cgo"]
+files = [
+  "/usr/lib/golang/pkg/tool/linux_amd64/cgo",
+  "/usr/lib/golang/pkg/tool/linux_amd64/compile",
+  "/usr/lib/golang/pkg/tool/linux_amd64/covdata",
+  "/usr/lib/golang/pkg/tool/linux_amd64/cover"
+]
 
 [[payload.sriov-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
