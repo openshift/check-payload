@@ -145,3 +145,7 @@ files = ["/usr/bin/cpb"]
 [[payload.ose-olm-rukpak-container.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = ["/unpack"]
+
+[[payload.multicluster-operators-subscription-operator-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/policy-generator/PolicyGenerator-rhel8"]

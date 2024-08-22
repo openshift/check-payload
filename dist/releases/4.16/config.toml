@@ -429,3 +429,7 @@ files = ["/unpack"]
 [[payload.ose-operator-framework-tools-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = ["/tools/opm-rhel8"]
+
+[[payload.multicluster-operators-subscription-operator-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/policy-generator/PolicyGenerator-rhel8"]
