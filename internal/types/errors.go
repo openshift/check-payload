@@ -21,4 +21,5 @@ var (
 	ErrOSNotCertified              = errors.New("operating system is not FIPS certified")
 	ErrDistributionFileMissing     = errors.New("could not find distribution file")
 	ErrCertifiedDistributionsEmpty = errors.New("certified_distributions is empty, consider using -V [VERSION] for check-payload")
+	ErrDetectedExcludedModule      = errors.New("detected a library that is incompatible with FIPS, check to make sure it is not performing any cryptographic operations")
 )
