@@ -42,6 +42,10 @@ func GetFilesFromRPM(ctx context.Context, root, rpm string) ([]string, error) {
 
 func GetAllRPMs(ctx context.Context, root string) ([]Info, error) {
 	klog.Info("rpm -qa")
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
 	dbpath, err := rpmDBPath(root)
 	if err != nil {
 		return nil, err
