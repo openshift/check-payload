@@ -1,4 +1,7 @@
-certified_distributions = [ "Red Hat Enterprise Linux release 9.2 (Plow)" ]
+certified_distributions = [
+  "Red Hat Enterprise Linux release 9.2 (Plow)",
+  "Red Hat Enterprise Linux release 9.4 (Plow)",
+]
 
 [[payload.ubi9-container.ignore]]
 error = "ErrOSNotCertified"
