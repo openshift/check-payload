@@ -93,3 +93,7 @@ files = ["/usr/bin/cpb"]
 [[payload.operator-lifecycle-manager-container.ignore]]
 error = "ErrLibcryptoMissing"
 files = ["/usr/bin/cpb"]
+
+[[payload.multicluster-operators-subscription-operator-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/policy-generator/PolicyGenerator-rhel8"]
