@@ -93,6 +93,10 @@ files = [
 error = "ErrNotDynLinked"
 files = ["/usr/libexec/podman/catatonit"]
 
+[[rpm.podman.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/libexec/podman/rootlessport"]
+
 [[rpm.podman-catatonit.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/libexec/catatonit/catatonit"]
