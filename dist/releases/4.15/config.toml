@@ -89,7 +89,7 @@ files = [
   "/usr/lib/golang/pkg/tool/linux_amd64/cgo",
   "/usr/lib/golang/pkg/tool/linux_amd64/compile",
   "/usr/lib/golang/pkg/tool/linux_amd64/covdata",
-  "/usr/lib/golang/pkg/tool/linux_amd64/cover"
+  "/usr/lib/golang/pkg/tool/linux_amd64/cover",
 ]
 
 [[payload.openshift-enterprise-operator-sdk-container.ignore]]
@@ -98,7 +98,7 @@ files = [
   "/usr/lib/golang/pkg/tool/linux_amd64/cgo",
   "/usr/lib/golang/pkg/tool/linux_amd64/compile",
   "/usr/lib/golang/pkg/tool/linux_amd64/covdata",
-  "/usr/lib/golang/pkg/tool/linux_amd64/cover"
+  "/usr/lib/golang/pkg/tool/linux_amd64/cover",
 ]
 
 [[payload.openshift-enterprise-operator-sdk-container.ignore]]
@@ -107,7 +107,7 @@ files = [
   "/usr/lib/golang/pkg/tool/linux_amd64/cgo",
   "/usr/lib/golang/pkg/tool/linux_amd64/compile",
   "/usr/lib/golang/pkg/tool/linux_amd64/covdata",
-  "/usr/lib/golang/pkg/tool/linux_amd64/cover"
+  "/usr/lib/golang/pkg/tool/linux_amd64/cover",
 ]
 
 [[payload.sriov-cni-container.ignore]]
@@ -143,5 +143,9 @@ error = "ErrLibcryptoMissing"
 files = ["/usr/bin/cpb"]
 
 [[payload.ose-olm-rukpak-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/unpack"]
+
+[[payload.rhel-coreos.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = ["/unpack"]
