@@ -30,10 +30,12 @@ var (
 	// Use these symbols for all go versions up to 1.21.13. These symbols
 	// changed in version 1.21.13 and again in 1.22
 	requiredGolangSymbolsPre12113 = []string{
+		"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 		"vendor/github.com/golang-fips/openssl/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 		"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 	}
 	requiredGolangSymbolsPre122 = []string{
+		"vendor/github.com/golang-fips/openssl-fips/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 		"vendor/github.com/golang-fips/openssl/openssl._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 		"crypto/internal/boring._Cfunc__goboringcrypto_DLOPEN_OPENSSL",
 	}
