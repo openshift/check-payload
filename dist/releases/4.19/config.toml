@@ -437,11 +437,11 @@ error = "ErrGoNotCgoEnabled"
 files = ["/unpack"]
 
 [[payload.hco-bundle-registry-container.ignore]]
-error = "executable is not dynamically linked"
+error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
 
 [[payload.hco-bundle-registry-container.ignore]]
-error = "go binary is not CGO_ENABLED"
+error = "ErrGoNotCgoEnabled"
 files = [
   "/usr/bin/cdi-containerimage-server",
   "/usr/local/bin/disk-uploader",
@@ -449,5 +449,4 @@ files = [
   "/usr/bin/ssp-operator.test",
   "/usr/bin/tekton-tasks-operator.test"
 ]
-
 
