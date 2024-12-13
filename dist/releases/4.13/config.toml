@@ -93,3 +93,7 @@ files = ["/usr/bin/cpb"]
 [[payload.operator-lifecycle-manager-container.ignore]]
 error = "ErrLibcryptoMissing"
 files = ["/usr/bin/cpb"]
+
+[[payload.multicluster-engine-hypershift-operator-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
