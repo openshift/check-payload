@@ -93,3 +93,17 @@ files = ["/usr/bin/cpb"]
 [[payload.operator-lifecycle-manager-container.ignore]]
 error = "ErrLibcryptoMissing"
 files = ["/usr/bin/cpb"]
+
+[[payload.hco-bundle-registry-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
+
+[[payload.hco-bundle-registry-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+  "/usr/bin/cdi-containerimage-server",
+  "/usr/local/bin/disk-uploader",
+  "/usr/local/bin/kubevirt-tekton-tasks.test",
+  "/usr/bin/ssp-operator.test",
+  "/usr/bin/tekton-tasks-operator.test"
+]
