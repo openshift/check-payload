@@ -396,6 +396,10 @@ files = [
   "/usr/lib/golang/pkg/tool/linux_amd64/cover"
 ]
 
+[[payload.openshift-enterprise-ansible-operator-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/libexec/catatonit/catatonit"]
+
 [[payload.ose-cloud-credential-operator-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = ["/usr/bin/ccoctl", "/usr/bin/ccoctl.rhel8"]
