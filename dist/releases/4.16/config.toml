@@ -451,3 +451,7 @@ files = ["/unpack"]
 [[payload.ose-operator-framework-tools-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = ["/tools/opm-rhel8"]
+
+[[payload.multicluster-engine-hypershift-operator-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
