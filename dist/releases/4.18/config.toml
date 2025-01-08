@@ -436,7 +436,7 @@ files = ["/usr/bin/cpb"]
 error = "ErrGoNotCgoEnabled"
 files = ["/unpack"]
 
-[[payload.virt-handler-rhel9-container.ignore]]
+[[payload.hco-bundle-registry-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
 

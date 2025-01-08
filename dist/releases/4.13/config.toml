@@ -94,7 +94,8 @@ files = ["/usr/bin/cpb"]
 error = "ErrLibcryptoMissing"
 files = ["/usr/bin/cpb"]
 
-[[payload.virt-handler-rhel9-container.ignore]]
+
+[[payload.hco-bundle-registry-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
 

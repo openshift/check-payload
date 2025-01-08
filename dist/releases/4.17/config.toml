@@ -441,3 +441,7 @@ files = ["/unpack"]
 [[payload.multicluster-engine-hypershift-operator-container.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
+
+[[payload.multicluster-engine-hypershift-operator-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
