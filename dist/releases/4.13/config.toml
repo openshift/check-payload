@@ -98,16 +98,65 @@ files = ["/usr/bin/cpb"]
 error = "ErrGoNotCgoEnabled"
 files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
 
+
 [[payload.hco-bundle-registry-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
 
-[[payload.hco-bundle-registry-container.ignore]]
+
+[[payload.virt-handler-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
+
+[[payload.virt-launcher-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
+
+[[payload.virt-cdi-importer-rhel9-container.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = [
-  "/usr/bin/cdi-containerimage-server",
-  "/usr/local/bin/disk-uploader",
-  "/usr/local/bin/kubevirt-tekton-tasks.test",
-  "/usr/bin/ssp-operator.test",
-  "/usr/bin/tekton-tasks-operator.test"
+"/usr/bin/cdi-containerimage-server"
+]
+
+[[payload.kubevirt-tekton-tasks-copy-template-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+"/usr/bin/kubevirt-tekton-tasks.test"
+]
+
+[[payload.kubevirt-ssp-operator-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+"/usr/bin/ssp-operator.test"
+]
+
+[[payload.kubevirt-tekton-tasks-copy-template-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+"/usr/bin/kubevirt-tekton-tasks.test"
+]
+
+[[payload.kubevirt-tekton-tasks-operator-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+"/usr/bin/tekton-tasks-operator.test"
+]
+
+[[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+"/usr/local/bin/disk-uploader",
+"/usr/local/bin/kubevirt-tekton-tasks.test"
+]
+
+[[payload.kubevirt-ssp-operator-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+"/usr/bin/ssp-operator.test"
+]
+
+[[payload.kubevirt-tekton-tasks-operator-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+"/usr/bin/tekton-tasks-operator.test"
 ]
