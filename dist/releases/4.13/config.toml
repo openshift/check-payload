@@ -96,11 +96,7 @@ files = ["/usr/bin/cpb"]
 
 [[payload.multicluster-engine-hypershift-operator-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = ["/usr/bin/hcp-no-cgo"]
-
-[[payload.multicluster-engine-hypershift-operator-container.ignore]]
-error = "ErrGoNotCgoEnabled"
-files = ["/usr/bin/hypershift-no-cgo"]
+files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
 
 
 [[payload.hco-bundle-registry-container.ignore]]
