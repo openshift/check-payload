@@ -164,3 +164,7 @@ dirs = ["/assets/downloads/cli"]
 [[payload.rhacs-main-container.ignore]]
 error = "ErrGoMissingTag"
 dirs = ["/assets/downloads/cli"]
+
+[[payload.openshift-istio-kiali-operator-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/libexec/catatonit/catatonit"]
