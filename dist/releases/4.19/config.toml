@@ -516,6 +516,3 @@ files = [
 "/usr/bin/tekton-tasks-operator.test"
 ]
 
-[[payload.virt-handler-rhel9-container.ignore]]
-error = "ErrNotDynLinked"
-files = ["/usr/bin/container-disk"]
