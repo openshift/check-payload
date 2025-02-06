@@ -500,4 +500,3 @@ error = "ErrGoNotCgoEnabled"
 files = [
 "/usr/bin/tekton-tasks-operator.test"
 ]
-
