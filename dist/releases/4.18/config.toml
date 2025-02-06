@@ -444,7 +444,6 @@ files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
 
-
 [[payload.virt-handler-rhel9-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
