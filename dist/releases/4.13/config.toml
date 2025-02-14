@@ -98,11 +98,9 @@ files = ["/usr/bin/cpb"]
 error = "ErrGoNotCgoEnabled"
 files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
 
-
 [[payload.hco-bundle-registry-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
-
 
 [[payload.virt-handler-rhel9-container.ignore]]
 error = "ErrNotDynLinked"
