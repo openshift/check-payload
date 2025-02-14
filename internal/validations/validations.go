@@ -172,7 +172,7 @@ func validateGoTagsAndExperiment(_ context.Context, _ string, baton *Baton) *typ
 			}
 		}
 		return nil
-	}
+	}()
 
 	// see https://github.com/openshift/check-payload/pull/143#issuecomment-1847671130
 	if tagResult != nil && expResult != nil {
