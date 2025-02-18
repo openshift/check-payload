@@ -135,3 +135,11 @@ files = [
 [[payload.multicluster-engine-hypershift-operator-container.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
+
+[[payload.ib-sriov-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/rhel8/ib-sriov"]
+
+[[payload.sriov-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/rhel8/sriov"]
