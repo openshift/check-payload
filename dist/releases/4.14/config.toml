@@ -138,7 +138,11 @@ files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
 
 [[payload.ib-sriov-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
-files = ["/usr/bin/rhel8/ib-sriov"]
+files = ["/usr/bin/rhel9/ib-sriov"]
+
+[[payload.ib-sriov-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/ib-sriov"]
 
 [[payload.sriov-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
