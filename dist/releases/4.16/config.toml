@@ -676,3 +676,6 @@ files = ["/usr/bin/kubevirt-tekton-tasks.test"]
 error = "ErrGoNotCgoEnabled"
 files = ["/usr/bin/tekton-tasks-operator.test"]
 
+[[payload.hco-bundle-registry-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/local/bin/disk-uploader"]
