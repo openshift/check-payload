@@ -38,31 +38,6 @@ files = ["/usr/bin/cpb"]
 error = "ErrLibcryptoMissing"
 files = ["/usr/bin/cpb"]
 
-
-[[payload.hco-bundle-registry-container.ignore]]
-error = "ErrNotDynLinked"
-files = ["/usr/bin/container-disk"]
-
-[[payload.hco-bundle-registry-container.ignore]]
-error = "ErrGoNotCgoEnabled"
-files = ["/usr/bin/cdi-containerimage-server"]
-
-[[payload.hco-bundle-registry-container.ignore]]
-error = "ErrGoNotCgoEnabled"
-files = ["/usr/local/bin/disk-uploader"]
-
-[[payload.hco-bundle-registry-container.ignore]]
-error = "ErrGoNotCgoEnabled"
-files = ["/usr/local/bin/kubevirt-tekton-tasks.test"]
-
-[[payload.hco-bundle-registry-container.ignore]]
-error = "ErrGoNotCgoEnabled"
-files = ["/usr/bin/ssp-operator.test"]
-
-[[payload.hco-bundle-registry-container.ignore]]
-error = "ErrGoNotCgoEnabled"
-files = ["/usr/bin/tekton-tasks-operator.test"]
-
 [[payload.virt-handler-rhel9-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
@@ -85,6 +60,18 @@ files = ["/usr/bin/kubevirt-tekton-tasks.test"]
 
 [[payload.kubevirt-ssp-operator-container.ignore]]
 error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/ssp-operator.test"]
+
+[[payload.kubevirt-ssp-operator-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/bin/ssp-operator.test"]
+
+[[payload.kubevirt-ssp-operator-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/ssp-operator.test"]
+
+[[payload.kubevirt-ssp-operator-container.ignore]]
+error = "ErrLibcryptoMissing"
 files = ["/usr/bin/ssp-operator.test"]
 
 [[payload.kubevirt-tekton-tasks-copy-template-container.ignore]]
@@ -121,6 +108,14 @@ files = ["/usr/bin/container-disk"]
 
 [[payload.virt-cdi-importer-container.ignore]]
 error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.virt-cdi-importer-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.virt-cdi-importer-container.ignore]]
+error = "ErrNotDynLinked"
 files = ["/usr/bin/cdi-containerimage-server"]
 
 [[payload.virt-launcher-container.ignore]]
@@ -254,10 +249,6 @@ files = ["/usr/bin/kubevirt-tekton-tasks.test"]
 [[payload.kubevirt-tekton-tasks-operator-rhel9-container.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = ["/usr/bin/tekton-tasks-operator.test"]
-
-[[payload.hco-bundle-registry-container.ignore]]
-error = "ErrGoMissingSymbols"
-files = ["/usr/local/bin/disk-uploader"]
 
 [[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
 error = "ErrGoMissingSymbols"
