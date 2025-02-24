@@ -452,264 +452,216 @@ files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
 
 [[payload.hco-bundle-registry-container.ignore]]
 error = "ErrNotDynLinked"
-files = [
-  "/usr/bin/container-disk"
-]
+files = ["/usr/bin/container-disk"]
 
 [[payload.hco-bundle-registry-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/bin/cdi-containerimage-server",
-  "/usr/local/bin/disk-uploader",
-  "/usr/local/bin/kubevirt-tekton-tasks.test",
-  "/usr/bin/ssp-operator.test",
-  "/usr/bin/tekton-tasks-operator.test"
-]
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.hco-bundle-registry-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/local/bin/disk-uploader"]
+
+[[payload.hco-bundle-registry-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/local/bin/kubevirt-tekton-tasks.test"]
+
+[[payload.hco-bundle-registry-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/ssp-operator.test"]
+
+[[payload.hco-bundle-registry-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/tekton-tasks-operator.test"]
 
 [[payload.virt-handler-rhel9-container.ignore]]
 error = "ErrNotDynLinked"
-files = [
-  "/usr/bin/container-disk"
-]
+files = ["/usr/bin/container-disk"]
 
 [[payload.virt-launcher-rhel9-container.ignore]]
 error = "ErrNotDynLinked"
-files = [
-  "/usr/bin/container-disk"
-]
+files = ["/usr/bin/container-disk"]
 
 [[payload.virt-cdi-importer-rhel9-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/bin/cdi-containerimage-server"
-]
+files = ["/usr/bin/cdi-containerimage-server"]
 
 [[payload.virt-cdi-importer-rhel9-container.ignore]]
 error = "ErrGoMissingSymbols"
-files = [
-  "/usr/bin/cdi-containerimage-server"
-]
+files = ["/usr/bin/cdi-containerimage-server"]
 
 [[payload.kubevirt-tekton-tasks-copy-template-rhel9-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/bin/kubevirt-tekton-tasks.test"
-]
+files = ["/usr/bin/kubevirt-tekton-tasks.test"]
 
 [[payload.kubevirt-ssp-operator-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/bin/ssp-operator.test"
-]
+files = ["/usr/bin/ssp-operator.test"]
 
 [[payload.kubevirt-tekton-tasks-copy-template-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/bin/kubevirt-tekton-tasks.test"
-]
+files = ["/usr/bin/kubevirt-tekton-tasks.test"]
 
 [[payload.kubevirt-tekton-tasks-operator-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/bin/tekton-tasks-operator.test"
-]
+files = ["/usr/bin/tekton-tasks-operator.test"]
 
 [[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/local/bin/disk-uploader",
-  "/usr/local/bin/kubevirt-tekton-tasks.test"
-]
+files = ["/usr/local/bin/disk-uploader"]
+
+[[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/local/bin/kubevirt-tekton-tasks.test"]
 
 [[payload.kubevirt-ssp-operator-rhel9-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/bin/ssp-operator.test"
-]
+files = ["/usr/bin/ssp-operator.test"]
 
 [[payload.kubevirt-tekton-tasks-operator-rhel9-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/bin/tekton-tasks-operator.test"
-]
+files = ["/usr/bin/tekton-tasks-operator.test"]
 
 [[payload.kubevirt-tekton-tasks-operator-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/bin/tekton-tasks-operator.test"
-]
+files = ["/usr/bin/tekton-tasks-operator.test"]
 
 [[payload.virt-handler-container.ignore]]
 error = "ErrNotDynLinked"
-files = [
-  "/usr/bin/container-disk"
-]
+files = ["/usr/bin/container-disk"]
 
 [[payload.virt-cdi-importer-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/bin/cdi-containerimage-server"
-]
+files = ["/usr/bin/cdi-containerimage-server"]
 
 [[payload.virt-launcher-container.ignore]]
 error = "ErrNotDynLinked"
-files = [
-  "/usr/bin/container-disk"
-]
+files = ["/usr/bin/container-disk"]
 
 [[payload.hyperconverged-cluster-webhook-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/local/bin/hyperconverged-cluster-webhook"
-]
+files = ["/usr/local/bin/hyperconverged-cluster-webhook"]
 
 [[payload.cluster-network-addons-operator-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/cluster-network-addons-operator",
-  "/manifest-templator"
-]
+files = ["/cluster-network-addons-operator"]
+
+[[payload.cluster-network-addons-operator-container.ignore]]
+error = "ErrGoNoTags"
+files = ["/manifest-templator"]
 
 [[payload.bridge-marker-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/bridge-marker"
-]
+files = ["/bridge-marker"]
 
 [[payload.vm-network-latency-checkup-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/checkups/kubevirt-vm-latency"
-]
+files = ["/checkups/kubevirt-vm-latency"]
 
 [[payload.kubevirt-tekton-tasks-create-datavolume-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/local/bin/modify-data-object"
-]
+files = ["/usr/local/bin/modify-data-object"]
 
 [[payload.kubemacpool-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/manager"
-]
+files = ["/manager"]
 
 [[payload.virt-exportserver-container.ignore]]
 error = "ErrGoMissingTag"
-files = [
-  "/usr/bin/virt-exportserver"
-]
+files = ["/usr/bin/virt-exportserver"]
 
 [[payload.virt-exportproxy-container.ignore]]
 error = "ErrGoMissingTag"
-files = [
-  "/usr/bin/virt-exportproxy"
-]
+files = ["/usr/bin/virt-exportproxy"]
 
 [[payload.kubevirt-tekton-tasks-create-vm-from-template-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/local/bin/create-vm"
-]
+files = ["/usr/local/bin/create-vm"]
 
 [[payload.kubevirt-tekton-tasks-disk-virt-customize-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/local/bin/disk-virt-customize"
-]
+files = ["/usr/local/bin/disk-virt-customize"]
 
 [[payload.kubevirt-tekton-tasks-wait-for-vmi-status-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/local/bin/wait-for-vmi-status"
-]
+files = ["/usr/local/bin/wait-for-vmi-status"]
 
 [[payload.cnv-must-gather-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/bin/vmConvertor"
-]
+files = ["/usr/bin/vmConvertor"]
 
 [[payload.cnv-containernetworking-plugins-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/src/github.com/containernetworking/plugins/bin/bridge",
-  "/usr/src/github.com/containernetworking/plugins/bin/tuning"
-]
+files = ["/usr/src/github.com/containernetworking/plugins/bin/bridge"]
+
+[[payload.cnv-containernetworking-plugins-container.ignore]]
+error = "ErrGoNoTags"
+files = ["/usr/src/github.com/containernetworking/plugins/bin/tuning"]
 
 [[payload.kubevirt-tekton-tasks-cleanup-vm-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/local/bin/execute-in-vm"
-]
+files = ["/usr/local/bin/execute-in-vm"]
 
 [[payload.virt-api-container.ignore]]
 error = "ErrGoMissingTag"
-files = [
-  "/usr/bin/virt-api"
-]
+files = ["/usr/bin/virt-api"]
 
 [[payload.virt-operator-container.ignore]]
 error = "ErrGoMissingTag"
-files = [
-  "/usr/bin/csv-generator",
-  "/usr/bin/virt-operator"
-]
+files = ["/usr/bin/csv-generator"]
+
+[[payload.virt-operator-container.ignore]]
+error = "ErrGoMissingTag"
+files = ["/usr/bin/virt-operator"]
 
 [[payload.kubevirt-tekton-tasks-disk-virt-sysprep-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/local/bin/disk-virt-sysprep"
-]
+files = ["/usr/local/bin/disk-virt-sysprep"]
 
 [[payload.ovs-cni-marker-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/src/ovs-cni/bin/ovs-marker"
-]
+files = ["/usr/src/ovs-cni/bin/ovs-marker"]
 
 [[payload.kubevirt-tekton-tasks-modify-vm-template-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/local/bin/modify-vm-template"
-]
+files = ["/usr/local/bin/modify-vm-template"]
 
 [[payload.hyperconverged-cluster-operator-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/local/bin/csv-merger",
-  "/usr/local/bin/hyperconverged-cluster-operator"
-]
+files = ["/usr/local/bin/csv-merger"]
+
+[[payload.hyperconverged-cluster-operator-container.ignore]]
+error = "ErrGoNoTags"
+files = ["/usr/local/bin/hyperconverged-cluster-operator"]
 
 [[payload.kubevirt-template-validator-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/usr/sbin/kubevirt-template-validator"
-]
+files = ["/usr/sbin/kubevirt-template-validator"]
 
 [[payload.virt-controller-container.ignore]]
 error = "ErrGoMissingTag"
-files = [
-  "/usr/bin/virt-controller"
-]
+files = ["/usr/bin/virt-controller"]
 
 [[payload.ovs-cni-plugin-container.ignore]]
 error = "ErrGoNoTags"
-files = [
-  "/marker",
-  "/ovs",
-  "/ovs-mirror-consumer",
-  "/ovs-mirror-producer"
-]
+files = ["/marker"]
+
+[[payload.ovs-cni-plugin-container.ignore]]
+error = "ErrGoNoTags"
+files = ["/ovs"]
+
+[[payload.ovs-cni-plugin-container.ignore]]
+error = "ErrGoNoTags"
+files = ["/ovs-mirror-consumer"]
+
+[[payload.ovs-cni-plugin-container.ignore]]
+error = "ErrGoNoTags"
+files = ["/ovs-mirror-producer"]
 
 [[payload.kubevirt-tekton-tasks-copy-template-rhel9-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/bin/kubevirt-tekton-tasks.test"
-]
+files = ["/usr/bin/kubevirt-tekton-tasks.test"]
 
 [[payload.kubevirt-tekton-tasks-operator-rhel9-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = [
-  "/usr/bin/tekton-tasks-operator.test"
-]
+files = ["/usr/bin/tekton-tasks-operator.test"]
