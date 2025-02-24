@@ -669,3 +669,7 @@ files = ["/usr/bin/tekton-tasks-operator.test"]
 [[payload.hco-bundle-registry-container.ignore]]
 error = "ErrGoMissingSymbols"
 files = ["/usr/local/bin/disk-uploader"]
+
+[[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/local/bin/disk-uploader"]
