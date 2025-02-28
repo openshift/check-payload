@@ -147,3 +147,51 @@ files = ["/usr/bin/ib-sriov"]
 [[payload.sriov-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = ["/usr/bin/rhel8/sriov"]
+
+[[payload.kubevirt-ssp-operator-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/ssp-operator.test"]
+
+[[payload.kubevirt-ssp-operator-rhel9-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/bin/ssp-operator.test"]
+
+[[payload.kubevirt-ssp-operator-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/ssp-operator.test"]
+
+[[payload.kubevirt-ssp-operator-rhel9-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/bin/ssp-operator.test"]
+
+[[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/local/bin/kubevirt-tekton-tasks.test"]
+
+[[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/local/bin/kubevirt-tekton-tasks.test"]
+
+[[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/local/bin/kubevirt-tekton-tasks.test"]
+
+[[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/local/bin/kubevirt-tekton-tasks.test"]
+
+[[payload.virt-cdi-importer-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.virt-cdi-importer-rhel9-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.virt-cdi-importer-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.virt-cdi-importer-rhel9-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/bin/cdi-containerimage-server"]
