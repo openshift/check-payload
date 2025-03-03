@@ -37,3 +37,39 @@ files = ["/usr/bin/cpb"]
 [[payload.operator-lifecycle-manager-container.ignore]]
 error = "ErrLibcryptoMissing"
 files = ["/usr/bin/cpb"]
+
+[[payload.virt-handler-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
+
+[[payload.virt-launcher-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
+
+[[payload.virt-cdi-importer-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.virt-cdi-importer-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.virt-cdi-importer-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.virt-cdi-importer-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.kubevirt-tekton-tasks-copy-template-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/kubevirt-tekton-tasks.test"]
+
+[[payload.kubevirt-tekton-tasks-operator-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/tekton-tasks-operator.test"]
+
+[[payload.kubevirt-ssp-operator-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/ssp-operator.test"]
