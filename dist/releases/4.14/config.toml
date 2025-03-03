@@ -195,3 +195,11 @@ files = ["/usr/bin/cdi-containerimage-server"]
 [[payload.virt-cdi-importer-rhel9-container.ignore]]
 error = "ErrLibcryptoMissing"
 files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.virt-handler-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
+
+[[payload.virt-launcher-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
