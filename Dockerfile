@@ -7,7 +7,7 @@ RUN go mod download
 COPY . ./
 RUN make
 
-FROM registry.ci.openshift.org/ocp/4.14:base-rhel9
+FROM registry.ci.openshift.org/ocp/4.18:base-rhel9
 ARG OC_VERSION=latest
 ARG UMOCI_VERSION=latest
 

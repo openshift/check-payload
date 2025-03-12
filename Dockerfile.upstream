@@ -7,7 +7,7 @@ RUN go mod download
 COPY . ./
 RUN make
 
-FROM fedora:38
+FROM fedora:41
 ARG OC_VERSION=latest
 ARG UMOCI_VERSION=latest
 
