@@ -72,9 +72,8 @@ func main() {
 	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(_ *cobra.Command, _ []string) {
 			fmt.Println(Commit)
-			return nil
 		},
 	}
 
@@ -124,7 +123,10 @@ func main() {
 
 			return nil
 		},
-		PersistentPostRunE: func(_ *cobra.Command, _ []string) error {
+		PersistentPostRunE: func(cmd *cobra.Command, _ []string) error {
+			// Don't print usage on scan errors
+			cmd.SilenceUsage = true
+
 			if cpuProfile != "" {
 				pprof.StopCPUProfile()
 				klog.Info("CPU profile saved to ", cpuProfile)
@@ -203,11 +205,10 @@ func main() {
 			}
 			return nil
 		},
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(_ *cobra.Command, _ []string) {
 			ctx, cancel := context.WithTimeout(context.Background(), config.TimeLimit)
 			defer cancel()
 			results = scan.RunLocalScan(ctx, &config, localBundlePath)
-			return nil
 		},
 	}
 
@@ -222,14 +223,13 @@ func main() {
 		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return scan.ValidateApplicationDependencies(applicationDepsNodeScan)
 		},
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Run: func(cmd *cobra.Command, _ []string) {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			root, _ := cmd.Flags().GetString("root")
 			walkScan, _ := cmd.Flags().GetBool("walk-scan")
 			config.UseRPMScan = !walkScan
 			results = scan.RunNodeScan(ctx, &config, root)
-			return nil
 		},
 	}
 	scanNode.Flags().String("root", "", "root path to scan")
@@ -243,13 +243,12 @@ func main() {
 		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return scan.ValidateApplicationDependencies(applicationDeps)
 		},
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Run: func(cmd *cobra.Command, _ []string) {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			config.ContainerImage, _ = cmd.Flags().GetString("spec")
 			config.UseRPMScan, _ = cmd.Flags().GetBool("rpm-scan")
 			results = scan.RunOperatorScan(ctx, &config)
-			return nil
 		},
 	}
 	scanImage.Flags().String("spec", "", "payload url")
@@ -263,7 +262,7 @@ func main() {
 		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return scan.ValidateApplicationDependencies(applicationDeps)
 		},
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Run: func(cmd *cobra.Command, _ []string) {
 			ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 			defer cancel()
 			config.ContainerImage, _ = cmd.Flags().GetString("spec")
@@ -271,7 +270,6 @@ func main() {
 			config.JavaDisabledAlgorithms = append(config.JavaDisabledAlgorithms, javaDisabledAlgorithms...)
 			config.Java = true
 			results = scan.RunOperatorScan(ctx, &config)
-			return nil
 		},
 	}
 	scanJavaImage.Flags().String("spec", "", "java payload url")
