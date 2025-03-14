@@ -1,6 +1,6 @@
 module github.com/openshift/check-payload
 
-go 1.19
+go 1.23.0
 
 require (
 	github.com/BurntSushi/toml v1.4.0
@@ -129,5 +129,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
-
-replace github.com/imdario/mergo => dario.cat/mergo v0.3.16
