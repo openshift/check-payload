@@ -3,7 +3,7 @@ module github.com/openshift/check-payload
 go 1.23.0
 
 require (
-	github.com/BurntSushi/toml v1.4.0
+	github.com/BurntSushi/toml v1.5.0
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/deckarep/golang-set/v2 v2.7.0
 	github.com/jedib0t/go-pretty/v6 v6.6.5
