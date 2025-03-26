@@ -194,3 +194,7 @@ files = ["/usr/bin/container-disk"]
 [[payload.virt-launcher-rhel9-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
+
+[[payload.openshift-istio-kiali-operator-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/libexec/catatonit/catatonit"]
