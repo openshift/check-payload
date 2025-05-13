@@ -536,3 +536,10 @@ files = [
   "/usr/sbin/build-locale-archive",
   "/usr/sbin/ldconfig"
 ]
+
+[[payload.ocp-virt-validation-checkup-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+  "/test/kv.test",
+  "/test/ssp.test"
+]
