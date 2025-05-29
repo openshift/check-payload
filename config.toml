@@ -101,6 +101,10 @@ files = ["/usr/libexec/podman/rootlessport"]
 error = "ErrNotDynLinked"
 files = ["/usr/libexec/catatonit/catatonit"]
 
+[[rpm.catatonit.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/libexec/catatonit/catatonit"]
+
 [[rpm.skopeo.ignore]]
 error = "ErrGoMissingTag"
 files = ["/usr/bin/skopeo"]
@@ -176,7 +180,3 @@ files = ["/usr/local/bin/mta-cli"]
 [[payload.mta-cli-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/local/bin/mta-cli"]
-
-[[payload.mta-operator-container.ignore]]
-error = "ErrNotDynLinked"
-files = ["/usr/libexec/catatonit/catatonit"]
