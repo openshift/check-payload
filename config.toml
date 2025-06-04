@@ -101,6 +101,10 @@ files = ["/usr/libexec/podman/rootlessport"]
 error = "ErrNotDynLinked"
 files = ["/usr/libexec/catatonit/catatonit"]
 
+[[rpm.catatonit.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/libexec/catatonit/catatonit"]
+
 [[rpm.skopeo.ignore]]
 error = "ErrGoMissingTag"
 files = ["/usr/bin/skopeo"]
@@ -164,3 +168,15 @@ dirs = ["/assets/downloads/cli"]
 [[payload.rhacs-main-container.ignore]]
 error = "ErrGoMissingTag"
 dirs = ["/assets/downloads/cli"]
+
+[[payload.mta-cli-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/local/bin/mta-cli"]
+
+[[payload.mta-cli-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/local/bin/mta-cli"]
+
+[[payload.mta-cli-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/local/bin/mta-cli"]
