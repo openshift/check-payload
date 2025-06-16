@@ -540,6 +540,6 @@ files = [
 [[payload.ocp-virt-validation-checkup-rhel9-container.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = [
-  "/test/kv.test",
-  "/test/ssp.test"
+  "/usr/local/bin/kubevirt.test",
+  "/usr/local/bin/ssp.test"
 ]
