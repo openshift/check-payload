@@ -129,6 +129,21 @@ dirs = ["/usr/libexec/cni"]
 error = "ErrGoMissingTag"
 files = ["/usr/lib/dracut/modules.d/30ignition/ignition"]
 
+[[rpm.valgrind.ignore]]
+error = "ErrNotDynLinked"
+files = [
+    "/usr/libexec/valgrind/cachegrind-amd64-linux",
+    "/usr/libexec/valgrind/callgrind-amd64-linux",
+    "/usr/libexec/valgrind/dhat-amd64-linux",
+    "/usr/libexec/valgrind/drd-amd64-linux",
+    "/usr/libexec/valgrind/exp-bbv-amd64-linux",
+    "/usr/libexec/valgrind/helgrind-amd64-linux",
+    "/usr/libexec/valgrind/lackey-amd64-linux",
+    "/usr/libexec/valgrind/massif-amd64-linux",
+    "/usr/libexec/valgrind/memcheck-amd64-linux",
+    "/usr/libexec/valgrind/none-amd64-linux"
+]
+
 [[payload.openshift-enterprise-pod-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/pod"]
