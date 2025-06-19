@@ -19,6 +19,21 @@ files = [
 error = "ErrLibcryptoSoMissing"
 files = ["/opt/cni/bin/rhel9/openshift-sdn"]
 
+# VolSync packages diskrsync which uses x/crypto/blake2b for local hashing only
+# for comparing blocks of data (non-cryptographic)
+# Actual network transfer is handled by the ssh executable in the image
+[[payload.volsync-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/local/bin/diskrsync"]
+
+[[payload.volsync-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/local/bin/diskrsync"]
+
+[[payload.volsync-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/local/bin/diskrsync"]
+
 [[payload.multus-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 dirs = ["/usr/src/multus-cni/rhel9/bin", "/usr/src/multus-cni/bin"]
