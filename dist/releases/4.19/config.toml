@@ -444,6 +444,16 @@ files = ["/unpack"]
 error = "ErrGoNotCgoEnabled"
 files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
 
+[[payload.multicluster-engine-hypershift-cli-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+  "/opt/app-root/src/linux/amd64/hcp",
+  "/opt/app-root/src/linux/arm64/hcp",
+  "/opt/app-root/src/linux/ppc64/hcp",
+  "/opt/app-root/src/linux/ppc64le/hcp",
+  "/opt/app-root/src/linux/s390x/hcp"
+]
+
 [[payload.hco-bundle-registry-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
