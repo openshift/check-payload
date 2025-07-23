@@ -1,10 +1,3 @@
-certified_distributions = [
-  "Red Hat Enterprise Linux release 9.2 (Plow)",
-  "Red Hat Enterprise Linux release 9.4 (Plow)",
-  "Red Hat Enterprise Linux release 9.6 (Plow)",
-  "Red Hat Enterprise Linux release 8.10 (Ootpa)",
-]
-
 [[payload.ubi9-container.ignore]]
 error = "ErrOSNotCertified"
 tags = ["rhel-coreos-extensions"]

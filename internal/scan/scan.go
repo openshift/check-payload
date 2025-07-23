@@ -377,12 +377,13 @@ func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, c
 		osInfo := validations.ValidateOS(cfg, mountPath)
 		osScanResult := types.NewScanResult().SetOS(osInfo).SetComponent(component).SetTag(tag)
 		if component != nil && osScanResult.Error != nil {
-			if i, ok := cfg.PayloadIgnores[component.Component]; ok {
-				if tag != nil {
-					if !i.ErrIgnores.IgnoreTag(tag.Name, osScanResult.Error.Error) {
-						results.Append(osScanResult)
-					}
+			// check if component can ignore this error otherwise append
+			if i, ok := cfg.PayloadIgnores[component.Component]; ok && tag != nil {
+				if !i.ErrIgnores.IgnoreTag(tag.Name, osScanResult.Error.Error) {
+					results.Append(osScanResult)
 				}
+			} else {
+				results.Append(osScanResult)
 			}
 		} else {
 			results.Append(osScanResult)

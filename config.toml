@@ -1,4 +1,23 @@
-certified_distributions = []
+certified_distributions = [
+  "Red Hat Enterprise Linux release 8.4 (Ootpa)",
+  "Red Hat Enterprise Linux release 8.5 (Ootpa)",
+  "Red Hat Enterprise Linux release 8.6 (Ootpa)",
+  "Red Hat Enterprise Linux release 8.7 (Ootpa)",
+  "Red Hat Enterprise Linux release 8.9 (Ootpa)",
+  "Red Hat Enterprise Linux release 8.10 (Ootpa)",
+  "Red Hat Enterprise Linux release 9.0 (Plow)",
+  "Red Hat Enterprise Linux release 9.2 (Plow)",
+  "Red Hat Enterprise Linux release 9.4 (Plow)",
+  "Red Hat Enterprise Linux release 9.5 (Plow)",
+  "Red Hat Enterprise Linux release 9.6 (Plow)",
+  "Red Hat Enterprise Linux CoreOS release 4.12",
+  "Red Hat Enterprise Linux CoreOS release 4.14",
+  "Red Hat Enterprise Linux CoreOS release 4.15",
+  "Red Hat Enterprise Linux CoreOS release 4.16",
+  "Red Hat Enterprise Linux CoreOS release 4.17",
+  "Red Hat Enterprise Linux CoreOS release 4.18",
+  "Red Hat Enterprise Linux CoreOS release 4.19",
+]
 
 # List of directories to ignore. This is a prefix match,
 # i.e. everything under a matched directory is ignored.
