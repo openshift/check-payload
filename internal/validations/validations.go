@@ -61,12 +61,14 @@ type Baton struct {
 	GoNoCrypto  bool
 	GoVersion   *semver.Version
 	GoBuildInfo *buildinfo.BuildInfo
+	GoSymTable  *gosym.Table
 }
 
 type ValidationFn func(ctx context.Context, path string, baton *Baton) *types.ValidationError
 
 var validationFns = map[string][]ValidationFn{
 	"go": {
+		_loadGoSymbols,
 		validateGoCgo,
 		validateGoCGOInit,
 		validateGoSymbols,
@@ -79,17 +81,24 @@ var validationFns = map[string][]ValidationFn{
 	},
 }
 
-func validateGoSymbols(_ context.Context, path string, baton *Baton) *types.ValidationError {
+// This must be run before any Go validation.
+func _loadGoSymbols(_ context.Context, path string, baton *Baton) *types.ValidationError {
 	symtable, err := golang.ReadTable(path, baton.GoBuildInfo)
 	if err != nil {
 		return types.NewValidationError(fmt.Errorf("go: could not read table for %v: %w", filepath.Base(path), err))
 	}
-	// Skip if the golang binary is not using crypto
-	if !isUsingCryptoModule(symtable) {
+	baton.GoSymTable = symtable
+	if !isUsingCryptoModule(baton.GoSymTable) {
 		baton.GoNoCrypto = true
+	}
+	return nil
+}
+
+func validateGoSymbols(_ context.Context, _ string, baton *Baton) *types.ValidationError {
+	// Skip if the golang binary is not using crypto
+	if baton.GoNoCrypto {
 		return nil
 	}
-
 	requiredGolangSymbols := requiredGolangSymbolsPost122
 	if goLessThan118.Check(baton.GoVersion) {
 		return nil
@@ -98,7 +107,7 @@ func validateGoSymbols(_ context.Context, path string, baton *Baton) *types.Vali
 	} else if goLessThan122.Check(baton.GoVersion) {
 		requiredGolangSymbols = requiredGolangSymbolsPre122
 	}
-	if !golang.ExpectedSyms(requiredGolangSymbols, symtable) {
+	if !golang.ExpectedSyms(requiredGolangSymbols, baton.GoSymTable) {
 		return types.NewValidationError(types.ErrGoMissingSymbols)
 	}
 
@@ -115,6 +124,10 @@ func isUsingCryptoModule(symtable *gosym.Table) bool {
 }
 
 func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationError {
+	// If crypto is not used, openssl linkage via CGO is not required
+	if baton.GoNoCrypto {
+		return nil
+	}
 	if goLessThan118.Check(baton.GoVersion) {
 		return nil
 	}
@@ -201,7 +214,11 @@ func validateGoOpenssl(_ context.Context, path string, baton *Baton) *types.Vali
 	return types.NewValidationError(validateStringsOpenssl(path, baton))
 }
 
-func validateGoCGOInit(_ context.Context, path string, _ *Baton) *types.ValidationError {
+func validateGoCGOInit(_ context.Context, path string, baton *Baton) *types.ValidationError {
+	// If crypto is not used, openssl linkage via CGO is not required
+	if baton.GoNoCrypto {
+		return nil
+	}
 	f, err := os.Open(path)
 	if err != nil {
 		return types.NewValidationError(err)
