@@ -10,13 +10,6 @@ certified_distributions = [
   "Red Hat Enterprise Linux release 9.4 (Plow)",
   "Red Hat Enterprise Linux release 9.5 (Plow)",
   "Red Hat Enterprise Linux release 9.6 (Plow)",
-  "Red Hat Enterprise Linux CoreOS release 4.12",
-  "Red Hat Enterprise Linux CoreOS release 4.14",
-  "Red Hat Enterprise Linux CoreOS release 4.15",
-  "Red Hat Enterprise Linux CoreOS release 4.16",
-  "Red Hat Enterprise Linux CoreOS release 4.17",
-  "Red Hat Enterprise Linux CoreOS release 4.18",
-  "Red Hat Enterprise Linux CoreOS release 4.19",
 ]
 
 # List of directories to ignore. This is a prefix match,
@@ -151,16 +144,16 @@ files = ["/usr/lib/dracut/modules.d/30ignition/ignition"]
 [[rpm.valgrind.ignore]]
 error = "ErrNotDynLinked"
 files = [
-    "/usr/libexec/valgrind/cachegrind-amd64-linux",
-    "/usr/libexec/valgrind/callgrind-amd64-linux",
-    "/usr/libexec/valgrind/dhat-amd64-linux",
-    "/usr/libexec/valgrind/drd-amd64-linux",
-    "/usr/libexec/valgrind/exp-bbv-amd64-linux",
-    "/usr/libexec/valgrind/helgrind-amd64-linux",
-    "/usr/libexec/valgrind/lackey-amd64-linux",
-    "/usr/libexec/valgrind/massif-amd64-linux",
-    "/usr/libexec/valgrind/memcheck-amd64-linux",
-    "/usr/libexec/valgrind/none-amd64-linux"
+  "/usr/libexec/valgrind/cachegrind-amd64-linux",
+  "/usr/libexec/valgrind/callgrind-amd64-linux",
+  "/usr/libexec/valgrind/dhat-amd64-linux",
+  "/usr/libexec/valgrind/drd-amd64-linux",
+  "/usr/libexec/valgrind/exp-bbv-amd64-linux",
+  "/usr/libexec/valgrind/helgrind-amd64-linux",
+  "/usr/libexec/valgrind/lackey-amd64-linux",
+  "/usr/libexec/valgrind/massif-amd64-linux",
+  "/usr/libexec/valgrind/memcheck-amd64-linux",
+  "/usr/libexec/valgrind/none-amd64-linux",
 ]
 
 [[payload.openshift-enterprise-pod-container.ignore]]
