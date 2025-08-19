@@ -23,7 +23,6 @@ func ValidateOS(cfg *types.Config, mountPath string) (info types.OSInfo) {
 	}
 
 	path, err := GetTargetPath(mountPath)
-
 	if err != nil {
 		info.Error = types.NewValidationError(err)
 		return info
