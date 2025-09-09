@@ -377,9 +377,7 @@ func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, c
 		// operating systems that haven't been certified, yet.
 		osInfo := validations.ValidateOS(cfg, mountPath)
 		osScanResult := types.NewScanResult().SetOS(osInfo).SetComponent(component).SetTag(tag)
-		if osScanResult.Error != nil {
-			results.Append(osScanResult)
-		}
+		results.Append(osScanResult)
 	}
 
 	// does the image contain openssl
