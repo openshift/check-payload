@@ -1,13 +1,15 @@
-certified_distributions = [
-  "Red Hat Enterprise Linux release 9.2 (Plow)",
-  "Red Hat Enterprise Linux release 9.4 (Plow)",
-  "Red Hat Enterprise Linux release 9.6 (Plow)",
-  "Red Hat Enterprise Linux release 8.10 (Ootpa)",
-]
-
 [[payload.ubi9-container.ignore]]
 error = "ErrOSNotCertified"
 tags = ["rhel-coreos-extensions"]
+
+# RHCOS transport image - ignore OS certification check
+# The rhel-coreos tag is used to transport the base OS image that OpenShift nodes run on.
+# This image doesn't have typical component metadata and isn't a layered product.
+# The RHCOS team uses OpenShift releases as a transport mechanism for this base OS.
+# This issue was resolved in OpenShift 4.19+ but affects earlier versions.
+[[tag.rhel-coreos.ignore]]
+error = "ErrOSNotCertified"
+tags = ["rhel-coreos"]
 
 [[payload.ose-network-interface-bond-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"

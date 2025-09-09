@@ -142,3 +142,27 @@ func (i ErrIgnoreList) IgnoreTag(tag string, err error) bool {
 func (c *Config) GetCertifiedDistributions() []string {
 	return c.ConfigFile.CertifiedDistributions
 }
+
+func (c *Config) ShouldIgnoreOSValidation(tag *imagev1.TagReference, component *OpenshiftComponent, osError error) bool {
+	if tag == nil {
+		return false
+	}
+
+	// Check component-based ignores first
+	if component != nil {
+		if i, ok := c.PayloadIgnores[component.Component]; ok {
+			if i.ErrIgnores.IgnoreTag(tag.Name, osError) {
+				return true
+			}
+		}
+	}
+
+	// Check tag-based ignores (for images without component metadata like rhel-coreos)
+	if i, ok := c.TagIgnores[tag.Name]; ok {
+		if i.ErrIgnores.IgnoreTag(tag.Name, osError) {
+			return true
+		}
+	}
+
+	return false
+}
