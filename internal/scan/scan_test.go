@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	v1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/check-payload/internal/types"
 )
 
@@ -76,6 +77,166 @@ func TestRunLocalScan(t *testing.T) {
 			passed := !IsFailed(results)
 			if passed != tc.expectedResult {
 				t.Errorf("Test %s: expected pass = %t, got pass = %t", tc.name, tc.expectedResult, passed)
+			}
+		})
+	}
+}
+
+func TestShouldSkipOSValidation(t *testing.T) {
+	testCases := []struct {
+		name      string
+		config    *types.Config
+		tag       *v1.TagReference
+		component *types.OpenshiftComponent
+		expected  bool
+	}{
+		{
+			name:   "no tag should not skip",
+			config: baseConfig,
+			tag:    nil,
+			component: &types.OpenshiftComponent{
+				Component: "test-component",
+			},
+			expected: false,
+		},
+		{
+			name:   "tag with no ignores should not skip",
+			config: baseConfig,
+			tag: &v1.TagReference{
+				Name: "regular-tag",
+			},
+			component: &types.OpenshiftComponent{
+				Component: "test-component",
+			},
+			expected: false,
+		},
+		{
+			name: "rhel-coreos tag with tag-based ignore should skip",
+			config: &types.Config{
+				ConfigFile: types.ConfigFile{
+					TagIgnores: map[string]types.IgnoreLists{
+						"rhel-coreos": {
+							ErrIgnores: types.ErrIgnoreList{{
+								Error: types.KnownError{Err: types.ErrOSNotCertified},
+								Tags:  []string{"rhel-coreos"},
+							}},
+						},
+					},
+					PayloadIgnores: make(map[string]types.IgnoreLists),
+				},
+			},
+			tag: &v1.TagReference{
+				Name: "rhel-coreos",
+			},
+			component: nil, // rhel-coreos has no component metadata
+			expected:  true,
+		},
+		{
+			name: "component with payload ignore should skip",
+			config: &types.Config{
+				ConfigFile: types.ConfigFile{
+					PayloadIgnores: map[string]types.IgnoreLists{
+						"test-component": {
+							ErrIgnores: types.ErrIgnoreList{{
+								Error: types.KnownError{Err: types.ErrOSNotCertified},
+								Tags:  []string{"test-tag"},
+							}},
+						},
+					},
+					TagIgnores: make(map[string]types.IgnoreLists),
+				},
+			},
+			tag: &v1.TagReference{
+				Name: "test-tag",
+			},
+			component: &types.OpenshiftComponent{
+				Component: "test-component",
+			},
+			expected: true,
+		},
+		{
+			name: "component ignore with wrong tag should not skip",
+			config: &types.Config{
+				ConfigFile: types.ConfigFile{
+					PayloadIgnores: map[string]types.IgnoreLists{
+						"test-component": {
+							ErrIgnores: types.ErrIgnoreList{{
+								Error: types.KnownError{Err: types.ErrOSNotCertified},
+								Tags:  []string{"different-tag"},
+							}},
+						},
+					},
+					TagIgnores: make(map[string]types.IgnoreLists),
+				},
+			},
+			tag: &v1.TagReference{
+				Name: "test-tag",
+			},
+			component: &types.OpenshiftComponent{
+				Component: "test-component",
+			},
+			expected: false,
+		},
+		{
+			name: "component ignore with wrong error should not skip",
+			config: &types.Config{
+				ConfigFile: types.ConfigFile{
+					PayloadIgnores: map[string]types.IgnoreLists{
+						"test-component": {
+							ErrIgnores: types.ErrIgnoreList{{
+								Error: types.KnownError{Err: types.ErrGoMissingTag}, // different error
+								Tags:  []string{"test-tag"},
+							}},
+						},
+					},
+					TagIgnores: make(map[string]types.IgnoreLists),
+				},
+			},
+			tag: &v1.TagReference{
+				Name: "test-tag",
+			},
+			component: &types.OpenshiftComponent{
+				Component: "test-component",
+			},
+			expected: false,
+		},
+		{
+			name: "both component and tag ignores - component takes precedence",
+			config: &types.Config{
+				ConfigFile: types.ConfigFile{
+					PayloadIgnores: map[string]types.IgnoreLists{
+						"test-component": {
+							ErrIgnores: types.ErrIgnoreList{{
+								Error: types.KnownError{Err: types.ErrOSNotCertified},
+								Tags:  []string{"test-tag"},
+							}},
+						},
+					},
+					TagIgnores: map[string]types.IgnoreLists{
+						"test-tag": {
+							ErrIgnores: types.ErrIgnoreList{{
+								Error: types.KnownError{Err: types.ErrOSNotCertified},
+								Tags:  []string{"test-tag"},
+							}},
+						},
+					},
+				},
+			},
+			tag: &v1.TagReference{
+				Name: "test-tag",
+			},
+			component: &types.OpenshiftComponent{
+				Component: "test-component",
+			},
+			expected: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.config.ShouldIgnoreOSValidation(tc.tag, tc.component, types.ErrOSNotCertified)
+			if result != tc.expected {
+				t.Errorf("shouldSkipOSValidation() = %v, expected %v", result, tc.expected)
 			}
 		})
 	}

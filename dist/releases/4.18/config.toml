@@ -1,3 +1,12 @@
+# RHCOS transport image - ignore OS certification check
+# The rhel-coreos tag is used to transport the base OS image that OpenShift nodes run on.
+# This image doesn't have typical component metadata and isn't a layered product.
+# The RHCOS team uses OpenShift releases as a transport mechanism for this base OS.
+# This issue was resolved in OpenShift 4.19+ but affects earlier versions.
+[[tag.rhel-coreos.ignore]]
+error = "ErrOSNotCertified"
+tags = ["rhel-coreos"]
+
 [[payload.ose-network-interface-bond-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = ["/bondcni/bond", "/bondcni/rhel9/bond"]
