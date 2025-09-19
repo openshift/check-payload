@@ -442,7 +442,23 @@ files = ["/unpack"]
 
 [[payload.multicluster-engine-hypershift-operator-container.ignore]]
 error = "ErrGoNotCgoEnabled"
-files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
+files = ["/usr/bin/hcp", "/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
+
+[[payload.multicluster-engine-hypershift-operator-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = [
+  "/usr/bin/hcp",
+  "/usr/bin/hcp-no-cgo",
+  "/usr/bin/hypershift-no-cgo",
+]
+
+[[payload.multicluster-engine-hypershift-operator-container.ignore]]
+error = "ErrNotDynLinked"
+files = [
+  "/usr/bin/hcp",
+  "/usr/bin/hcp-no-cgo",
+  "/usr/bin/hypershift-no-cgo",
+]
 
 [[payload.multicluster-engine-hypershift-cli-container.ignore]]
 error = "ErrGoNotCgoEnabled"
