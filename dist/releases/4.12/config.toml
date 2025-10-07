@@ -3,9 +3,9 @@
 # This image doesn't have typical component metadata and isn't a layered product.
 # The RHCOS team uses OpenShift releases as a transport mechanism for this base OS.
 # This issue was resolved in OpenShift 4.19+ but affects earlier versions.
-[[tag.rhel-coreos.ignore]]
+[[tag.rhel-coreos-8.ignore]]
 error = "ErrOSNotCertified"
-tags = ["rhel-coreos"]
+tags = ["rhel-coreos-8"]
 
 [[payload.openshift-enterprise-operator-sdk-container.ignore]]
 error = "ErrGoMissingSymbols"
