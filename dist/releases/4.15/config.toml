@@ -176,7 +176,7 @@ files = [
   "/usr/libexec/cni/vlan",
 ]
 
-[[payload.multicluster-engine-hypershift-operator-container.ignore]]
+[[payload.multicluster-engine-hypershift-operator.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
 
