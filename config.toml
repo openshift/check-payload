@@ -10,6 +10,7 @@ certified_distributions = [
   "Red Hat Enterprise Linux release 9.4 (Plow)",
   "Red Hat Enterprise Linux release 9.5 (Plow)",
   "Red Hat Enterprise Linux release 9.6 (Plow)",
+  "Red Hat Enterprise Linux release 9.7 (Plow)",
 ]
 
 # List of directories to ignore. This is a prefix match,
