@@ -451,13 +451,10 @@ files = ["/unpack"]
 
 # These binaries are not built with CGO enabled because they're convenience
 # containers for QE testing.
-[[payload.multicluster-engine-hypershift-operator-container.ignore]]
+[[payload.multicluster-engine-hypershift-operator.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
 
-[[payload.multicluster-engine-hypershift-operator-container.ignore]]
-error = "ErrGoNotCgoEnabled"
-files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
 
 [[payload.virt-cdi-importer-rhel9-container.ignore]]
 error = "ErrGoNotCgoEnabled"
