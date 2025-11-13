@@ -67,7 +67,7 @@ func (t *Table) renderColumn(out *strings.Builder, row rowStr, colIdx int, maxCo
 	}
 
 	// extract the text, convert-case if not-empty and align horizontally
-	mergeVertically := t.shouldMergeCellsVertically(colIdx, hint)
+	mergeVertically := t.shouldMergeCellsVerticallyAbove(colIdx, hint)
 	var colStr string
 	if mergeVertically {
 		// leave colStr empty; align will expand the column as necessary
@@ -239,7 +239,7 @@ func (t *Table) renderLineMergeOutputs(out *strings.Builder, outLine *strings.Bu
 }
 
 func (t *Table) renderMarginLeft(out *strings.Builder, hint renderHint) {
-	out.WriteString(t.style.Format.Direction.Modifier())
+	out.WriteString(t.directionModifier)
 	if t.style.Options.DrawBorder {
 		border := t.getBorderLeft(hint)
 		colors := t.getBorderColors(hint)

@@ -28,6 +28,8 @@ type Table struct {
 	// columnConfigMap stores the custom-configuration by column
 	// number and is generated before rendering
 	columnConfigMap map[int]ColumnConfig
+	// directionModifier caches the direction modifier string to avoid repeated calls
+	directionModifier string
 	// firstRowOfPage tells if the renderer is on the first row of a page?
 	firstRowOfPage bool
 	// htmlCSSClass stores the HTML CSS Class to use on the <table> node
@@ -36,6 +38,9 @@ type Table struct {
 	indexColumn int
 	// maxColumnLengths stores the length of the longest line in each column
 	maxColumnLengths []int
+	// maxMergedColumnLengths stores the longest lengths for merged columns
+	// endIndex -> startIndex -> maxMergedLength
+	maxMergedColumnLengths map[int]map[int]int
 	// maxRowLength stores the length of the longest row
 	maxRowLength int
 	// numColumns stores the (max.) number of columns seen
@@ -302,12 +307,12 @@ func (t *Table) SetRowPainter(painter interface{}) {
 	t.rowPainterWithAttributes = nil
 
 	// if called as SetRowPainter(RowPainter(func...))
-	switch painter.(type) {
+	switch p := painter.(type) {
 	case RowPainter:
-		t.rowPainter = painter.(RowPainter)
+		t.rowPainter = p
 		return
 	case RowPainterWithAttributes:
-		t.rowPainterWithAttributes = painter.(RowPainterWithAttributes)
+		t.rowPainterWithAttributes = p
 		return
 	}
 
@@ -431,7 +436,7 @@ func (t *Table) getBorderLeft(hint renderHint) string {
 	} else if hint.isSeparatorRow {
 		if t.autoIndex && hint.isHeaderOrFooterSeparator() {
 			border = t.style.Box.Left
-		} else if !t.autoIndex && t.shouldMergeCellsVertically(0, hint) {
+		} else if !t.autoIndex && t.shouldMergeCellsVerticallyAbove(0, hint) {
 			border = t.style.Box.Left
 		} else {
 			border = t.style.Box.LeftSeparator
@@ -451,7 +456,7 @@ func (t *Table) getBorderRight(hint renderHint) string {
 	} else if hint.isBorderBottom {
 		border = t.style.Box.BottomRight
 	} else if hint.isSeparatorRow {
-		if t.shouldMergeCellsVertically(t.numColumns-1, hint) {
+		if t.shouldMergeCellsVerticallyAbove(t.numColumns-1, hint) {
 			border = t.style.Box.Right
 		} else {
 			border = t.style.Box.RightSeparator
@@ -522,12 +527,12 @@ func (t *Table) getColumnSeparator(row rowStr, colIdx int, hint renderHint) stri
 }
 
 func (t *Table) getColumnSeparatorNonBorder(mergeCellsAbove bool, mergeCellsBelow bool, colIdx int, hint renderHint) string {
-	mergeNextCol := t.shouldMergeCellsVertically(colIdx, hint)
+	mergeNextCol := t.shouldMergeCellsVerticallyAbove(colIdx, hint)
 	if hint.isAutoIndexColumn {
 		return t.getColumnSeparatorNonBorderAutoIndex(mergeNextCol, hint)
 	}
 
-	mergeCurrCol := t.shouldMergeCellsVertically(colIdx-1, hint)
+	mergeCurrCol := t.shouldMergeCellsVerticallyAbove(colIdx-1, hint)
 	return t.getColumnSeparatorNonBorderNonAutoIndex(mergeCellsAbove, mergeCellsBelow, mergeCurrCol, mergeNextCol)
 }
 
@@ -619,19 +624,19 @@ func (t *Table) getMergedColumnIndices(row rowStr, hint renderHint) mergedColumn
 
 	mci := make(mergedColumnIndices)
 	for colIdx := 0; colIdx < t.numColumns-1; colIdx++ {
-		// look backward
-		for otherColIdx := colIdx - 1; colIdx >= 0 && otherColIdx >= 0; otherColIdx-- {
-			if row[colIdx] != row[otherColIdx] {
+		for otherColIdx := colIdx + 1; otherColIdx < len(row); otherColIdx++ {
+			colsEqual := row[colIdx] == row[otherColIdx]
+			if !colsEqual {
+				lastEqual := otherColIdx - 1
+				if colIdx != lastEqual {
+					mci[colIdx] = lastEqual
+					colIdx = lastEqual
+				}
 				break
+			} else if colsEqual && otherColIdx == len(row)-1 {
+				mci[colIdx] = otherColIdx
+				colIdx = otherColIdx
 			}
-			mci.safeAppend(colIdx, otherColIdx)
-		}
-		// look forward
-		for otherColIdx := colIdx + 1; colIdx < len(row) && otherColIdx < len(row); otherColIdx++ {
-			if row[colIdx] != row[otherColIdx] {
-				break
-			}
-			mci.safeAppend(colIdx, otherColIdx)
 		}
 	}
 	return mci
@@ -836,7 +841,7 @@ func (t *Table) shouldMergeCellsHorizontallyBelow(row rowStr, colIdx int, hint r
 	return false
 }
 
-func (t *Table) shouldMergeCellsVertically(colIdx int, hint renderHint) bool {
+func (t *Table) shouldMergeCellsVerticallyAbove(colIdx int, hint renderHint) bool {
 	if !t.firstRowOfPage && t.columnConfigMap[colIdx].AutoMerge && colIdx < t.numColumns {
 		if hint.isSeparatorRow {
 			rowPrev := t.getRow(hint.rowNumber-1, hint)
@@ -853,6 +858,23 @@ func (t *Table) shouldMergeCellsVertically(colIdx int, hint renderHint) bool {
 		}
 	}
 	return false
+}
+
+func (t *Table) shouldMergeCellsVerticallyBelow(colIdx int, hint renderHint) int {
+	numRowsToMerge := 0
+	if t.columnConfigMap[colIdx].AutoMerge && colIdx < t.numColumns {
+		numRowsToMerge = 1
+		rowCurr := t.getRow(hint.rowNumber-1, hint)
+		for rowIdx := hint.rowNumber; rowIdx < len(t.rows); rowIdx++ {
+			rowNext := t.getRow(rowIdx, hint)
+			if colIdx < len(rowCurr) && colIdx < len(rowNext) && rowNext[colIdx] == rowCurr[colIdx] {
+				numRowsToMerge++
+			} else {
+				break
+			}
+		}
+	}
+	return numRowsToMerge
 }
 
 func (t *Table) shouldSeparateRows(rowIdx int, numRows int) bool {
