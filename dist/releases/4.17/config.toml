@@ -507,3 +507,10 @@ files = ["/usr/bin/container-disk"]
 [[payload.virt-launcher-rhel9-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
+
+[[payload.devspaces-code-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = [
+  "/checode-linux-libc/ubi8/node_modules/@vscode/ripgrep/bin/rg",
+  "/checode-linux-libc/ubi9/node_modules/@vscode/ripgrep/bin/rg"
+]
