@@ -1,0 +1,562 @@
+[[payload.ose-network-interface-bond-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/bondcni/bond", "/bondcni/rhel9/bond"]
+
+[[payload.ose-network-tools-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/ovnkube-trace"]
+
+[[payload.ose-machine-config-operator-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/machine-config-daemon.rhel9"]
+
+[[payload.ose-node-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/opt/cni/bin/rhel9/openshift-sdn", "/opt/cni/bin/rhel8/openshift-sdn"]
+
+[[payload.multus-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+dirs = [
+  "/usr/src/multus-cni/rhel8/bin",
+  "/usr/src/multus-cni/rhel9/bin",
+  "/usr/src/multus-cni/bin",
+]
+
+[[payload.ose-ovn-kubernetes-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = [
+  "/usr/libexec/cni/rhel8/ovn-k8s-cni-overlay",
+  "/usr/lib/rhel8/ovnkube-trace",
+]
+
+[[payload.ose-egress-router-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = [
+  "/usr/src/egress-router-cni/bin/egress-router",
+  "/usr/src/egress-router-cni/rhel9/bin/egress-router",
+]
+
+[[payload.ose-multus-whereabouts-ipam-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+dirs = ["/usr/src/whereabouts/bin", "/usr/src/whereabouts/rhel9/bin"]
+
+
+[[payload.ose-ovn-kubernetes-container.ignore]]
+error = "ErrGoNotGoExperiment"
+dirs = ["/usr/libexec/cni"]
+
+
+[[payload.ose-agent-installer-node-agent-container.ignore]]
+error = "ErrGoNotGoExperiment"
+files = ["/usr/bin/podman"]
+dirs = ["/usr/libexec/podman"]
+
+[[payload.openshift-enterprise-builder-container.ignore]]
+error = "ErrGoNotGoExperiment"
+files = ["/usr/bin/runc"]
+
+[[payload.ose-multus-whereabouts-ipam-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+dirs = ["/usr/src/whereabouts/rhel8/bin"]
+
+[[payload.oc-mirror-plugin-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/oc-mirror.rhel8"]
+
+[[payload.ose-network-interface-bond-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/bondcni/rhel8/bond"]
+
+# VolSync packages diskrsync which uses x/crypto/blake2b for local hashing only
+# for comparing blocks of data (non-cryptographic)
+# Actual network transfer is handled by the ssh executable in the image
+[[payload.volsync-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/local/bin/diskrsync"]
+
+[[payload.volsync-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/local/bin/diskrsync"]
+
+[[payload.volsync-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/local/bin/diskrsync"]
+
+[[payload.ose-installer-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-container.ignore]]
+error = "ErrGoNoCgoInit"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-container.ignore]]
+error = "ErrLibcryptoMany"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-container.ignore]]
+error = "ErrGoNotGoExperiment"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-container.ignore]]
+error = "ErrGoMissingTag"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-altinfra-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-altinfra-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-altinfra-container.ignore]]
+error = "ErrGoNoCgoInit"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-altinfra-container.ignore]]
+error = "ErrLibcryptoMany"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-altinfra-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-altinfra-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-altinfra-container.ignore]]
+error = "ErrGoNotGoExperiment"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-altinfra-container.ignore]]
+error = "ErrGoMissingTag"
+files = ["/usr/bin/openshift-install"]
+
+[[payload.ose-installer-terraform-providers-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-aws",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-azurerm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-azurestack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-google",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ibm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ignition",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-libvirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-local",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-nutanix",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-openstack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ovirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-time",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-vsphere",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-vsphereprivate",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-aws",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-azurerm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-azurestack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-google",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ibm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ignition",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-libvirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-local",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-nutanix",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-openstack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ovirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-time",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphere",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate",
+]
+
+[[payload.ose-installer-terraform-providers-container.ignore]]
+error = "ErrGoNoCgoInit"
+files = [
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-aws",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-azurerm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-azurestack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-google",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ibm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ignition",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-libvirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-local",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-nutanix",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-openstack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ovirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-time",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-vsphere",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-vsphereprivate",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-aws",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-azurerm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-azurestack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-google",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ibm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ignition",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-libvirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-local",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-nutanix",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-openstack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ovirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-time",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphere",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate",
+]
+
+[[payload.ose-installer-terraform-providers-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = [
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-aws",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-azurerm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-azurestack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-google",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ibm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ignition",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-libvirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-local",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-nutanix",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-openstack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ovirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-time",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-vsphere",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-vsphereprivate",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-aws",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-azurerm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-azurestack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-google",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ibm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ignition",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-libvirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-local",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-nutanix",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-openstack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ovirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-time",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphere",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate",
+]
+
+[[payload.ose-installer-terraform-providers-container.ignore]]
+error = "ErrNotDynLinked"
+files = [
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-aws",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-azurerm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-azurestack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-google",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ibm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ignition",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-libvirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-local",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-nutanix",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-openstack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ovirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-time",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-vsphere",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-vsphereprivate",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-aws",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-azurerm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-azurestack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-google",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ibm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ignition",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-libvirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-local",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-nutanix",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-openstack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ovirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-time",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphere",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate",
+]
+
+[[payload.ose-installer-terraform-providers-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = [
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-aws",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-azurerm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-azurestack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-google",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ibm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ignition",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-libvirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-local",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-nutanix",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-openstack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ovirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-time",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-vsphere",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-vsphereprivate",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-aws",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-azurerm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-azurestack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-google",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ibm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ignition",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-libvirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-local",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-nutanix",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-openstack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ovirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-time",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphere",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate",
+]
+
+[[payload.ose-installer-terraform-providers-container.ignore]]
+error = "ErrGoNoTags"
+files = [
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-aws",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-azurerm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-azurestack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-google",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ibm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ignition",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-libvirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-local",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-nutanix",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-openstack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-ovirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-time",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-vsphere",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_amd64/terraform-provider-vsphereprivate",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-aws",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-azurerm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-azurestack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-google",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ibm",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ignition",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-libvirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-local",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-nutanix",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-openstack",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-ovirt",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-time",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphere",
+  "/go/src/github.com/openshift/installer/terraform/bin/linux_arm64/terraform-provider-vsphereprivate",
+]
+
+[[payload.ib-sriov-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/rhel8/ib-sriov"]
+
+[[payload.openshift-enterprise-operator-sdk-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = [
+  "/usr/lib/golang/pkg/tool/linux_amd64/compile",
+  "/usr/lib/golang/pkg/tool/linux_amd64/covdata",
+  "/usr/lib/golang/pkg/tool/linux_amd64/cover"
+]
+
+[[payload.openshift-enterprise-operator-sdk-container.ignore]]
+error = "ErrNotDynLinked"
+files = [
+  "/usr/lib/golang/pkg/tool/linux_amd64/compile",
+  "/usr/lib/golang/pkg/tool/linux_amd64/covdata",
+  "/usr/lib/golang/pkg/tool/linux_amd64/cover"
+]
+
+[[payload.openshift-enterprise-operator-sdk-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = [
+  "/usr/lib/golang/pkg/tool/linux_amd64/compile",
+  "/usr/lib/golang/pkg/tool/linux_amd64/covdata",
+  "/usr/lib/golang/pkg/tool/linux_amd64/cover"
+]
+
+[[payload.openshift-enterprise-ansible-operator-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/libexec/catatonit/catatonit"]
+
+[[payload.openshift-istio-kiali-operator-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/libexec/catatonit/catatonit"]
+
+[[payload.ose-cloud-credential-operator-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/ccoctl", "/usr/bin/ccoctl.rhel8"]
+
+[[payload.ose-egress-router-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/src/egress-router-cni/rhel8/bin/egress-router"]
+
+[[payload.ose-machine-config-operator-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/machine-config-daemon.rhel8"]
+
+[[payload.sriov-cni-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/rhel8/sriov"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrGoMissingTag"
+files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrGoNoTags"
+files = ["/usr/bin/cpb", "/usr/bin/copy-content"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrLibcryptoSoMissing"
+files = ["/usr/bin/cpb"]
+
+[[payload.operator-lifecycle-manager-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/bin/cpb"]
+
+[[payload.ose-olm-rukpak-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/unpack"]
+
+[[payload.multicluster-engine-hypershift-operator.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/hcp-no-cgo", "/usr/bin/hypershift-no-cgo"]
+
+[[payload.multicluster-engine-hypershift-cli-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+  "/opt/app-root/src/linux/amd64/hcp",
+  "/opt/app-root/src/linux/arm64/hcp",
+  "/opt/app-root/src/linux/ppc64/hcp",
+  "/opt/app-root/src/linux/ppc64le/hcp",
+  "/opt/app-root/src/linux/s390x/hcp"
+]
+
+[[payload.hco-bundle-registry-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
+
+[[payload.hco-bundle-registry-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+  "/usr/bin/cdi-containerimage-server",
+  "/usr/local/bin/disk-uploader",
+  "/usr/local/bin/kubevirt-tekton-tasks.test",
+  "/usr/bin/ssp-operator.test",
+  "/usr/bin/tekton-tasks-operator.test"
+]
+
+[[payload.hco-bundle-registry-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
+
+[[payload.virt-handler-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
+
+[[payload.virt-launcher-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
+
+[[payload.virt-cdi-importer-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.virt-cdi-importer-rhel9-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.virt-cdi-importer-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.virt-cdi-importer-rhel9-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = ["/usr/bin/cdi-containerimage-server"]
+
+[[payload.kubevirt-tekton-tasks-copy-template-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/kubevirt-tekton-tasks.test"]
+
+[[payload.kubevirt-tekton-tasks-copy-template-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/kubevirt-tekton-tasks.test"]
+
+[[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+  "/usr/local/bin/disk-uploader",
+  "/usr/local/bin/kubevirt-tekton-tasks.test"
+]
+
+[[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
+error = "ErrGoMissingSymbols"
+files = [
+  "/usr/local/bin/disk-uploader",
+  "/usr/local/bin/kubevirt-tekton-tasks.test"
+]
+
+[[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = [
+  "/usr/local/bin/disk-uploader",
+  "/usr/local/bin/kubevirt-tekton-tasks.test"
+]
+
+[[payload.kubevirt-tekton-tasks-create-datavolume-rhel9-container.ignore]]
+error = "ErrLibcryptoMissing"
+files = [
+  "/usr/local/bin/disk-uploader",
+  "/usr/local/bin/kubevirt-tekton-tasks.test"
+]
+
+[[payload.kubevirt-ssp-operator-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/ssp-operator.test"]
+
+[[payload.kubevirt-tekton-tasks-operator-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = ["/usr/bin/tekton-tasks-operator.test"]
+
+[[payload.secondary-scheduler-operator-container.ignore]]
+error = "ErrNotDynLinked"
+files = [
+  "/usr/sbin/build-locale-archive",
+  "/usr/sbin/ldconfig"
+]
+
+[[payload.ocp-virt-validation-checkup-rhel9-container.ignore]]
+error = "ErrGoNotCgoEnabled"
+files = [
+  "/usr/local/bin/kubevirt.test",
+  "/usr/local/bin/ssp.test"
+]
+
+[[payload.devspaces-code-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = [
+  "/checode-linux-libc/ubi8/node_modules/@vscode/ripgrep/bin/rg",
+  "/checode-linux-libc/ubi9/node_modules/@vscode/ripgrep/bin/rg"
+]
