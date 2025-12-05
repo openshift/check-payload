@@ -560,3 +560,10 @@ files = [
   "/checode-linux-libc/ubi8/node_modules/@vscode/ripgrep/bin/rg",
   "/checode-linux-libc/ubi9/node_modules/@vscode/ripgrep/bin/rg"
 ]
+
+# In 4.21 and 4.22 we'll have a rhel-coreos-10 and rhel-coreos-10-extensions image
+# these images are devpreview / techpreview and thus not beholden to FIPS validation
+# TODO: revisit this after 4.22 branch
+[[tag.rhel-coreos-10.ignore]]
+error = "ErrOSNotCertified"
+tags = ["rhel-coreos-10"]
