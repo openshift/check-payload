@@ -53,12 +53,12 @@ func RunOperatorScan(ctx context.Context, cfg *types.Config) []*types.ScanResult
 	return []*types.ScanResults{validateTag(ctx, tag, cfg)}
 }
 
-func RunPayloadScan(ctx context.Context, cfg *types.Config) []*types.ScanResults {
+func RunPayloadScan(ctx context.Context, cfg *types.Config) ([]*types.ScanResults, error) {
 	var runs []*types.ScanResults
 
 	payload, err := GetPayload(cfg)
 	if err != nil {
-		klog.Fatalf("could not get pods from payload: %v", err)
+		return nil, fmt.Errorf("could not get pods from payload: %w", err)
 	}
 
 	parallelism := cfg.Parallelism
@@ -112,7 +112,7 @@ func RunPayloadScan(ctx context.Context, cfg *types.Config) []*types.ScanResults
 	close(rx)
 	wgRx.Wait()
 
-	return runs
+	return runs, nil
 }
 
 func scan(ctx context.Context, cfg *types.Config, tx <-chan *Request, rx chan<- *Result) {
