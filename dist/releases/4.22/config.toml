@@ -1,3 +1,8 @@
+certified_distributions = [
+  "Red Hat Enterprise Linux release 9.8 Beta (Plow)",
+]
+
+
 [[payload.ose-network-interface-bond-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"
 files = ["/bondcni/bond", "/bondcni/rhel9/bond"]
