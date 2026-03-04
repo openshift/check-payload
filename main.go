@@ -174,8 +174,9 @@ func main() {
 			}
 			config.PrintExceptions, _ = cmd.Flags().GetBool("print-exceptions")
 			config.UseRPMScan, _ = cmd.Flags().GetBool("rpm-scan")
-			results = scan.RunPayloadScan(ctx, &config)
-			return nil
+			var err error
+			results, err = scan.RunPayloadScan(ctx, &config)
+			return err
 		},
 	}
 	scanPayload.Flags().StringP("url", "u", "", "payload url")
@@ -291,7 +292,8 @@ func main() {
 	rootCmd.PersistentFlags().AddGoFlagSet(klogFlags)
 
 	if err := rootCmd.Execute(); err != nil {
-		klog.Fatalf("Error: %v\n", err)
+		klog.ErrorS(err, "command failed")
+		os.Exit(1)
 	}
 }
 
