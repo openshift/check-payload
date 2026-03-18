@@ -143,6 +143,18 @@ func (c *Config) GetCertifiedDistributions() []string {
 	return c.ConfigFile.CertifiedDistributions
 }
 
+func (c *Config) GetFIPSValidationMode() string {
+	return c.ConfigFile.FIPSValidationMode
+}
+
+func (c *Config) GetFIPSCertifiedModules() []FipsModule {
+	return c.ConfigFile.FIPSCertifiedModules
+}
+
+func (c *Config) UseFIPSModuleValidation() bool {
+	return c.GetFIPSValidationMode() == "module" && len(c.GetFIPSCertifiedModules()) > 0
+}
+
 func (c *Config) ShouldIgnoreOSValidation(tag *imagev1.TagReference, component *OpenshiftComponent, osError error) bool {
 	if tag == nil {
 		return false

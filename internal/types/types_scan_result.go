@@ -96,3 +96,8 @@ func (r *ScanResult) SetRPM(rpm string) *ScanResult {
 	r.RPM = rpm
 	return r
 }
+
+func (r *ScanResult) SetModulesUsed(used []string) *ScanResult {
+	r.ModulesUsed = used
+	return r
+}
