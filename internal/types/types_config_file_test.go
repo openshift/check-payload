@@ -143,7 +143,59 @@ certified_distributions = [ "Red Hat Enterprise Linux release 9.4 (Plow)" ]
 	cd1cd2 = `
 certified_distributions = [ "Red Hat Enterprise Linux release 9.2 (Plow)", "Red Hat Enterprise Linux release 9.4 (Plow)" ]
 `
+	fips1 = `
+fips_validation_mode = "module"
+fips_certified_modules = [
+  { module = "openssl", certified_artifact = "openssl-fips-provider", certified_artifact_min_version = "3.0.7" },
+]
+`
+	fips2 = `
+fips_validation_mode = "allowlist"
+fips_certified_modules = [
+  { module = "go", certified_artifact = "go-std" },
+]
+`
+	fips1fips2 = `
+fips_validation_mode = "allowlist"
+fips_certified_modules = [
+  { module = "openssl", certified_artifact = "openssl-fips-provider", certified_artifact_min_version = "3.0.7" },
+  { module = "go", certified_artifact = "go-std" },
+]
+`
 )
+
+func TestFIPSValidation(t *testing.T) {
+	t.Run("valid modes", func(t *testing.T) {
+		for _, mode := range []string{"", "allowlist", "module"} {
+			cfg := &types.ConfigFile{FIPSValidationMode: mode}
+			err, _ := cfg.Validate()
+			if err != nil {
+				t.Errorf("mode %q: unexpected error: %v", mode, err)
+			}
+		}
+	})
+
+	t.Run("invalid mode", func(t *testing.T) {
+		cfg := &types.ConfigFile{FIPSValidationMode: "bogus"}
+		err, _ := cfg.Validate()
+		if err == nil {
+			t.Error("expected error for invalid mode")
+		}
+	})
+
+	t.Run("module with empty fields", func(t *testing.T) {
+		cfg := &types.ConfigFile{
+			FIPSCertifiedModules: []types.FipsModule{
+				{Module: "", CertifiedArtifact: "something"},
+				{Module: "openssl", CertifiedArtifact: ""},
+			},
+		}
+		err, _ := cfg.Validate()
+		if err == nil {
+			t.Error("expected error for empty module/artifact fields")
+		}
+	})
+}
 
 func TestConfigMerge(t *testing.T) {
 	testCases := []struct {
@@ -214,6 +266,18 @@ func TestConfigMerge(t *testing.T) {
 			main:     cd1,
 			add:      cd2,
 			expected: cd1cd2,
+		},
+		{
+			name:     "fips1 + fips2 merges modules and overrides mode",
+			main:     fips1,
+			add:      fips2,
+			expected: fips1fips2,
+		},
+		{
+			name:     "fips1 + fips1 deduplicates",
+			main:     fips1,
+			add:      fips1,
+			expected: fips1,
 		},
 	}
 

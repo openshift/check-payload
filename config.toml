@@ -12,6 +12,18 @@ certified_distributions = [
   "Red Hat Enterprise Linux release 9.6 (Plow)",
   "Red Hat Enterprise Linux release 9.7 (Plow)",
   "Red Hat Enterprise Linux release 9.8 (Plow)",
+  "Red Hat Enterprise Linux release 10.0 (Coughlan)",
+  "Red Hat Enterprise Linux release 10.1 (Coughlan)",
+]
+
+# allowlist = OS only (certified_distributions). module = also enforce FIPS rows below when applicable.
+fips_validation_mode = "module"
+
+# fips certified modules that have or are in process of receiving fips certification
+fips_certified_modules = [
+  { module = "openssl", certified_artifact = "openssl-fips-provider", certified_artifact_min_version = "3.0.7", certified_artifact_paths = ["/usr/lib64/ossl-modules/fips.so", "/usr/lib/ossl-modules/fips.so"] },
+  # placeholder for when Go's crypto module is fips certified, then it should be allowed as a module
+  # { module = "go", certified_artifact = "crypto/fips140", certified_artifact_min_version = "1.27.0" },
 ]
 
 # List of directories to ignore. This is a prefix match,

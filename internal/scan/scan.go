@@ -370,7 +370,6 @@ func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, c
 	results := types.NewScanResults()
 
 	certifiedDistributions := cfg.GetCertifiedDistributions()
-
 	if len(certifiedDistributions) > 0 && !cfg.ShouldIgnoreOSValidation(tag, component, types.ErrOSNotCertified) {
 		// Check the operating system release against a known list of certified
 		// distributions. Here we're primarily concerned about warning against
@@ -461,6 +460,31 @@ func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, c
 		return nil
 	}); err != nil {
 		return results.Append(types.NewScanResult().SetError(err))
+	}
+
+	// fips certified module check
+	if cfg.UseFIPSModuleValidation() {
+		modulesInUseSet := make(map[string]bool)
+		for _, item := range results.Items {
+			for _, m := range item.ModulesUsed {
+				modulesInUseSet[m] = true
+			}
+		}
+		if len(modulesInUseSet) > 0 {
+			var modulesInUse []string
+			for m := range modulesInUseSet {
+				modulesInUse = append(modulesInUse, m)
+			}
+			klog.V(1).InfoS("fips module validation", "modulesDetected", modulesInUse, "mountPath", mountPath)
+			if ve := validations.ValidateModuleArtifacts(ctx, cfg, mountPath, modulesInUse); ve != nil {
+				klog.InfoS("fips module validation failed", "error", ve.Error, "mountPath", mountPath)
+				results.Append(types.NewScanResult().SetValidationError(ve).SetComponent(component).SetTag(tag))
+			} else {
+				klog.V(1).InfoS("fips module validation passed", "mountPath", mountPath)
+			}
+		} else {
+			klog.V(1).InfoS("fips module validation skipped, no crypto modules detected", "mountPath", mountPath)
+		}
 	}
 
 	return results

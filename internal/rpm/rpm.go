@@ -19,7 +19,7 @@ type Info struct {
 }
 
 func GetFilesFromRPM(ctx context.Context, root, rpm string) ([]string, error) {
-	klog.Infof("rpm -ql %v", rpm)
+	klog.V(1).Infof("rpm -ql %v root=%s", rpm, root)
 	dbpath, err := rpmDBPath(root)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func GetFilesFromRPM(ctx context.Context, root, rpm string) ([]string, error) {
 }
 
 func GetAllRPMs(ctx context.Context, root string) ([]Info, error) {
-	klog.Info("rpm -qa")
+	klog.V(1).Infof("rpm -qa root=%s", root)
 	root, err := filepath.Abs(root)
 	if err != nil {
 		return nil, err
@@ -75,6 +75,26 @@ func GetAllRPMs(ctx context.Context, root string) ([]Info, error) {
 		return nil, fmt.Errorf("no rpms found under %q", root)
 	}
 	return rpms, nil
+}
+
+// VersionOf returns the version string of the named RPM package.
+func VersionOf(ctx context.Context, root, pkg string) (string, error) {
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return "", err
+	}
+	dbpath, err := rpmDBPath(root)
+	if err != nil {
+		return "", err
+	}
+	cmd := exec.CommandContext(ctx, "rpm", "-q", "--dbpath", dbpath, "--root", root, "--queryformat=%{VERSION}", pkg)
+	var outbuf, errbuf bytes.Buffer
+	cmd.Stdout = &outbuf
+	cmd.Stderr = &errbuf
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("rpm -q %s: %w (stderr=%s)", pkg, err, strings.TrimSpace(errbuf.String()))
+	}
+	return strings.TrimSpace(outbuf.String()), nil
 }
 
 // NameFromFile tells which rpm the given file belongs to, under a given root.

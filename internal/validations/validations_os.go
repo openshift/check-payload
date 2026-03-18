@@ -2,6 +2,7 @@ package validations
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -9,6 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/openshift/check-payload/internal/types"
+
+	"k8s.io/klog/v2"
 )
 
 const releaseFilePath = "/etc/redhat-release"
@@ -49,6 +52,34 @@ func ValidateOS(cfg *types.Config, mountPath string) (info types.OSInfo) {
 		}
 	}
 	return info
+}
+
+// ValidateModuleArtifacts checks that each detected module's certified
+// artifact is present. Runs independently of the OS allowlist check.
+func ValidateModuleArtifacts(ctx context.Context, cfg *types.Config, mountPath string, modulesInUse []string) *types.ValidationError {
+	for _, r := range cfg.GetFIPSCertifiedModules() {
+		if r.CertifiedArtifact == "" {
+			continue
+		}
+		if !containsStr(modulesInUse, r.Module) {
+			klog.V(1).InfoS("fips module not in use, skipping", "module", r.Module, "artifact", r.CertifiedArtifact)
+			continue
+		}
+		klog.V(1).InfoS("fips module in use, checking artifact", "module", r.Module, "artifact", r.CertifiedArtifact, "minVersion", r.CertifiedArtifactMinVersion)
+		if ve := CheckArtifact(ctx, r, mountPath); ve != nil {
+			return ve
+		}
+	}
+	return nil
+}
+
+func containsStr(ss []string, s string) bool {
+	for _, v := range ss {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
 
 // in case the file is symlinked, we need to check to ensure there is not a target path
