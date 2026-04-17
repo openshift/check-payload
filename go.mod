@@ -6,7 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/deckarep/golang-set/v2 v2.8.0
-	github.com/jedib0t/go-pretty/v6 v6.7.8
+	github.com/jedib0t/go-pretty/v6 v6.7.9
 	github.com/openshift/api v0.0.0-20250710082954-674ad74beffc
 	github.com/openshift/oc v0.0.0-alpha.0.0.20251209043725-dc61926008ad
 	github.com/spf13/cobra v1.10.2
