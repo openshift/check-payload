@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/Masterminds/semver/v3 v3.4.0
-	github.com/deckarep/golang-set/v2 v2.8.0
+	github.com/deckarep/golang-set/v2 v2.9.0
 	github.com/jedib0t/go-pretty/v6 v6.7.10
 	github.com/openshift/api v0.0.0-20250710082954-674ad74beffc
 	github.com/openshift/oc v0.0.0-alpha.0.0.20251209043725-dc61926008ad
@@ -97,6 +97,7 @@ require (
 	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
+	go.mongodb.org/mongo-driver v1.17.4 // indirect
 	go.opentelemetry.io/otel v1.33.0 // indirect
 	go.opentelemetry.io/otel/trace v1.33.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
