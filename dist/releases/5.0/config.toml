@@ -566,8 +566,7 @@ files = [
   "/checode-linux-libc/ubi9/node_modules/@vscode/ripgrep/bin/rg"
 ]
 
-# In 5.0 we have a rhel-coreos-10 image
-# this image is devpreview / techpreview and thus not beholden to FIPS validation
+# FIPS status is non blocker for RHCOS10 in 5.0
 [[tag.rhel-coreos-10.ignore]]
 error = "ErrOSNotCertified"
 tags = ["rhel-coreos-10"]
