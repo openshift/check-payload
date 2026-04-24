@@ -158,6 +158,10 @@ files = [
   "/usr/libexec/valgrind/none-amd64-linux",
 ]
 
+[[payload.odh-vllm-gaudi-rhel9.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/hl-smi"]
+
 [[payload.openshift-enterprise-pod-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/pod"]
