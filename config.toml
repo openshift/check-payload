@@ -214,3 +214,144 @@ files = ["/usr/local/bin/mta-cli"]
 [[payload.mta-cli-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/local/bin/mta-cli"]
+
+# -----------------------------------------------------------------------------
+# Open Data Hub (ODH) / RHOAI payloads: odh-workbench-* and odh-pipeline-runtime-*
+#
+# odh-workbench-* images are interactive JupyterLab and code-server workbenches.
+# Pandoc and ripgrep (via code-server) cover notebook PDF export and IDE search.
+#
+# py-spy is a Python sampling profiler brought in with the datascience/ML dependency
+# graph so users can debug performance from the workbench. It does not use
+# cryptography. Upstream distributes it as a statically linked executable, so
+# check-payload raises ErrNotDynLinked; we waive that here because the finding reflects
+# static linking, not an in-image cryptographic module or TLS endpoint.
+#
+# odh-pipeline-runtime-* images are non-interactive Elyra/KFP-style job runtimes; see the
+# comment block immediately before those entries for py-spy on pipeline images.
+#
+# ErrNotDynLinked ignores cite RHOAIENG-58626 (umbrella epic for multiple check-payload
+# FIPS findings across RHOAI). py-spy waivers: track RHOAIENG-58916. Work is broken
+# down by failing component/image in Jira. Pandoc rebuild/remediation: AIPCC-7795.
+# -----------------------------------------------------------------------------
+
+# odh-workbench-codeserver-datascience-cpu-py312-rhel9
+[[payload.odh-workbench-codeserver-datascience-cpu-py312-rhel9.ignore]]
+# py-spy: track RHOAIENG-58916. rg (@vscode/ripgrep, IDE search): RHOAIENG-58626. Static upstream.
+error = "ErrNotDynLinked"
+files = [
+    "/opt/app-root/bin/py-spy",
+    "/usr/lib/code-server/lib/vscode/node_modules/@vscode/ripgrep/bin/rg",
+]
+
+# odh-workbench-jupyter-datascience-cpu-py312-rhel9
+[[payload.odh-workbench-jupyter-datascience-cpu-py312-rhel9.ignore]]
+# Pandoc (PDF export): RHOAIENG-58626. py-spy: track RHOAIENG-58916.
+error = "ErrNotDynLinked"
+files = [
+    "/usr/local/pandoc/bin/pandoc",
+    "/opt/app-root/bin/py-spy",
+]
+
+# odh-workbench-jupyter-minimal-cpu-py312-rhel9
+[[payload.odh-workbench-jupyter-minimal-cpu-py312-rhel9.ignore]]
+# Pandoc: bundled for notebook PDF/LaTeX export; not a crypto boundary. Track: RHOAIENG-58626.
+error = "ErrNotDynLinked"
+files = ["/usr/local/pandoc/bin/pandoc"]
+
+# odh-workbench-jupyter-minimal-cuda-py312-rhel9
+[[payload.odh-workbench-jupyter-minimal-cuda-py312-rhel9.ignore]]
+# Pandoc: bundled for notebook PDF/LaTeX export; not a crypto boundary. Track: RHOAIENG-58626.
+error = "ErrNotDynLinked"
+files = ["/usr/local/pandoc/bin/pandoc"]
+
+# odh-workbench-jupyter-minimal-rocm-py312-rhel9
+[[payload.odh-workbench-jupyter-minimal-rocm-py312-rhel9.ignore]]
+# Pandoc: bundled for notebook PDF/LaTeX export; not a crypto boundary. Track: RHOAIENG-58626.
+error = "ErrNotDynLinked"
+files = ["/usr/local/pandoc/bin/pandoc"]
+
+# odh-workbench-jupyter-pytorch-cuda-py312-rhel9
+[[payload.odh-workbench-jupyter-pytorch-cuda-py312-rhel9.ignore]]
+# Pandoc (PDF export): RHOAIENG-58626. py-spy: track RHOAIENG-58916.
+error = "ErrNotDynLinked"
+files = [
+    "/usr/local/pandoc/bin/pandoc",
+    "/opt/app-root/bin/py-spy",
+]
+
+# odh-workbench-jupyter-pytorch-llmcompressor-cuda-py312-rhel9
+[[payload.odh-workbench-jupyter-pytorch-llmcompressor-cuda-py312-rhel9.ignore]]
+# Pandoc (PDF export): RHOAIENG-58626. py-spy: track RHOAIENG-58916.
+error = "ErrNotDynLinked"
+files = [
+    "/usr/local/pandoc/bin/pandoc",
+    "/opt/app-root/bin/py-spy",
+]
+
+# odh-workbench-jupyter-pytorch-rocm-py312-rhel9
+[[payload.odh-workbench-jupyter-pytorch-rocm-py312-rhel9.ignore]]
+# Pandoc (PDF export): RHOAIENG-58626. py-spy: track RHOAIENG-58916.
+error = "ErrNotDynLinked"
+files = [
+    "/usr/local/pandoc/bin/pandoc",
+    "/opt/app-root/bin/py-spy",
+]
+
+# odh-workbench-jupyter-tensorflow-cuda-py312-rhel9
+[[payload.odh-workbench-jupyter-tensorflow-cuda-py312-rhel9.ignore]]
+# Pandoc (PDF export): RHOAIENG-58626. py-spy: track RHOAIENG-58916.
+error = "ErrNotDynLinked"
+files = [
+    "/usr/local/pandoc/bin/pandoc",
+    "/opt/app-root/bin/py-spy",
+]
+
+# odh-workbench-jupyter-tensorflow-rocm-py312-rhel9
+[[payload.odh-workbench-jupyter-tensorflow-rocm-py312-rhel9.ignore]]
+# Pandoc (PDF export): RHOAIENG-58626. py-spy: track RHOAIENG-58916.
+error = "ErrNotDynLinked"
+files = [
+    "/usr/local/pandoc/bin/pandoc",
+    "/opt/app-root/bin/py-spy",
+]
+
+# odh-workbench-jupyter-trustyai-cpu-py312-rhel9
+[[payload.odh-workbench-jupyter-trustyai-cpu-py312-rhel9.ignore]]
+# Pandoc (PDF export): RHOAIENG-58626. py-spy: track RHOAIENG-58916.
+error = "ErrNotDynLinked"
+files = [
+    "/usr/local/pandoc/bin/pandoc",
+    "/opt/app-root/bin/py-spy",
+]
+
+# odh-pipeline-runtime-*, py-spy (all [[payload.odh-pipeline-runtime-*]] blocks below):
+# Same waivers as in the section header (static binary -> ErrNotDynLinked; no crypto).
+# The binary is there because these images share the ODH Python base and datascience
+# pip lock with workbench stacks (stack parity); Elyra/KFP does not rely on py-spy for
+# pipeline execution. py-spy: track RHOAIENG-58916.
+
+# odh-pipeline-runtime-datascience-cpu-py312-rhel9
+[[payload.odh-pipeline-runtime-datascience-cpu-py312-rhel9.ignore]]
+error = "ErrNotDynLinked"
+files = ["/opt/app-root/bin/py-spy"]
+
+# odh-pipeline-runtime-pytorch-cuda-py312-rhel9
+[[payload.odh-pipeline-runtime-pytorch-cuda-py312-rhel9.ignore]]
+error = "ErrNotDynLinked"
+files = ["/opt/app-root/bin/py-spy"]
+
+# odh-pipeline-runtime-pytorch-rocm-py312-rhel9
+[[payload.odh-pipeline-runtime-pytorch-rocm-py312-rhel9.ignore]]
+error = "ErrNotDynLinked"
+files = ["/opt/app-root/bin/py-spy"]
+
+# odh-pipeline-runtime-tensorflow-cuda-py312-rhel9
+[[payload.odh-pipeline-runtime-tensorflow-cuda-py312-rhel9.ignore]]
+error = "ErrNotDynLinked"
+files = ["/opt/app-root/bin/py-spy"]
+
+# odh-pipeline-runtime-tensorflow-rocm-py312-rhel9
+[[payload.odh-pipeline-runtime-tensorflow-rocm-py312-rhel9.ignore]]
+error = "ErrNotDynLinked"
+files = ["/opt/app-root/bin/py-spy"]
