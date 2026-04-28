@@ -32,7 +32,7 @@ Steps:
    - `[[tag.TAG.ignore]]` for tags
 5. Specify error type: Use exact error name:
    - Binary: `ErrNotDynLinked`, `ErrGoMissingTag`, `ErrGoNotCgoEnabled`, `ErrLibcryptoMissing`
-   - OS: `ErrOSNotCertified` (images not using certified distributions like UBI)
+   - OS: `ErrOSNotCertified` (images not using certified distributions like UBI); `ErrFipsArtifactMissing` (certified artifact not found); `ErrFipsArtifactVersionLow` (artifact version below minimum)
    - Library: `ErrLibcryptoSoMissing` (missing OpenSSL in container images)
 6. Use files or dirs: Specify `files = [...]` or `dirs = [...]` with absolute paths
 
@@ -67,7 +67,15 @@ Releases are managed via git tags using semantic versioning (e.g., `0.3.11`):
 2. Create and push a git tag: `git tag -s v0.x.x && git push origin v0.x.x`
 3. Version information is embedded at build time via `git describe --tags`
 
-Version-specific configurations are embedded from `dist/releases/4.x/config.toml` during build.
+Version-specific configurations are embedded from `dist/releases/4.x/config.toml` during build. `fips_validation_mode` and `fips_certified_modules` live in root `config.toml`; version configs handle exceptions only.
+
+## FIPS Module Validation
+
+`fips_validation_mode`: `allowlist` = OS check only (`certified_distributions`). `module` = also enforce `fips_certified_modules`.
+
+Each entry maps a crypto stack (`module`) to its `certified_artifact`, with optional `certified_artifact_min_version` and `certified_artifact_paths` for file-based fallback. Artifact presence verified via RPM query or file path.
+
+Flow (module mode): OS allowlist check runs early. After binary scanning, detected crypto modules are matched against config entries and each artifact is validated.
 
 ## General Contribution Guidelines
 
