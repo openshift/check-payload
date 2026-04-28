@@ -209,3 +209,17 @@ files = ["/usr/local/bin/mta-cli"]
 [[payload.mta-cli-container.ignore]]
 error = "ErrNotDynLinked"
 files = ["/usr/local/bin/mta-cli"]
+
+# Ignore these for Notebook images
+[[ignore]]
+error = "ErrNotDynLinked"
+files = [
+    # A transitive dependencies through codeflare-sdk, Ray
+    "/opt/app-root/bin/py-spy",
+
+    # Pandoc for notebook PDF export
+    "/usr/local/pandoc/bin/pandoc",
+
+    # When code-server is not installed from rpm, the exclusion below won't apply
+    "/usr/lib/code-server/lib/vscode/node_modules/@vscode/ripgrep/bin/rg",
+]
