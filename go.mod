@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/Masterminds/semver/v3 v3.4.0
+	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/deckarep/golang-set/v2 v2.9.0
 	github.com/jedib0t/go-pretty/v6 v6.7.10
 	github.com/openshift/api v0.0.0-20250710082954-674ad74beffc
