@@ -158,7 +158,8 @@ files = [
   "/usr/libexec/valgrind/none-amd64-linux",
 ]
 
-[[payload.odh-vllm-gaudi-rhel9.ignore]]
+[[rpm.habanalabs-firmware-tools.ignore]]
+# hl-smi: Intel Gaudi hardware monitor, static by design, no crypto.
 error = "ErrNotDynLinked"
 files = ["/usr/bin/hl-smi"]
 
