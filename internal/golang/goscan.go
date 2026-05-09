@@ -52,33 +52,20 @@ func _magicNumber(goVersion string) uint32 {
 
 // Open a Go ELF executable and read .gopclntab
 func ReadTable(fileName string, bi *buildinfo.BuildInfo) (*gosym.Table, error) {
-	// Default section label is .gopclntab
-	sectionLabel := ".gopclntab"
-
-	// If built with PIE and stripped, gopclntab is
-	// unlabeled and nested under .data.rel.ro.
-	for _, bs := range bi.Settings {
-		if bs.Key == "-buildmode" {
-			if bs.Value == "pie" {
-				sectionLabel = ".data.rel.ro"
-			}
-			break
-		}
-	}
-
 	exe, err := elf.Open(fileName)
 	if err != nil {
 		return nil, err
 	}
 	defer exe.Close()
 
-	section := exe.Section(sectionLabel)
+	// Go 1.26+ restores .gopclntab as a separate section even for PIE builds.
+	// Go <= 1.25 PIE binaries embed pclntab inside .data.rel.ro instead.
+	// Always check .gopclntab first, then fall back to .data.rel.ro.
+	section := exe.Section(".gopclntab")
 	if section == nil {
-		// binary may be built with -pie
-		sectionLabel = ".data.rel.ro"
-		section = exe.Section(sectionLabel)
+		section = exe.Section(".data.rel.ro")
 		if section == nil {
-			return nil, fmt.Errorf("could not read section .gopclntab from %s ", fileName)
+			return nil, fmt.Errorf("could not find .gopclntab or .data.rel.ro section in %s", fileName)
 		}
 	}
 	tableData, err := section.Data()
