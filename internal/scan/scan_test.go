@@ -86,6 +86,7 @@ func TestRunLocalScan(t *testing.T) {
 		{"UnsupportedOperatingSystemIgnored", "../../test/resources/mock_unsupported_os", ignoredOsConfig, true},
 		{"SymlinkedOsRelease", "../../test/resources/mock_os_symlinked", baseConfig, true},
 		{"ModuleModeRHEL94WithProvider", "../../test/resources/mock_unpacked_dir_9_4", moduleConfig94, true},
+		{"PIE_Go126_s390x", "../../test/resources/mock_unpacked_dir_pie_s390x", baseConfig, true},
 	}
 	// Iterate over test cases
 	for _, tc := range testCases {

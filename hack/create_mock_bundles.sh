@@ -34,6 +34,7 @@ create_mock_unpacked_dir() {
 # Create the mock_unpacked_dir directories and subdirectories
 create_mock_unpacked_dir "mock_unpacked_dir-1" "etc" "usr" "usr/lib64"
 create_mock_unpacked_dir "mock_unpacked_dir-2" "bin" "lib" "sbin"
+create_mock_unpacked_dir "mock_unpacked_dir_pie_s390x" "etc" "usr" "usr/lib64"
 
 # After ensuring the directories are created, copy the binaries and test files for mock_unpacked_dir-1
 echo "Copying binaries to mock_unpacked_dir-1..."
@@ -69,8 +70,15 @@ else
     fi
 fi
 
-# Add mock config.json and umoci.json files to both mock_unpacked_dirs
-for MOCK_UNPACKED_DIR in "mock_unpacked_dir-1" "mock_unpacked_dir-2"; do
+# Copy PIE s390x Go 1.26 binary and supporting files to mock_unpacked_dir_pie_s390x
+echo "Copying binaries to mock_unpacked_dir_pie_s390x..."
+cp "$TEST_RESOURCES_DIR/pie_go126_s390x_app" "$TEST_RESOURCES_DIR/mock_unpacked_dir_pie_s390x/usr/pie_go126_s390x_app"
+cp "$TEST_RESOURCES_DIR/libcrypto.so" "$TEST_RESOURCES_DIR/mock_unpacked_dir_pie_s390x/usr/lib64/libcrypto.so"
+cp "$TEST_RESOURCES_DIR/redhat-release" "$TEST_RESOURCES_DIR/mock_unpacked_dir_pie_s390x/etc/redhat-release"
+echo "Copied binaries to mock_unpacked_dir_pie_s390x"
+
+# Add mock config.json and umoci.json files to all mock_unpacked_dirs
+for MOCK_UNPACKED_DIR in "mock_unpacked_dir-1" "mock_unpacked_dir-2" "mock_unpacked_dir_pie_s390x"; do
     touch "$TEST_RESOURCES_DIR/$MOCK_UNPACKED_DIR/config.json"
     touch "$TEST_RESOURCES_DIR/$MOCK_UNPACKED_DIR/umoci.json"
     echo "Added mock config files to $TEST_RESOURCES_DIR/$MOCK_UNPACKED_DIR"
