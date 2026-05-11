@@ -11,15 +11,38 @@ import (
 
 var (
 	baseConfig = &types.Config{
-		OutputFormat: "table",          // or another suitable format
-		Parallelism:  1,                // for test simplicity, you might want to run sequentially
-		TimeLimit:    30 * time.Second, // or a suitable duration
-		Verbose:      true,             // if you want verbose output during testing
+		OutputFormat: "table",
+		Parallelism:  1,
+		TimeLimit:    30 * time.Second,
+		Verbose:      true,
 		ConfigFile: types.ConfigFile{
 			PayloadIgnores:         make(map[string]types.IgnoreLists),
 			TagIgnores:             make(map[string]types.IgnoreLists),
 			RPMIgnores:             make(map[string]types.IgnoreLists),
 			CertifiedDistributions: []string{"Red Hat Enterprise Linux release 9.2 (Plow)", "Red Hat Enterprise Linux CoreOS release 4.12"},
+		},
+	}
+	moduleConfig94 = &types.Config{
+		OutputFormat: "table",
+		Parallelism:  1,
+		TimeLimit:    30 * time.Second,
+		Verbose:      true,
+		ConfigFile: types.ConfigFile{
+			PayloadIgnores:         make(map[string]types.IgnoreLists),
+			TagIgnores:             make(map[string]types.IgnoreLists),
+			RPMIgnores:             make(map[string]types.IgnoreLists),
+			CertifiedDistributions: []string{"Red Hat Enterprise Linux release 9.4 (Plow)"},
+			FIPSValidationMode:     "module",
+			FIPSCertifiedModules: []types.FipsModule{
+				{
+					Module:            "openssl",
+					CertifiedArtifact: "openssl-fips-provider",
+					CertifiedArtifactPaths: []string{
+						"/usr/lib64/ossl-modules/fips.so",
+						"/usr/lib/ossl-modules/fips.so",
+					},
+				},
+			},
 		},
 	}
 	ignoredOsConfig = &types.Config{
@@ -62,6 +85,7 @@ func TestRunLocalScan(t *testing.T) {
 		{"BadMockUnsupportedOperatingSystem", "../../test/resources/mock_unsupported_os", baseConfig, false},
 		{"UnsupportedOperatingSystemIgnored", "../../test/resources/mock_unsupported_os", ignoredOsConfig, true},
 		{"SymlinkedOsRelease", "../../test/resources/mock_os_symlinked", baseConfig, true},
+		{"ModuleModeRHEL94WithProvider", "../../test/resources/mock_unpacked_dir_9_4", moduleConfig94, true},
 	}
 	// Iterate over test cases
 	for _, tc := range testCases {

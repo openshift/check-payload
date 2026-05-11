@@ -1,11 +1,33 @@
 package types
 
 import (
+	"regexp"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	v1 "github.com/openshift/api/image/v1"
 	corev1 "k8s.io/api/core/v1"
 )
+
+var leadingSemverRE = regexp.MustCompile(`^(\d+\.\d+\.\d+)`)
+
+// VersionAtLeast compares an installed version string (which may have
+// RPM suffixes like "3.0.7-1.el9_4") against a minimum semver floor.
+func VersionAtLeast(installed, minVersion string) bool {
+	sv := leadingSemverRE.FindString(installed)
+	if sv == "" {
+		return false
+	}
+	v, err := semver.NewVersion(sv)
+	if err != nil {
+		return false
+	}
+	c, err := semver.NewConstraint(">= " + minVersion)
+	if err != nil {
+		return false
+	}
+	return c.Check(v)
+}
 
 type Config struct {
 	Components              []string      `json:"components"`
@@ -39,6 +61,9 @@ type ConfigFile struct {
 	JavaDisabledAlgorithms []string `json:"java_fips_disabled_algorithms" toml:"java_fips_disabled_algorithms"`
 	CertifiedDistributions []string `json:"certified_distributions" toml:"certified_distributions"`
 
+	FIPSValidationMode   string       `json:"fips_validation_mode" toml:"fips_validation_mode"`
+	FIPSCertifiedModules []FipsModule `json:"fips_certified_modules" toml:"fips_certified_modules"`
+
 	PayloadIgnores map[string]IgnoreLists `toml:"payload"`
 	TagIgnores     map[string]IgnoreLists `toml:"tag"`
 	RPMIgnores     map[string]IgnoreLists `toml:"rpm"`
@@ -68,13 +93,23 @@ type ArtifactPod struct {
 	Items      []corev1.Pod `json:"items"`
 }
 
+// FipsModule maps a crypto stack to its FIPS-certified artifact and version requirements.
+// Parsed from fips_certified_modules config entries.
+type FipsModule struct {
+	Module                      string   `json:"module" toml:"module"`
+	CertifiedArtifact           string   `json:"certified_artifact" toml:"certified_artifact"`
+	CertifiedArtifactMinVersion string   `json:"certified_artifact_min_version" toml:"certified_artifact_min_version"`
+	CertifiedArtifactPaths      []string `json:"certified_artifact_paths" toml:"certified_artifact_paths"`
+}
+
 type ScanResult struct {
-	Component *OpenshiftComponent
-	Tag       *v1.TagReference
-	RPM       string
-	Path      string
-	Skip      bool
-	Error     *ValidationError
+	Component   *OpenshiftComponent
+	Tag         *v1.TagReference
+	RPM         string
+	Path        string
+	Skip        bool
+	Error       *ValidationError
+	ModulesUsed []string
 }
 
 type ScanResults struct {

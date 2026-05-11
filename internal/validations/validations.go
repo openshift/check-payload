@@ -53,6 +53,14 @@ var (
 
 	// correlates to java 1.11
 	JavaClassLessThan55 = newSemverConstraint("< 55")
+
+	// Module names used in ModulesUsed tracking. These must match the
+	// "module" field in fips_certified_modules config entries.
+	moduleGo      = "go"
+	moduleOpenssl = "openssl"
+
+	// Library prefix used to detect openssl linkage in ELF DT_NEEDED.
+	libcryptoPrefix = "libcrypto.so"
 )
 
 type Baton struct {
@@ -62,6 +70,7 @@ type Baton struct {
 	GoVersion   *semver.Version
 	GoBuildInfo *buildinfo.BuildInfo
 	GoSymTable  *gosym.Table
+	ModulesUsed []string
 }
 
 type ValidationFn func(ctx context.Context, path string, baton *Baton) *types.ValidationError
@@ -78,6 +87,7 @@ var validationFns = map[string][]ValidationFn{
 	},
 	"exe": {
 		validateNotStatic,
+		validateExeOpenssl,
 	},
 }
 
@@ -90,6 +100,8 @@ func _loadGoSymbols(_ context.Context, path string, baton *Baton) *types.Validat
 	baton.GoSymTable = symtable
 	if !isUsingCryptoModule(baton.GoSymTable) {
 		baton.GoNoCrypto = true
+	} else {
+		baton.ModulesUsed = append(baton.ModulesUsed, moduleGo)
 	}
 	return nil
 }
@@ -204,14 +216,17 @@ func validateGoStatic(ctx context.Context, path string, baton *Baton) *types.Val
 }
 
 func validateGoOpenssl(_ context.Context, path string, baton *Baton) *types.ValidationError {
-	// if there is no crypto then skip openssl test
 	if baton.GoNoCrypto {
 		return nil
-	} else if goGreaterThanOrEqualTo122.Check(baton.GoVersion) {
+	}
+	if goGreaterThanOrEqualTo122.Check(baton.GoVersion) {
 		return nil
 	}
-	// check for openssl strings
-	return types.NewValidationError(validateStringsOpenssl(path, baton))
+	if err := validateStringsOpenssl(path, baton); err != nil {
+		return types.NewValidationError(err)
+	}
+	baton.ModulesUsed = append(baton.ModulesUsed, moduleOpenssl)
+	return nil
 }
 
 func validateGoCGOInit(_ context.Context, path string, baton *Baton) *types.ValidationError {
@@ -302,6 +317,29 @@ func validateStringsOpenssl(path string, baton *Baton) error {
 		return fmt.Errorf("%w: %v", types.ErrLibcryptoSoMissing, libcryptoVersion)
 	}
 
+	return nil
+}
+
+func validateExeOpenssl(_ context.Context, path string, baton *Baton) *types.ValidationError {
+	if baton.Static {
+		return nil
+	}
+	exe, err := elf.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer exe.Close()
+
+	libs, err := exe.ImportedLibraries()
+	if err != nil {
+		return nil
+	}
+	for _, lib := range libs {
+		if strings.HasPrefix(lib, libcryptoPrefix) {
+			baton.ModulesUsed = append(baton.ModulesUsed, moduleOpenssl)
+			return nil
+		}
+	}
 	return nil
 }
 
@@ -431,11 +469,11 @@ checks:
 					}
 				}
 			}
-			return res.SetValidationError(err)
+			return res.SetModulesUsed(baton.ModulesUsed).SetValidationError(err)
 		}
 	}
 
-	return res.Success()
+	return res.SetModulesUsed(baton.ModulesUsed).Success()
 }
 
 // newSemverConstraint is like semver.NewConstraint but panics if the expression cannot be parsed.

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -16,6 +17,9 @@ func (c *ConfigFile) Validate() (err, warn error) {
 	validateFileList("filter_files", &err, c.FilterFiles)
 	validateFileList("filter_dirs", &err, c.FilterDirs)
 	validateOverlaps("filter_", &warn, c.FilterFiles, c.FilterDirs)
+
+	validateFIPSValidationMode(&err, c.FIPSValidationMode)
+	validateFIPSCertifiedModules(&err, c.FIPSCertifiedModules)
 
 	validateIgnoreLists("payload", &err, &warn, c.PayloadIgnores)
 	validateIgnoreLists("tag", &err, &warn, c.TagIgnores)
@@ -62,6 +66,41 @@ type errEmpty struct {
 
 func (e *errEmpty) Error() string {
 	return `config entry ` + e.Listname + ` has no ` + e.What + ` set`
+}
+
+type errInvalidFIPSMode struct {
+	Value string
+}
+
+func (e *errInvalidFIPSMode) Error() string {
+	return `fips_validation_mode must be "", "allowlist", or "module", got "` + e.Value + `"`
+}
+
+type errInvalidFIPSModule struct {
+	Index int
+	Field string
+}
+
+func (e *errInvalidFIPSModule) Error() string {
+	return fmt.Sprintf("fips_certified_modules[%d] has empty %s", e.Index, e.Field)
+}
+
+func validateFIPSValidationMode(perr *error, mode string) {
+	if mode == "" || mode == "allowlist" || mode == "module" {
+		return
+	}
+	multierr.AppendInto(perr, &errInvalidFIPSMode{Value: mode})
+}
+
+func validateFIPSCertifiedModules(perr *error, modules []FipsModule) {
+	for i, m := range modules {
+		if m.Module == "" {
+			multierr.AppendInto(perr, &errInvalidFIPSModule{Index: i, Field: "module"})
+		}
+		if m.CertifiedArtifact == "" {
+			multierr.AppendInto(perr, &errInvalidFIPSModule{Index: i, Field: "certified_artifact"})
+		}
+	}
 }
 
 // validateFileList checks that the paths in the list are clean and absolute.
@@ -134,6 +173,11 @@ func (c *ConfigFile) Add(add *ConfigFile) error {
 	c.FilterImages = appendUniq("filter_images", &err, c.FilterImages, add.FilterImages)
 	c.CertifiedDistributions = appendUniq("certified_distributions", &err, c.CertifiedDistributions, add.CertifiedDistributions)
 
+	if add.FIPSValidationMode != "" {
+		c.FIPSValidationMode = add.FIPSValidationMode
+	}
+	c.FIPSCertifiedModules = mergeFIPSModules(c.FIPSCertifiedModules, add.FIPSCertifiedModules)
+
 	c.PayloadIgnores = mergeLists("payload", &err, c.PayloadIgnores, add.PayloadIgnores)
 	c.TagIgnores = mergeLists("tag", &err, c.TagIgnores, add.TagIgnores)
 	c.RPMIgnores = mergeLists("rpm", &err, c.RPMIgnores, add.RPMIgnores)
@@ -141,6 +185,27 @@ func (c *ConfigFile) Add(add *ConfigFile) error {
 	c.ErrIgnores = mergeErrIgnoreLists("[[ignore]]", &err, c.ErrIgnores, add.ErrIgnores)
 
 	return err
+}
+
+func fipsModuleKey(m FipsModule) string {
+	return m.Module + "\x00" + m.CertifiedArtifact
+}
+
+func mergeFIPSModules(main, add []FipsModule) []FipsModule {
+	if len(add) == 0 {
+		return main
+	}
+	seen := make(map[string]bool, len(main))
+	for _, m := range main {
+		seen[fipsModuleKey(m)] = true
+	}
+	for _, m := range add {
+		if !seen[fipsModuleKey(m)] {
+			main = append(main, m)
+			seen[fipsModuleKey(m)] = true
+		}
+	}
+	return main
 }
 
 type errDup struct {
