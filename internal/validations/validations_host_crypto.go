@@ -3,7 +3,6 @@ package validations
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -60,51 +59,74 @@ func artifactPresentAndVersion(ctx context.Context, mountPath string, m types.Fi
 	return "", false
 }
 
-func findLib(mountPath string, searchPaths []string, subname string) (path string, err error) {
-	var returnPath string
-	for _, path := range searchPaths {
-		files, err := os.ReadDir(filepath.Join(mountPath, path))
+type hostLibCheck struct {
+	lib         string
+	fipsSymbols []string
+}
+
+// moduleHostLibChecks maps module names to host library FIPS requirements.
+// Add entries here when a new crypto stack needs host library validation.
+var moduleHostLibChecks = map[string]hostLibCheck{
+	"openssl": {
+		lib:         "libcrypto.so",
+		fipsSymbols: []string{"FIPS_mode", "fips_mode", "EVP_default_properties_is_fips_enabled"},
+	},
+}
+
+var hostLibSearchPaths = []string{"/usr/lib64", "/usr/lib"}
+
+func findLib(mountPath string, searchPaths []string, subname string) (string, error) {
+	for _, dir := range searchPaths {
+		files, err := os.ReadDir(filepath.Join(mountPath, dir))
 		if err != nil {
 			continue
 		}
 		for _, file := range files {
 			if strings.Contains(file.Name(), subname) && !strings.Contains(file.Name(), "hmac") {
-				returnPath = filepath.Join(path, file.Name())
-				break
+				return filepath.Join(dir, file.Name()), nil
 			}
 		}
 	}
-	if returnPath == "" {
-		return "", errors.New("openssl not found")
-	}
-	return returnPath, nil
+	return "", fmt.Errorf("%s not found", subname)
 }
 
-func ValidateOpenssl(ctx context.Context, mountPath string) types.OpensslInfo {
-	info := types.OpensslInfo{
-		Present: false,
-		FIPS:    false,
-		Error:   nil,
+// ValidateHostLibsForModules checks that each detected module's host library
+// exports FIPS symbols. Only modules registered in moduleHostLibChecks are
+// checked; modules without a host library (e.g. Go native FIPS) are skipped.
+func ValidateHostLibsForModules(ctx context.Context, mountPath string, modulesInUse map[string]bool) []*types.ValidationError {
+	var errs []*types.ValidationError
+	for module := range modulesInUse {
+		check, ok := moduleHostLibChecks[module]
+		if !ok {
+			continue
+		}
+		if ve := validateHostLib(ctx, mountPath, module, check); ve != nil {
+			errs = append(errs, ve)
+		}
 	}
+	return errs
+}
 
-	path, err := findLib(mountPath, []string{"/usr/lib64", "/usr/lib"}, "libcrypto.so")
+func validateHostLib(ctx context.Context, mountPath, module string, check hostLibCheck) *types.ValidationError {
+	libPath, err := findLib(mountPath, hostLibSearchPaths, check.lib)
 	if err != nil {
-		info.Present = false
-		info.FIPS = false
-		return info
+		return types.NewValidationError(fmt.Errorf("%s host library not present: %w", module, err))
 	}
-	info.Path = path
 
 	var stdout bytes.Buffer
-	cmd := exec.CommandContext(ctx, "nm", "-D", filepath.Join(mountPath, path))
+	cmd := exec.CommandContext(ctx, "nm", "-D", filepath.Join(mountPath, libPath))
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		info.Error = err
-		return info
+		return types.NewValidationError(fmt.Errorf("failed to inspect %s: %w", libPath, err))
 	}
 
-	info.Present = true
-	info.FIPS = bytes.Contains(stdout.Bytes(), []byte("FIPS_mode")) || bytes.Contains(stdout.Bytes(), []byte("fips_mode")) || bytes.Contains(stdout.Bytes(), []byte("EVP_default_properties_is_fips_enabled"))
+	out := stdout.Bytes()
+	for _, sym := range check.fipsSymbols {
+		if bytes.Contains(out, []byte(sym)) {
+			klog.V(1).InfoS("host lib FIPS check passed", "module", module, "lib", libPath, "symbol", sym)
+			return nil
+		}
+	}
 
-	return info
+	return types.NewValidationError(fmt.Errorf("%s is missing FIPS symbols %v", libPath, check.fipsSymbols))
 }

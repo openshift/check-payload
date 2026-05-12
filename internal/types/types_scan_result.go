@@ -1,8 +1,6 @@
 package types
 
 import (
-	"errors"
-
 	v1 "github.com/openshift/api/image/v1"
 )
 
@@ -45,16 +43,6 @@ func (r *ScanResult) Status() string {
 	}
 	// Should never happen.
 	return "<unknown>"
-}
-
-func (r *ScanResult) SetOpenssl(info OpensslInfo) *ScanResult {
-	if !info.Present {
-		r.SetError(errors.New("openssl library not present"))
-	} else if !info.FIPS {
-		r.SetError(errors.New("openssl library is missing FIPS support"))
-	}
-	r.Path = info.Path
-	return r
 }
 
 func (r *ScanResult) SetOS(info OSInfo) *ScanResult {

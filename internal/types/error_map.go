@@ -7,6 +7,8 @@ var KnownErrors = map[string]error {
 	"ErrDistributionFileMissing": ErrDistributionFileMissing,
 	"ErrFipsArtifactMissing": ErrFipsArtifactMissing,
 	"ErrFipsArtifactVersionLow": ErrFipsArtifactVersionLow,
+	"ErrGoFIPSNotAuto": ErrGoFIPSNotAuto,
+	"ErrGoFIPSNotCertified": ErrGoFIPSNotCertified,
 	"ErrGoInvalidTag": ErrGoInvalidTag,
 	"ErrGoMissingSymbols": ErrGoMissingSymbols,
 	"ErrGoMissingTag": ErrGoMissingTag,
