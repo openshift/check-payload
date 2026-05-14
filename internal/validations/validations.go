@@ -97,6 +97,9 @@ func _loadGoSymbols(_ context.Context, path string, baton *Baton) *types.Validat
 	if err != nil {
 		return types.NewValidationError(fmt.Errorf("go: could not read table for %v: %w", filepath.Base(path), err))
 	}
+	if len(symtable.Funcs) == 0 {
+		return types.NewValidationError(fmt.Errorf("go: symbol table for %v has no functions (pclntab may be corrupt)", filepath.Base(path)))
+	}
 	baton.GoSymTable = symtable
 	if !isUsingCryptoModule(baton.GoSymTable) {
 		baton.GoNoCrypto = true
