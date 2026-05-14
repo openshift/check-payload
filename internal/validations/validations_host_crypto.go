@@ -16,47 +16,59 @@ import (
 )
 
 func CheckArtifact(ctx context.Context, m types.FipsModule, mountPath string) *types.ValidationError {
-	version, present := artifactPresentAndVersion(ctx, mountPath, m)
+	version, present := rpmPresentAndVersion(ctx, mountPath, m.CertifiedArtifact)
 	if !present {
-		klog.V(1).InfoS("fips artifact missing", "artifact", m.CertifiedArtifact, "module", m.Module, "mountPath", mountPath)
+		klog.V(1).InfoS("fips artifact RPM missing", "artifact", m.CertifiedArtifact, "module", m.Module)
 		return types.NewValidationError(fmt.Errorf("%s: %w", m.CertifiedArtifact, types.ErrFipsArtifactMissing))
 	}
-	if m.CertifiedArtifactMinVersion != "" && !types.VersionAtLeast(version, m.CertifiedArtifactMinVersion) {
-		installed := version
-		if installed == "" {
-			installed = "unknown (detected via file path, RPM not available)"
+	if version != "" {
+		atLeast, atMost := types.VersionInRange(version, m.CertifiedArtifactMinVersion, m.CertifiedArtifactMaxVersion)
+		if !atLeast {
+			klog.V(1).InfoS("fips artifact version too low", "artifact", m.CertifiedArtifact, "installed", version, "required", m.CertifiedArtifactMinVersion)
+			return types.NewValidationError(fmt.Errorf("%s (installed %s, need >= %s): %w",
+				m.CertifiedArtifact, version, m.CertifiedArtifactMinVersion, types.ErrFipsArtifactVersionLow))
 		}
-		klog.V(1).InfoS("fips artifact version too low", "artifact", m.CertifiedArtifact, "installed", installed, "required", m.CertifiedArtifactMinVersion)
-		return types.NewValidationError(fmt.Errorf("%s (installed %s, need >= %s): %w",
-			m.CertifiedArtifact, installed, m.CertifiedArtifactMinVersion, types.ErrFipsArtifactVersionLow))
+		if !atMost {
+			klog.V(1).InfoS("fips artifact version exceeds certified range", "artifact", m.CertifiedArtifact, "installed", version, "maxCertified", m.CertifiedArtifactMaxVersion)
+			return types.NewValidationError(fmt.Errorf("%s (installed %s, certified <= %s): %w",
+				m.CertifiedArtifact, version, m.CertifiedArtifactMaxVersion, types.ErrFipsArtifactVersionHigh))
+		}
+	}
+	if len(m.CertifiedArtifactPaths) > 0 && !anyPathExists(mountPath, m.CertifiedArtifactPaths) {
+		klog.V(1).InfoS("fips artifact RPM present but certified file missing", "artifact", m.CertifiedArtifact, "paths", m.CertifiedArtifactPaths)
+		return types.NewValidationError(fmt.Errorf("%s RPM present but certified file not found at %v: %w",
+			m.CertifiedArtifact, m.CertifiedArtifactPaths, types.ErrFipsArtifactMissing))
 	}
 	klog.V(1).InfoS("fips artifact present", "artifact", m.CertifiedArtifact, "version", version, "module", m.Module)
 	return nil
 }
 
-func artifactPresentAndVersion(ctx context.Context, mountPath string, m types.FipsModule) (version string, present bool) {
+func rpmPresentAndVersion(ctx context.Context, mountPath, rpmName string) (version string, present bool) {
 	rpms, err := rpm.GetAllRPMs(ctx, mountPath)
-	if err == nil {
-		for _, r := range rpms {
-			if r.Name == m.CertifiedArtifact {
-				v, err := rpm.VersionOf(ctx, mountPath, m.CertifiedArtifact)
-				if err == nil {
-					klog.V(1).InfoS("fips artifact found via RPM", "artifact", m.CertifiedArtifact, "version", v)
-					return v, true
-				}
-				klog.V(1).InfoS("fips artifact RPM found but version query failed", "artifact", m.CertifiedArtifact, "error", err)
-				return "", true
-			}
-		}
+	if err != nil {
+		return "", false
 	}
-	for _, p := range m.CertifiedArtifactPaths {
-		full := filepath.Join(mountPath, p)
-		if _, err := os.Stat(full); err == nil {
-			klog.V(1).InfoS("fips artifact found via file path", "artifact", m.CertifiedArtifact, "path", p)
+	for _, r := range rpms {
+		if r.Name == rpmName {
+			v, err := rpm.VersionOf(ctx, mountPath, rpmName)
+			if err == nil {
+				klog.V(1).InfoS("fips artifact found via RPM", "artifact", rpmName, "version", v)
+				return v, true
+			}
+			klog.V(1).InfoS("fips artifact RPM found but version query failed", "artifact", rpmName, "error", err)
 			return "", true
 		}
 	}
 	return "", false
+}
+
+func anyPathExists(mountPath string, paths []string) bool {
+	for _, p := range paths {
+		if _, err := os.Stat(filepath.Join(mountPath, p)); err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 type hostLibCheck struct {
@@ -90,21 +102,35 @@ func findLib(mountPath string, searchPaths []string, subname string) (string, er
 	return "", fmt.Errorf("%s not found", subname)
 }
 
-// ValidateHostLibsForModules checks that each detected module's host library
-// exports FIPS symbols. Only modules registered in moduleHostLibChecks are
-// checked; modules without a host library (e.g. Go native FIPS) are skipped.
-func ValidateHostLibsForModules(ctx context.Context, mountPath string, modulesInUse map[string]bool) []*types.ValidationError {
-	var errs []*types.ValidationError
-	for module := range modulesInUse {
-		check, ok := moduleHostLibChecks[module]
-		if !ok {
-			continue
-		}
-		if ve := validateHostLib(ctx, mountPath, module, check); ve != nil {
-			errs = append(errs, ve)
+// ValidateModule performs unified FIPS validation for a single module.
+// Binary-source modules are skipped (validated during binary inspection).
+// Image-source modules try artifact check first, then fall back to host lib
+// FIPS symbol check. Passes if either succeeds.
+func ValidateModule(ctx context.Context, cfg *types.Config, mountPath string, module string) *types.ValidationError {
+	for _, r := range cfg.GetFIPSCertifiedModules() {
+		if r.Module == module && r.IsBinarySource() {
+			klog.V(1).InfoS("fips module validated at binary level, skipping image check", "module", module)
+			return nil
 		}
 	}
-	return errs
+
+	for _, r := range cfg.GetFIPSCertifiedModules() {
+		if r.Module != module || r.CertifiedArtifact == "" {
+			continue
+		}
+		klog.V(1).InfoS("checking fips artifact", "module", r.Module, "artifact", r.CertifiedArtifact)
+		if ve := CheckArtifact(ctx, r, mountPath); ve == nil {
+			return nil
+		}
+	}
+
+	if check, ok := moduleHostLibChecks[module]; ok {
+		if ve := validateHostLib(ctx, mountPath, module, check); ve == nil {
+			return nil
+		}
+	}
+
+	return types.NewValidationError(fmt.Errorf("no FIPS certified artifact or library found for module %s: %w", module, types.ErrFipsArtifactMissing))
 }
 
 func validateHostLib(ctx context.Context, mountPath, module string, check hostLibCheck) *types.ValidationError {

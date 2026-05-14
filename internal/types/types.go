@@ -9,24 +9,29 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-var leadingSemverRE = regexp.MustCompile(`^(\d+\.\d+\.\d+)`)
+var leadingSemverRE = regexp.MustCompile(`^v?(\d+\.\d+\.\d+)`)
 
-// VersionAtLeast compares an installed version string (which may have
-// RPM suffixes like "3.0.7-1.el9_4") against a minimum semver floor.
-func VersionAtLeast(installed, minVersion string) bool {
+// VersionInRange checks installed version against optional min/max bounds.
+func VersionInRange(installed, minVersion, maxVersion string) (atLeast, atMost bool) {
 	sv := leadingSemverRE.FindString(installed)
 	if sv == "" {
-		return false
+		return false, false
 	}
 	v, err := semver.NewVersion(sv)
 	if err != nil {
-		return false
+		return false, false
 	}
-	c, err := semver.NewConstraint(">= " + minVersion)
-	if err != nil {
-		return false
+	atLeast = true
+	if minVersion != "" {
+		c, err := semver.NewConstraint(">= " + minVersion)
+		atLeast = err == nil && c.Check(v)
 	}
-	return c.Check(v)
+	atMost = true
+	if maxVersion != "" {
+		c, err := semver.NewConstraint("<= " + maxVersion)
+		atMost = err == nil && c.Check(v)
+	}
+	return atLeast, atMost
 }
 
 type Config struct {
@@ -93,12 +98,18 @@ type ArtifactPod struct {
 }
 
 // FipsModule maps a crypto stack to its FIPS-certified artifact and version requirements.
-// Parsed from fips_certified_modules config entries.
+// ArtifactSource: "image" (default) = RPM/file in container, "binary" = embedded in binary.
 type FipsModule struct {
 	Module                      string   `json:"module" toml:"module"`
-	CertifiedArtifact           string   `json:"certified_artifact" toml:"certified_artifact"`
-	CertifiedArtifactMinVersion string   `json:"certified_artifact_min_version" toml:"certified_artifact_min_version"`
-	CertifiedArtifactPaths      []string `json:"certified_artifact_paths" toml:"certified_artifact_paths"`
+	ArtifactSource              string   `json:"artifact_source,omitempty" toml:"artifact_source"`
+	CertifiedArtifact           string   `json:"certified_artifact,omitempty" toml:"certified_artifact"`
+	CertifiedArtifactMinVersion string   `json:"certified_artifact_min_version,omitempty" toml:"certified_artifact_min_version"`
+	CertifiedArtifactMaxVersion string   `json:"certified_artifact_max_version,omitempty" toml:"certified_artifact_max_version"`
+	CertifiedArtifactPaths      []string `json:"certified_artifact_paths,omitempty" toml:"certified_artifact_paths"`
+}
+
+func (m FipsModule) IsBinarySource() bool {
+	return m.ArtifactSource == "binary"
 }
 
 type ScanResult struct {

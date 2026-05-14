@@ -35,11 +35,18 @@ var (
 			FIPSCertifiedModules: []types.FipsModule{
 				{
 					Module:            "openssl",
+					ArtifactSource:    "image",
 					CertifiedArtifact: "openssl-fips-provider",
 					CertifiedArtifactPaths: []string{
 						"/usr/lib64/ossl-modules/fips.so",
 						"/usr/lib/ossl-modules/fips.so",
 					},
+				},
+				{
+					Module:                      "go",
+					ArtifactSource:              "binary",
+					CertifiedArtifact:           "crypto/fips140",
+					CertifiedArtifactMinVersion: "v1.0.0",
 				},
 			},
 		},
@@ -57,11 +64,18 @@ var (
 			FIPSCertifiedModules: []types.FipsModule{
 				{
 					Module:            "openssl",
+					ArtifactSource:    "image",
 					CertifiedArtifact: "openssl-fips-provider",
 					CertifiedArtifactPaths: []string{
 						"/usr/lib64/ossl-modules/fips.so",
 						"/usr/lib/ossl-modules/fips.so",
 					},
+				},
+				{
+					Module:                      "go",
+					ArtifactSource:              "binary",
+					CertifiedArtifact:           "crypto/fips140",
+					CertifiedArtifactMinVersion: "v1.0.0",
 				},
 			},
 		},
