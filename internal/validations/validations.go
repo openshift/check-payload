@@ -47,6 +47,8 @@ var (
 	goLessThan12113           = newSemverConstraint("< 1.21.13")
 	goLessThan122             = newSemverConstraint("< 1.22")
 	goGreaterThanOrEqualTo122 = newSemverConstraint(">= 1.22")
+	goGreaterThanOrEqualTo126 = newSemverConstraint(">= 1.26")
+	goVersionIs126            = newSemverConstraint(">= 1.26, < 1.27")
 
 	// correlates to java 1.8
 	JavaClassLessThan52 = newSemverConstraint("< 52")
@@ -64,9 +66,11 @@ var (
 )
 
 type Baton struct {
-	TopDir      string
-	Static      bool
-	GoNoCrypto  bool
+	TopDir       string
+	Static       bool
+	GoNoCrypto   bool
+	GoNativeFIPS bool
+
 	GoVersion   *semver.Version
 	GoBuildInfo *buildinfo.BuildInfo
 	GoSymTable  *gosym.Table
@@ -78,6 +82,7 @@ type ValidationFn func(ctx context.Context, path string, baton *Baton) *types.Va
 var validationFns = map[string][]ValidationFn{
 	"go": {
 		_loadGoSymbols,
+		validateGoNativeFIPS,
 		validateGoCgo,
 		validateGoCGOInit,
 		validateGoSymbols,
@@ -103,15 +108,63 @@ func _loadGoSymbols(_ context.Context, path string, baton *Baton) *types.Validat
 	baton.GoSymTable = symtable
 	if !isUsingCryptoModule(baton.GoSymTable) {
 		baton.GoNoCrypto = true
-	} else {
-		baton.ModulesUsed = append(baton.ModulesUsed, moduleGo)
 	}
 	return nil
 }
 
-func validateGoSymbols(_ context.Context, _ string, baton *Baton) *types.ValidationError {
-	// Skip if the golang binary is not using crypto
+func validateGoNativeFIPS(_ context.Context, _ string, baton *Baton) *types.ValidationError {
 	if baton.GoNoCrypto {
+		return nil
+	}
+	// Go <= 1.25: fips140=auto doesn't exist (RH patch is 1.26+ only).
+	if !goGreaterThanOrEqualTo126.Check(baton.GoVersion) {
+		return nil
+	}
+	// Go 1.26: dual mode. No fips140=auto means golang-fips/OpenSSL path.
+	if goVersionIs126.Check(baton.GoVersion) && !hasGodebugFIPS140Auto(baton) {
+		return nil
+	}
+	// Go >= 1.27 OR (Go 1.26 + fips140=auto): enforce native FIPS rules.
+	if !hasGodebugFIPS140Auto(baton) {
+		return types.NewValidationError(types.ErrGoFIPSNotAuto)
+	}
+	if !hasGOFIPS140Certified(baton) {
+		return types.NewValidationError(types.ErrGoFIPSNotCertified)
+	}
+	baton.GoNativeFIPS = true
+	baton.ModulesUsed = append(baton.ModulesUsed, moduleGo)
+	return nil
+}
+
+func hasGodebugFIPS140Auto(baton *Baton) bool {
+	for _, bs := range baton.GoBuildInfo.Settings {
+		// //go:debug directives are stored under DefaultGODEBUG in BuildInfo,
+		// not GODEBUG. The value is comma-separated key=value pairs.
+		if bs.Key == "DefaultGODEBUG" || bs.Key == "GODEBUG" {
+			for _, kv := range strings.Split(bs.Value, ",") {
+				if strings.TrimSpace(kv) == "fips140=auto" {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func hasGOFIPS140Certified(baton *Baton) bool {
+	for _, bs := range baton.GoBuildInfo.Settings {
+		if bs.Key == "GOFIPS140" {
+			// GOFIPS140=certified resolves to a version string at build time
+			// (e.g. "v1.0.0-c2097c7c"), not the literal "certified". Any
+			// non-empty, non-"off" value indicates a FIPS module was selected.
+			return bs.Value != "" && bs.Value != "off"
+		}
+	}
+	return false
+}
+
+func validateGoSymbols(_ context.Context, _ string, baton *Baton) *types.ValidationError {
+	if baton.GoNoCrypto || baton.GoNativeFIPS {
 		return nil
 	}
 	requiredGolangSymbols := requiredGolangSymbolsPost122
@@ -139,8 +192,7 @@ func isUsingCryptoModule(symtable *gosym.Table) bool {
 }
 
 func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationError {
-	// If crypto is not used, openssl linkage via CGO is not required
-	if baton.GoNoCrypto {
+	if baton.GoNoCrypto || baton.GoNativeFIPS {
 		return nil
 	}
 	if goLessThan118.Check(baton.GoVersion) {
@@ -155,6 +207,9 @@ func validateGoCgo(_ context.Context, _ string, baton *Baton) *types.ValidationE
 }
 
 func validateGoTagsAndExperiment(_ context.Context, _ string, baton *Baton) *types.ValidationError {
+	if baton.GoNativeFIPS {
+		return nil
+	}
 	badTags := []string{"no_openssl"}
 	goodTags := []string{"strictfipsruntime"}
 
@@ -211,30 +266,31 @@ func validateGoTagsAndExperiment(_ context.Context, _ string, baton *Baton) *typ
 }
 
 func validateGoStatic(ctx context.Context, path string, baton *Baton) *types.ValidationError {
-	// if the static golang binary does not contain crypto then skip
-	if baton.GoNoCrypto {
+	if baton.GoNoCrypto || baton.GoNativeFIPS {
 		return nil
 	}
 	return validateNotStatic(ctx, path, baton)
 }
 
 func validateGoOpenssl(_ context.Context, path string, baton *Baton) *types.ValidationError {
-	if baton.GoNoCrypto {
+	if baton.GoNoCrypto || baton.GoNativeFIPS {
 		return nil
 	}
+	// All legacy golang-fips binaries use OpenSSL — tag for module artifact check (Phase 4).
+	baton.ModulesUsed = append(baton.ModulesUsed, moduleOpenssl)
 	if goGreaterThanOrEqualTo122.Check(baton.GoVersion) {
 		return nil
 	}
+	// Go < 1.22: also verify the libcrypto version string in the binary matches
+	// an actual .so in the image.
 	if err := validateStringsOpenssl(path, baton); err != nil {
 		return types.NewValidationError(err)
 	}
-	baton.ModulesUsed = append(baton.ModulesUsed, moduleOpenssl)
 	return nil
 }
 
 func validateGoCGOInit(_ context.Context, path string, baton *Baton) *types.ValidationError {
-	// If crypto is not used, openssl linkage via CGO is not required
-	if baton.GoNoCrypto {
+	if baton.GoNoCrypto || baton.GoNativeFIPS {
 		return nil
 	}
 	f, err := os.Open(path)

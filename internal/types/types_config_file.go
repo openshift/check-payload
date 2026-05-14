@@ -18,7 +18,6 @@ func (c *ConfigFile) Validate() (err, warn error) {
 	validateFileList("filter_dirs", &err, c.FilterDirs)
 	validateOverlaps("filter_", &warn, c.FilterFiles, c.FilterDirs)
 
-	validateFIPSValidationMode(&err, c.FIPSValidationMode)
 	validateFIPSCertifiedModules(&err, c.FIPSCertifiedModules)
 
 	validateIgnoreLists("payload", &err, &warn, c.PayloadIgnores)
@@ -68,14 +67,6 @@ func (e *errEmpty) Error() string {
 	return `config entry ` + e.Listname + ` has no ` + e.What + ` set`
 }
 
-type errInvalidFIPSMode struct {
-	Value string
-}
-
-func (e *errInvalidFIPSMode) Error() string {
-	return `fips_validation_mode must be "", "allowlist", or "module", got "` + e.Value + `"`
-}
-
 type errInvalidFIPSModule struct {
 	Index int
 	Field string
@@ -83,13 +74,6 @@ type errInvalidFIPSModule struct {
 
 func (e *errInvalidFIPSModule) Error() string {
 	return fmt.Sprintf("fips_certified_modules[%d] has empty %s", e.Index, e.Field)
-}
-
-func validateFIPSValidationMode(perr *error, mode string) {
-	if mode == "" || mode == "allowlist" || mode == "module" {
-		return
-	}
-	multierr.AppendInto(perr, &errInvalidFIPSMode{Value: mode})
 }
 
 func validateFIPSCertifiedModules(perr *error, modules []FipsModule) {
@@ -173,9 +157,6 @@ func (c *ConfigFile) Add(add *ConfigFile) error {
 	c.FilterImages = appendUniq("filter_images", &err, c.FilterImages, add.FilterImages)
 	c.CertifiedDistributions = appendUniq("certified_distributions", &err, c.CertifiedDistributions, add.CertifiedDistributions)
 
-	if add.FIPSValidationMode != "" {
-		c.FIPSValidationMode = add.FIPSValidationMode
-	}
 	c.FIPSCertifiedModules = mergeFIPSModules(c.FIPSCertifiedModules, add.FIPSCertifiedModules)
 
 	c.PayloadIgnores = mergeLists("payload", &err, c.PayloadIgnores, add.PayloadIgnores)

@@ -32,7 +32,28 @@ var (
 			TagIgnores:             make(map[string]types.IgnoreLists),
 			RPMIgnores:             make(map[string]types.IgnoreLists),
 			CertifiedDistributions: []string{"Red Hat Enterprise Linux release 9.4 (Plow)"},
-			FIPSValidationMode:     "module",
+			FIPSCertifiedModules: []types.FipsModule{
+				{
+					Module:            "openssl",
+					CertifiedArtifact: "openssl-fips-provider",
+					CertifiedArtifactPaths: []string{
+						"/usr/lib64/ossl-modules/fips.so",
+						"/usr/lib/ossl-modules/fips.so",
+					},
+				},
+			},
+		},
+	}
+	nativeFIPSConfig = &types.Config{
+		OutputFormat: "table",
+		Parallelism:  1,
+		TimeLimit:    30 * time.Second,
+		Verbose:      true,
+		ConfigFile: types.ConfigFile{
+			PayloadIgnores:         make(map[string]types.IgnoreLists),
+			TagIgnores:             make(map[string]types.IgnoreLists),
+			RPMIgnores:             make(map[string]types.IgnoreLists),
+			CertifiedDistributions: []string{"Red Hat Enterprise Linux release 9.6 (Plow)"},
 			FIPSCertifiedModules: []types.FipsModule{
 				{
 					Module:            "openssl",
@@ -87,6 +108,7 @@ func TestRunLocalScan(t *testing.T) {
 		{"SymlinkedOsRelease", "../../test/resources/mock_os_symlinked", baseConfig, true},
 		{"ModuleModeRHEL94WithProvider", "../../test/resources/mock_unpacked_dir_9_4", moduleConfig94, true},
 		{"PIE_Go126_s390x", "../../test/resources/mock_unpacked_dir_pie_s390x", baseConfig, true},
+		{"NativeFIPSBinary", "../../test/resources/mock_native_fips", nativeFIPSConfig, true},
 	}
 	// Iterate over test cases
 	for _, tc := range testCases {

@@ -61,7 +61,6 @@ type ConfigFile struct {
 	JavaDisabledAlgorithms []string `json:"java_fips_disabled_algorithms" toml:"java_fips_disabled_algorithms"`
 	CertifiedDistributions []string `json:"certified_distributions" toml:"certified_distributions"`
 
-	FIPSValidationMode   string       `json:"fips_validation_mode" toml:"fips_validation_mode"`
 	FIPSCertifiedModules []FipsModule `json:"fips_certified_modules" toml:"fips_certified_modules"`
 
 	PayloadIgnores map[string]IgnoreLists `toml:"payload"`
@@ -127,13 +126,6 @@ type JavaComponent struct {
 	Entrypoint []string
 	Cmd        []string
 	WorkingDir string
-}
-
-type OpensslInfo struct {
-	Present bool
-	FIPS    bool
-	Error   error
-	Path    string
 }
 
 type OSInfo struct {

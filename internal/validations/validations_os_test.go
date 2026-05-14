@@ -37,7 +37,6 @@ func TestValidateModuleArtifacts(t *testing.T) {
 	baseCfg := func(modules []types.FipsModule) *types.Config {
 		return &types.Config{
 			ConfigFile: types.ConfigFile{
-				FIPSValidationMode:   "module",
 				FIPSCertifiedModules: modules,
 			},
 		}

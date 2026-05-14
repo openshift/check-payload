@@ -366,31 +366,33 @@ func validateTagLocal(ctx context.Context, tag *v1.TagReference, cfg *types.Conf
 	return walkDirScan(ctx, cfg, tag, component, localTagPath)
 }
 
+// imagePhase is a single stage of the image validation pipeline.
+type imagePhase func(ctx context.Context, cfg *types.Config, tag *v1.TagReference, component *types.OpenshiftComponent, mountPath string, results *types.ScanResults)
+
 func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, component *types.OpenshiftComponent, mountPath string) *types.ScanResults {
 	results := types.NewScanResults()
+	for _, phase := range []imagePhase{
+		validateOSPhase,
+		scanBinariesPhase,
+		validateModuleArtifactsPhase,
+	} {
+		phase(ctx, cfg, tag, component, mountPath, results)
+	}
+	logPipelineSummary(tag, component, results)
+	return results
+}
 
+func validateOSPhase(_ context.Context, cfg *types.Config, tag *v1.TagReference, component *types.OpenshiftComponent, mountPath string, results *types.ScanResults) {
 	certifiedDistributions := cfg.GetCertifiedDistributions()
-	if len(certifiedDistributions) > 0 && !cfg.ShouldIgnoreOSValidation(tag, component, types.ErrOSNotCertified) {
-		// Check the operating system release against a known list of certified
-		// distributions. Here we're primarily concerned about warning against
-		// operating systems that haven't been certified, yet.
-		osInfo := validations.ValidateOS(cfg, mountPath)
-		osScanResult := types.NewScanResult().SetOS(osInfo).SetComponent(component).SetTag(tag)
-		results.Append(osScanResult)
+	if len(certifiedDistributions) == 0 || cfg.ShouldIgnoreOSValidation(tag, component, types.ErrOSNotCertified) {
+		return
 	}
+	osInfo := validations.ValidateOS(cfg, mountPath)
+	results.Append(types.NewScanResult().SetOS(osInfo).SetComponent(component).SetTag(tag))
+}
 
-	// does the image contain openssl
-	opensslInfo := validations.ValidateOpenssl(ctx, mountPath)
-	scanResult := types.NewScanResult().SetOpenssl(opensslInfo).SetTag(tag)
-
-	// Because java uses a native implementation of SSL, any openssl related results should be warnings for java.
-	if cfg.Java && scanResult.Error != nil {
-		scanResult.Error.SetWarning()
-	}
-	results.Append(scanResult)
-
+func scanBinariesPhase(ctx context.Context, cfg *types.Config, tag *v1.TagReference, component *types.OpenshiftComponent, mountPath string, results *types.ScanResults) {
 	errIgnoreLists := []types.ErrIgnoreList{cfg.ErrIgnores}
-
 	if tag != nil {
 		if i, ok := cfg.TagIgnores[tag.Name]; ok {
 			errIgnoreLists = append(errIgnoreLists, i.ErrIgnores)
@@ -402,7 +404,7 @@ func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, c
 		}
 	}
 
-	// business logic for scan
+	var scanned, skipped int
 	if err := filepath.WalkDir(mountPath, func(path string, file fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -414,19 +416,14 @@ func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, c
 			}
 			return nil
 		}
-		// Skip over all non-regular files. This is a very fast check
-		// as it does not require calling stat(2).
 		if !file.Type().IsRegular() {
 			return nil
 		}
-		// Check if the file has any x bits set. This is a slower check
-		// as it calls lstat(2) under the hood.
 		fi, err := file.Info()
 		if err != nil {
 			return err
 		}
 		if fi.Mode().Perm()&0o111 == 0 {
-			// Not an executable.
 			return nil
 		}
 		if cfg.IgnoreFileWithTag(innerPath, tag) || cfg.IgnoreFileWithComponent(innerPath, component) {
@@ -435,14 +432,14 @@ func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, c
 		klog.V(1).InfoS("scanning path", "path", path)
 		res := validations.ScanBinary(ctx, mountPath, innerPath, cfg.RPMIgnores, errIgnoreLists...)
 		if res.Skip {
-			// Do not add skipped binaries to results.
+			skipped++
 			return nil
 		}
-		// Check rpm.* excludes. Performed post-check because the rpm name was not known before.
 		if !res.IsSuccess() && res.RPM != "" && cfg.IgnoreFileByRpm(innerPath, res.RPM) {
 			return nil
 		}
 		res.SetTag(tag).SetComponent(component)
+		scanned++
 		if res.IsSuccess() {
 			klog.V(1).InfoS("scanning success", "image", getImage(res), "path", innerPath, "status", "success")
 		} else {
@@ -459,35 +456,75 @@ func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, c
 		results.Append(res)
 		return nil
 	}); err != nil {
-		return results.Append(types.NewScanResult().SetError(err))
+		results.Append(types.NewScanResult().SetError(err))
 	}
+	klog.V(1).InfoS("binary scan complete", "scanned", scanned, "skipped", skipped, "mountPath", mountPath)
+}
 
-	// fips certified module check
-	if cfg.UseFIPSModuleValidation() {
-		modulesInUseSet := make(map[string]bool)
-		for _, item := range results.Items {
-			for _, m := range item.ModulesUsed {
-				modulesInUseSet[m] = true
-			}
-		}
-		if len(modulesInUseSet) > 0 {
-			var modulesInUse []string
-			for m := range modulesInUseSet {
-				modulesInUse = append(modulesInUse, m)
-			}
-			klog.V(1).InfoS("fips module validation", "modulesDetected", modulesInUse, "mountPath", mountPath)
-			if ve := validations.ValidateModuleArtifacts(ctx, cfg, mountPath, modulesInUse); ve != nil {
-				klog.InfoS("fips module validation failed", "error", ve.Error, "mountPath", mountPath)
-				results.Append(types.NewScanResult().SetValidationError(ve).SetComponent(component).SetTag(tag))
-			} else {
-				klog.V(1).InfoS("fips module validation passed", "mountPath", mountPath)
-			}
-		} else {
-			klog.V(1).InfoS("fips module validation skipped, no crypto modules detected", "mountPath", mountPath)
+func validateModuleArtifactsPhase(ctx context.Context, cfg *types.Config, tag *v1.TagReference, component *types.OpenshiftComponent, mountPath string, results *types.ScanResults) {
+	if !cfg.UseFIPSModuleValidation() {
+		return
+	}
+	modulesInUseSet := make(map[string]bool)
+	for _, item := range results.Items {
+		for _, m := range item.ModulesUsed {
+			modulesInUseSet[m] = true
 		}
 	}
+	if len(modulesInUseSet) == 0 {
+		klog.V(1).InfoS("fips module validation skipped, no crypto modules detected", "mountPath", mountPath)
+		return
+	}
+	var modulesInUse []string
+	for m := range modulesInUseSet {
+		modulesInUse = append(modulesInUse, m)
+	}
+	klog.V(1).InfoS("fips module validation", "modulesDetected", modulesInUse, "mountPath", mountPath)
+	if ve := validations.ValidateModuleArtifacts(ctx, cfg, mountPath, modulesInUse); ve != nil {
+		klog.InfoS("fips module validation failed", "error", ve.Error, "mountPath", mountPath)
+		results.Append(types.NewScanResult().SetValidationError(ve).SetComponent(component).SetTag(tag))
+	} else {
+		klog.V(1).InfoS("fips module validation passed", "mountPath", mountPath)
+	}
 
-	return results
+	for _, ve := range validations.ValidateHostLibsForModules(ctx, mountPath, modulesInUseSet) {
+		if cfg.Java {
+			ve.SetWarning()
+		}
+		klog.InfoS("host lib fips check failed", "error", ve.Error, "mountPath", mountPath)
+		results.Append(types.NewScanResult().SetValidationError(ve).SetComponent(component).SetTag(tag))
+	}
+}
+
+func logPipelineSummary(tag *v1.TagReference, component *types.OpenshiftComponent, results *types.ScanResults) {
+	var succeeded, failed, warnings int
+	modules := make(map[string]bool)
+	for _, r := range results.Items {
+		switch {
+		case r.IsSuccess():
+			succeeded++
+		case r.IsLevel(types.Warning):
+			warnings++
+		default:
+			failed++
+		}
+		for _, m := range r.ModulesUsed {
+			modules[m] = true
+		}
+	}
+	var moduleList []string
+	for m := range modules {
+		moduleList = append(moduleList, m)
+	}
+	klog.V(1).InfoS("pipeline complete",
+		"image", getTag(&types.ScanResult{Tag: tag}),
+		"component", getComponent(&types.ScanResult{Component: component}),
+		"total", len(results.Items),
+		"succeeded", succeeded,
+		"failed", failed,
+		"warnings", warnings,
+		"cryptoModules", moduleList,
+	)
 }
 
 func stripMountPath(mountPath, path string) string {
