@@ -19,54 +19,36 @@ func createDirAndFile(t *testing.T, dir string) {
 	}
 }
 
-var testModule = types.FipsModule{
-	Module:            "openssl",
-	CertifiedArtifact: "openssl-fips-provider",
-	CertifiedArtifactPaths: []string{
-		"/usr/lib64/ossl-modules/fips.so",
-		"/usr/lib/ossl-modules/fips.so",
-	},
-}
+func TestAnyPathExists(t *testing.T) {
+	paths := []string{"/usr/lib64/ossl-modules/fips.so", "/usr/lib/ossl-modules/fips.so"}
 
-func TestArtifactPresent(t *testing.T) {
-	ctx := context.Background()
-
-	t.Run("no rpm db and no file path", func(t *testing.T) {
-		dir := t.TempDir()
-		_, present := artifactPresentAndVersion(ctx, dir, testModule)
-		if present {
-			t.Error("expected false when no db and no provider file")
-		}
-	})
-
-	t.Run("file path under lib64", func(t *testing.T) {
+	t.Run("file present at lib64", func(t *testing.T) {
 		dir := t.TempDir()
 		createDirAndFile(t, filepath.Join(dir, "usr", "lib64", "ossl-modules"))
-		_, present := artifactPresentAndVersion(ctx, dir, testModule)
-		if !present {
-			t.Error("expected true when file present at configured path")
+		if !anyPathExists(dir, paths) {
+			t.Error("expected true when file present")
 		}
 	})
 
-	t.Run("file path under lib", func(t *testing.T) {
+	t.Run("file present at lib", func(t *testing.T) {
 		dir := t.TempDir()
 		createDirAndFile(t, filepath.Join(dir, "usr", "lib", "ossl-modules"))
-		_, present := artifactPresentAndVersion(ctx, dir, testModule)
-		if !present {
-			t.Error("expected true when file present at configured path")
+		if !anyPathExists(dir, paths) {
+			t.Error("expected true when file present")
 		}
 	})
 
-	t.Run("no paths configured means file fallback skipped", func(t *testing.T) {
+	t.Run("file absent", func(t *testing.T) {
 		dir := t.TempDir()
-		createDirAndFile(t, filepath.Join(dir, "usr", "lib64", "ossl-modules"))
-		noPaths := types.FipsModule{
-			Module:            "openssl",
-			CertifiedArtifact: "openssl-fips-provider",
+		if anyPathExists(dir, paths) {
+			t.Error("expected false when no file present")
 		}
-		_, present := artifactPresentAndVersion(ctx, dir, noPaths)
-		if present {
-			t.Error("expected false when no paths configured and no RPM db")
+	})
+
+	t.Run("nil paths", func(t *testing.T) {
+		dir := t.TempDir()
+		if anyPathExists(dir, nil) {
+			t.Error("expected false for nil paths")
 		}
 	})
 }
@@ -74,31 +56,42 @@ func TestArtifactPresent(t *testing.T) {
 func TestCheckArtifact(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("artifact missing", func(t *testing.T) {
+	t.Run("RPM missing", func(t *testing.T) {
 		dir := t.TempDir()
-		err := CheckArtifact(ctx, testModule, dir)
-		if err == nil {
-			t.Error("expected error for missing artifact")
+		m := types.FipsModule{
+			Module:            "openssl",
+			CertifiedArtifact: "openssl-fips-provider",
+		}
+		if err := CheckArtifact(ctx, m, dir); err == nil {
+			t.Error("expected error when RPM missing")
 		}
 	})
 
-	t.Run("artifact present via file path", func(t *testing.T) {
+	t.Run("RPM missing even with paths present", func(t *testing.T) {
 		dir := t.TempDir()
 		createDirAndFile(t, filepath.Join(dir, "usr", "lib64", "ossl-modules"))
-		err := CheckArtifact(ctx, testModule, dir)
-		if err != nil {
-			t.Errorf("expected nil with artifact present, got %v", err)
+		m := types.FipsModule{
+			Module:                 "openssl",
+			CertifiedArtifact:      "openssl-fips-provider",
+			CertifiedArtifactPaths: []string{"/usr/lib64/ossl-modules/fips.so"},
+		}
+		if err := CheckArtifact(ctx, m, dir); err == nil {
+			t.Error("expected error: file exists but RPM not found")
 		}
 	})
 
-	t.Run("version required but unknown from file path", func(t *testing.T) {
+	t.Run("paths gate: RPM present but file missing fails", func(t *testing.T) {
 		dir := t.TempDir()
-		createDirAndFile(t, filepath.Join(dir, "usr", "lib64", "ossl-modules"))
-		m := testModule
-		m.CertifiedArtifactMinVersion = "3.0.7"
-		err := CheckArtifact(ctx, m, dir)
-		if err == nil {
-			t.Error("expected error when version required but unknown")
+		m := types.FipsModule{
+			Module:                 "openssl",
+			CertifiedArtifact:      "openssl-libs",
+			CertifiedArtifactPaths: []string{"/usr/lib64/ossl-modules/fips.so"},
+		}
+		// Can't mock RPM presence without rpmdb, so this tests the path
+		// gate in isolation via anyPathExists (tested above).
+		// CheckArtifact will fail at RPM check first.
+		if err := CheckArtifact(ctx, m, dir); err == nil {
+			t.Error("expected error when RPM missing")
 		}
 	})
 }

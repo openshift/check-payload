@@ -392,6 +392,13 @@ func validateOSPhase(_ context.Context, cfg *types.Config, tag *v1.TagReference,
 }
 
 func scanBinariesPhase(ctx context.Context, cfg *types.Config, tag *v1.TagReference, component *types.OpenshiftComponent, mountPath string, results *types.ScanResults) {
+	for _, m := range cfg.GetFIPSCertifiedModules() {
+		if m.Module == "go" && m.IsBinarySource() && m.CertifiedArtifactMinVersion != "" {
+			validations.SetGoFIPSMinVersion(m.CertifiedArtifactMinVersion)
+			break
+		}
+	}
+
 	errIgnoreLists := []types.ErrIgnoreList{cfg.ErrIgnores}
 	if tag != nil {
 		if i, ok := cfg.TagIgnores[tag.Name]; ok {
@@ -480,19 +487,17 @@ func validateModuleArtifactsPhase(ctx context.Context, cfg *types.Config, tag *v
 		modulesInUse = append(modulesInUse, m)
 	}
 	klog.V(1).InfoS("fips module validation", "modulesDetected", modulesInUse, "mountPath", mountPath)
-	if ve := validations.ValidateModuleArtifacts(ctx, cfg, mountPath, modulesInUse); ve != nil {
-		klog.InfoS("fips module validation failed", "error", ve.Error, "mountPath", mountPath)
-		results.Append(types.NewScanResult().SetValidationError(ve).SetComponent(component).SetTag(tag))
-	} else {
-		klog.V(1).InfoS("fips module validation passed", "mountPath", mountPath)
-	}
 
-	for _, ve := range validations.ValidateHostLibsForModules(ctx, mountPath, modulesInUseSet) {
-		if cfg.Java {
-			ve.SetWarning()
+	for _, module := range modulesInUse {
+		if ve := validations.ValidateModule(ctx, cfg, mountPath, module); ve != nil {
+			if cfg.Java {
+				ve.SetWarning()
+			}
+			klog.InfoS("fips module validation failed", "module", module, "error", ve.Error, "mountPath", mountPath)
+			results.Append(types.NewScanResult().SetValidationError(ve).SetComponent(component).SetTag(tag))
+		} else {
+			klog.V(1).InfoS("fips module validation passed", "module", module, "mountPath", mountPath)
 		}
-		klog.InfoS("host lib fips check failed", "error", ve.Error, "mountPath", mountPath)
-		results.Append(types.NewScanResult().SetValidationError(ve).SetComponent(component).SetTag(tag))
 	}
 }
 
@@ -516,7 +521,8 @@ func logPipelineSummary(tag *v1.TagReference, component *types.OpenshiftComponen
 	for m := range modules {
 		moduleList = append(moduleList, m)
 	}
-	klog.V(1).InfoS("pipeline complete",
+	klog.V(1).InfoS(
+		"pipeline complete",
 		"image", getTag(&types.ScanResult{Tag: tag}),
 		"component", getComponent(&types.ScanResult{Component: component}),
 		"total", len(results.Items),

@@ -65,6 +65,12 @@ var (
 	libcryptoPrefix = "libcrypto.so"
 )
 
+var goFIPSMinVersion string
+
+func SetGoFIPSMinVersion(v string) {
+	goFIPSMinVersion = v
+}
+
 type Baton struct {
 	TopDir       string
 	Static       bool
@@ -154,10 +160,14 @@ func hasGodebugFIPS140Auto(baton *Baton) bool {
 func hasGOFIPS140Certified(baton *Baton) bool {
 	for _, bs := range baton.GoBuildInfo.Settings {
 		if bs.Key == "GOFIPS140" {
-			// GOFIPS140=certified resolves to a version string at build time
-			// (e.g. "v1.0.0-c2097c7c"), not the literal "certified". Any
-			// non-empty, non-"off" value indicates a FIPS module was selected.
-			return bs.Value != "" && bs.Value != "off"
+			if bs.Value == "" || bs.Value == "off" {
+				return false
+			}
+			if goFIPSMinVersion != "" {
+				atLeast, _ := types.VersionInRange(bs.Value, goFIPSMinVersion, "")
+				return atLeast
+			}
+			return true
 		}
 	}
 	return false

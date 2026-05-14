@@ -57,21 +57,27 @@ func TestHasGodebugFIPS140Auto(t *testing.T) {
 
 func TestHasGOFIPS140Certified(t *testing.T) {
 	tests := []struct {
-		name     string
-		settings []debug.BuildSetting
-		want     bool
+		name       string
+		settings   []debug.BuildSetting
+		minVersion string
+		want       bool
 	}{
-		{"no GOFIPS140", nil, false},
-		{"GOFIPS140=off", []debug.BuildSetting{{Key: "GOFIPS140", Value: "off"}}, false},
-		{"GOFIPS140 empty", []debug.BuildSetting{{Key: "GOFIPS140", Value: ""}}, false},
-		{"GOFIPS140=latest", []debug.BuildSetting{{Key: "GOFIPS140", Value: "latest"}}, true},
-		{"GOFIPS140=v1.0.0", []debug.BuildSetting{{Key: "GOFIPS140", Value: "v1.0.0"}}, true},
-		{"GOFIPS140=v1.0.0-c2097c7c", []debug.BuildSetting{{Key: "GOFIPS140", Value: "v1.0.0-c2097c7c"}}, true},
-		{"GOFIPS140=certified", []debug.BuildSetting{{Key: "GOFIPS140", Value: "certified"}}, true},
-		{"GOFIPS140=inprocess", []debug.BuildSetting{{Key: "GOFIPS140", Value: "inprocess"}}, true},
+		{"no GOFIPS140", nil, "", false},
+		{"GOFIPS140=off", []debug.BuildSetting{{Key: "GOFIPS140", Value: "off"}}, "", false},
+		{"GOFIPS140 empty", []debug.BuildSetting{{Key: "GOFIPS140", Value: ""}}, "", false},
+		{"GOFIPS140=latest", []debug.BuildSetting{{Key: "GOFIPS140", Value: "latest"}}, "", true},
+		{"GOFIPS140=v1.0.0", []debug.BuildSetting{{Key: "GOFIPS140", Value: "v1.0.0"}}, "", true},
+		{"GOFIPS140=v1.0.0-c2097c7c", []debug.BuildSetting{{Key: "GOFIPS140", Value: "v1.0.0-c2097c7c"}}, "", true},
+		{"GOFIPS140=certified", []debug.BuildSetting{{Key: "GOFIPS140", Value: "certified"}}, "", true},
+		{"GOFIPS140=inprocess", []debug.BuildSetting{{Key: "GOFIPS140", Value: "inprocess"}}, "", true},
+		{"version >= min", []debug.BuildSetting{{Key: "GOFIPS140", Value: "v1.0.0"}}, "v1.0.0", true},
+		{"version < min", []debug.BuildSetting{{Key: "GOFIPS140", Value: "v0.9.0"}}, "v1.0.0", false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			old := goFIPSMinVersion
+			goFIPSMinVersion = tc.minVersion
+			defer func() { goFIPSMinVersion = old }()
 			baton := &Baton{GoBuildInfo: &debug.BuildInfo{Settings: tc.settings}}
 			if got := hasGOFIPS140Certified(baton); got != tc.want {
 				t.Errorf("got %v, want %v", got, tc.want)
@@ -226,7 +232,8 @@ func TestValidateGoNativeFIPS(t *testing.T) {
 func TestLegacyChecksSkippedForNativeFIPS(t *testing.T) {
 	ctx := context.Background()
 
-	baton := makeBaton("1.27.0",
+	baton := makeBaton(
+		"1.27.0",
 		debug.BuildSetting{Key: "DefaultGODEBUG", Value: "fips140=auto"},
 		debug.BuildSetting{Key: "GOFIPS140", Value: "v1.0.0-c2097c7c"},
 	)

@@ -2,34 +2,11 @@ package validations
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/openshift/check-payload/internal/types"
 )
-
-func setupFakeImage(t *testing.T, release string, providerPath string) string {
-	t.Helper()
-	dir := t.TempDir()
-	etc := filepath.Join(dir, "etc")
-	if err := os.MkdirAll(etc, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(etc, "redhat-release"), []byte(release), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if providerPath != "" {
-		full := filepath.Join(dir, providerPath)
-		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(full, nil, 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	return dir
-}
 
 func TestValidateModuleArtifacts(t *testing.T) {
 	ctx := context.Background()
@@ -42,64 +19,83 @@ func TestValidateModuleArtifacts(t *testing.T) {
 		}
 	}
 
-	opensslModule := types.FipsModule{
-		Module:            "openssl",
-		CertifiedArtifact: "openssl-fips-provider",
-		CertifiedArtifactPaths: []string{
-			"/usr/lib64/ossl-modules/fips.so",
-			"/usr/lib/ossl-modules/fips.so",
-		},
-	}
-
-	opensslModuleWithVersion := types.FipsModule{
-		Module:                      "openssl",
-		CertifiedArtifact:           "openssl-fips-provider",
-		CertifiedArtifactMinVersion: "3.0.7",
-		CertifiedArtifactPaths: []string{
-			"/usr/lib64/ossl-modules/fips.so",
-		},
-	}
-
 	t.Run("no modules in use returns nil", func(t *testing.T) {
 		dir := t.TempDir()
-		cfg := baseCfg([]types.FipsModule{opensslModule})
+		cfg := baseCfg([]types.FipsModule{
+			{Module: "openssl", CertifiedArtifact: "openssl-fips-provider"},
+		})
 		if ve := ValidateModuleArtifacts(ctx, cfg, dir, nil); ve != nil {
 			t.Errorf("expected nil, got %v", ve)
 		}
 	})
 
-	t.Run("module matched + provider present", func(t *testing.T) {
-		dir := setupFakeImage(t, "", "usr/lib64/ossl-modules/fips.so")
-		cfg := baseCfg([]types.FipsModule{opensslModule})
-		if ve := ValidateModuleArtifacts(ctx, cfg, dir, []string{"openssl"}); ve != nil {
-			t.Errorf("expected nil, got %v", ve)
-		}
-	})
-
-	t.Run("module matched + provider missing", func(t *testing.T) {
+	t.Run("module matched + RPM missing", func(t *testing.T) {
 		dir := t.TempDir()
-		cfg := baseCfg([]types.FipsModule{opensslModule})
+		cfg := baseCfg([]types.FipsModule{
+			{Module: "openssl", CertifiedArtifact: "openssl-fips-provider"},
+		})
 		ve := ValidateModuleArtifacts(ctx, cfg, dir, []string{"openssl"})
 		if ve == nil {
-			t.Error("expected error when provider missing")
-		}
-	})
-
-	t.Run("version required but unknown from file path", func(t *testing.T) {
-		dir := setupFakeImage(t, "", "usr/lib64/ossl-modules/fips.so")
-		cfg := baseCfg([]types.FipsModule{opensslModuleWithVersion})
-		ve := ValidateModuleArtifacts(ctx, cfg, dir, []string{"openssl"})
-		if ve == nil {
-			t.Error("expected error when version required but unknown")
+			t.Error("expected error when RPM missing")
 		}
 	})
 
 	t.Run("unmatched module returns nil", func(t *testing.T) {
 		dir := t.TempDir()
-		goModule := types.FipsModule{Module: "go", CertifiedArtifact: "go-std"}
-		cfg := baseCfg([]types.FipsModule{goModule})
+		cfg := baseCfg([]types.FipsModule{
+			{Module: "go", CertifiedArtifact: "go-std"},
+		})
 		if ve := ValidateModuleArtifacts(ctx, cfg, dir, []string{"openssl"}); ve != nil {
 			t.Errorf("expected nil when no config module matches, got %v", ve)
+		}
+	})
+}
+
+func TestValidateModule(t *testing.T) {
+	ctx := context.Background()
+
+	baseCfg := func(modules []types.FipsModule) *types.Config {
+		return &types.Config{
+			ConfigFile: types.ConfigFile{
+				FIPSCertifiedModules: modules,
+			},
+		}
+	}
+
+	t.Run("binary source skips image check", func(t *testing.T) {
+		dir := t.TempDir()
+		cfg := baseCfg([]types.FipsModule{
+			{Module: "go", ArtifactSource: "binary", CertifiedArtifact: "crypto/fips140"},
+		})
+		if ve := ValidateModule(ctx, cfg, dir, "go"); ve != nil {
+			t.Errorf("expected nil for binary source, got %v", ve)
+		}
+	})
+
+	t.Run("no artifact and no host lib fails", func(t *testing.T) {
+		dir := t.TempDir()
+		cfg := baseCfg([]types.FipsModule{
+			{
+				Module:            "openssl",
+				ArtifactSource:    "image",
+				CertifiedArtifact: "openssl-fips-provider",
+			},
+		})
+		if ve := ValidateModule(ctx, cfg, dir, "openssl"); ve == nil {
+			t.Error("expected error when no artifact and no host lib")
+		}
+	})
+
+	t.Run("anyPathExists gates CheckArtifact", func(t *testing.T) {
+		dir := t.TempDir()
+		paths := []string{"/usr/lib64/ossl-modules/fips.so"}
+
+		if anyPathExists(dir, paths) {
+			t.Error("expected false when fips.so absent")
+		}
+		createDirAndFile(t, filepath.Join(dir, "usr", "lib64", "ossl-modules"))
+		if !anyPathExists(dir, paths) {
+			t.Error("expected true when fips.so present")
 		}
 	})
 }

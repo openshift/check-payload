@@ -16,18 +16,37 @@ certified_distributions = [
   "Red Hat Enterprise Linux release 10.1 (Coughlan)",
 ]
 
-# FIPS certified modules (or in-process). Each entry defines a crypto stack
-# and its certified artifact. Host library checks are code-driven (see
-# validations_host_crypto.go moduleHostLibChecks registry).
+# FIPS certified modules. Multiple entries per module are alternatives — first match wins.
 fips_certified_modules = [
+  # OpenSSL 3.x FIPS Provider (CMVP #4282) — RHEL 9.4+
   { module = "openssl",
+    artifact_source = "image",
     certified_artifact = "openssl-fips-provider",
     certified_artifact_min_version = "3.0.7",
-    certified_artifact_paths = ["/usr/lib64/ossl-modules/fips.so", "/usr/lib/ossl-modules/fips.so"],
+    certified_artifact_paths = ["/usr/lib64/ossl-modules/fips.so"],
   },
-  # Go native FIPS (CMVP #5247): embedded in binary at build time.
-  # Validated by validateGoNativeFIPS; no image-level artifact needed.
-  # { module = "go", certified_artifact = "crypto/fips140" },
+  # OpenSSL 3.x FIPS Provider (CMVP #4282) — RHEL 9.2-9.3
+  # Same certified module, different package: fips.so shipped inside openssl-libs.
+  { module = "openssl",
+    artifact_source = "image",
+    certified_artifact = "openssl-libs",
+    certified_artifact_min_version = "3.0.7",
+    certified_artifact_max_version = "3.0.7",
+    certified_artifact_paths = ["/usr/lib64/ossl-modules/fips.so"],
+  },
+  # OpenSSL 1.1.1 FIPS (CMVP #3842) — RHEL 8
+  { module = "openssl",
+    artifact_source = "image",
+    certified_artifact = "openssl-libs",
+    certified_artifact_min_version = "1.1.1",
+    certified_artifact_max_version = "1.1.1",
+  },
+  # Go FIPS 140 (CMVP #5247)
+  { module = "go",
+    artifact_source = "binary",
+    certified_artifact = "crypto/fips140",
+    certified_artifact_min_version = "v1.0.0",
+  },
 ]
 
 # List of directories to ignore. This is a prefix match,

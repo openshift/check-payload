@@ -81,7 +81,10 @@ func validateFIPSCertifiedModules(perr *error, modules []FipsModule) {
 		if m.Module == "" {
 			multierr.AppendInto(perr, &errInvalidFIPSModule{Index: i, Field: "module"})
 		}
-		if m.CertifiedArtifact == "" {
+		if m.ArtifactSource != "" && m.ArtifactSource != "image" && m.ArtifactSource != "binary" {
+			multierr.AppendInto(perr, &errInvalidFIPSModule{Index: i, Field: `artifact_source (must be "image" or "binary")`})
+		}
+		if m.ArtifactSource != "binary" && m.CertifiedArtifact == "" {
 			multierr.AppendInto(perr, &errInvalidFIPSModule{Index: i, Field: "certified_artifact"})
 		}
 	}

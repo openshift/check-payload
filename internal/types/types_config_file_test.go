@@ -174,6 +174,47 @@ func TestFIPSValidation(t *testing.T) {
 			t.Error("expected error for empty module/artifact fields")
 		}
 	})
+
+	t.Run("binary source allows empty certified_artifact", func(t *testing.T) {
+		cfg := &types.ConfigFile{
+			FIPSCertifiedModules: []types.FipsModule{
+				{Module: "go", ArtifactSource: "binary"},
+			},
+		}
+		err, _ := cfg.Validate()
+		if err != nil {
+			t.Errorf("unexpected error for binary source: %v", err)
+		}
+	})
+
+	t.Run("invalid artifact_source", func(t *testing.T) {
+		cfg := &types.ConfigFile{
+			FIPSCertifiedModules: []types.FipsModule{
+				{Module: "openssl", ArtifactSource: "bogus", CertifiedArtifact: "x"},
+			},
+		}
+		err, _ := cfg.Validate()
+		if err == nil {
+			t.Error("expected error for invalid artifact_source")
+		}
+	})
+
+	t.Run("max version parses and validates", func(t *testing.T) {
+		cfg := &types.ConfigFile{
+			FIPSCertifiedModules: []types.FipsModule{
+				{
+					Module:                      "openssl",
+					CertifiedArtifact:           "openssl-libs",
+					CertifiedArtifactMinVersion: "1.1.1",
+					CertifiedArtifactMaxVersion: "1.1.1",
+				},
+			},
+		}
+		err, _ := cfg.Validate()
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
 }
 
 func TestConfigMerge(t *testing.T) {

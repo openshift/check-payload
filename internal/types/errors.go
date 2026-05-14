@@ -23,6 +23,7 @@ var (
 	ErrCertifiedDistributionsEmpty = errors.New("certified_distributions is empty, consider using -V [VERSION] for check-payload")
 	ErrFipsArtifactMissing         = errors.New("required FIPS certified artifact not found")
 	ErrFipsArtifactVersionLow      = errors.New("FIPS certified artifact version below required minimum")
+	ErrFipsArtifactVersionHigh     = errors.New("FIPS certified artifact version above certified maximum")
 	ErrGoFIPSNotAuto               = errors.New("go binary does not set GODEBUG fips140=auto")
 	ErrGoFIPSNotCertified          = errors.New("go binary not built with GOFIPS140 FIPS module")
 )
