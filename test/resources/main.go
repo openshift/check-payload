@@ -1,3 +1,16 @@
 package main
 
-func main() {}
+import (
+	"crypto/tls"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
+)
+
+func main() {
+	_ = &tls.Config{}
+	_ = &http.Server{}
+	b, _ := json.Marshal(os.Args)
+	fmt.Println(string(b))
+}
