@@ -50,7 +50,42 @@ func _magicNumber(goVersion string) uint32 {
 	return magic
 }
 
-// Open a Go ELF executable and read .gopclntab
+// Header layout: magic(4) + two zero bytes + quantum(1,2,4) + ptrsize(4,8).
+func isValidPclntabHeader(data []byte) bool {
+	return len(data) >= 8 &&
+		data[4] == 0 && data[5] == 0 &&
+		(data[6] == 1 || data[6] == 2 || data[6] == 4) &&
+		(data[7] == 4 || data[7] == 8)
+}
+
+func findPclntab(data []byte, magic []byte) int {
+	for offset := 0; offset+8 <= len(data); {
+		idx := bytes.Index(data[offset:], magic)
+		if idx < 0 {
+			return -1
+		}
+		candidate := offset + idx
+		if candidate+8 > len(data) {
+			return -1
+		}
+		if isValidPclntabHeader(data[candidate:]) {
+			return candidate
+		}
+		offset = candidate + 1
+	}
+	return -1
+}
+
+func tryParseTable(tableData []byte, offset int, textAddr uint64) *gosym.Table {
+	lineTable := gosym.NewLineTable(tableData[offset:], textAddr)
+	symTable, err := gosym.NewTable([]byte{}, lineTable)
+	if err != nil || len(symTable.Funcs) == 0 {
+		return nil
+	}
+	return symTable
+}
+
+// ReadTable opens a Go ELF executable and reads its symbol table from the pclntab.
 func ReadTable(fileName string, bi *buildinfo.BuildInfo) (*gosym.Table, error) {
 	exe, err := elf.Open(fileName)
 	if err != nil {
@@ -58,39 +93,59 @@ func ReadTable(fileName string, bi *buildinfo.BuildInfo) (*gosym.Table, error) {
 	}
 	defer exe.Close()
 
-	// Go 1.26+ restores .gopclntab as a separate section even for PIE builds.
-	// Go <= 1.25 PIE binaries embed pclntab inside .data.rel.ro instead.
-	// Always check .gopclntab first, then fall back to .data.rel.ro.
-	section := exe.Section(".gopclntab")
-	if section == nil {
-		section = exe.Section(".data.rel.ro")
-		if section == nil {
-			return nil, fmt.Errorf("could not find .gopclntab or .data.rel.ro section in %s", fileName)
+	textSection := exe.Section(".text")
+	if textSection == nil {
+		return nil, fmt.Errorf("missing .text section in %s", fileName)
+	}
+
+	// The pclntab lives in different ELF sections depending on Go version
+	// and link mode:
+	//   .gopclntab              - non-PIE, or Go 1.26+ PIE
+	//   .data.rel.ro.gopclntab  - Go <= 1.25 internal PIE (CGO_ENABLED=0)
+	//   .data.rel.ro            - Go <= 1.25 external PIE (CGO_ENABLED=1)
+	var section *elf.Section
+	for _, name := range []string{".gopclntab", ".data.rel.ro.gopclntab", ".data.rel.ro"} {
+		if s := exe.Section(name); s != nil {
+			section = s
+			break
 		}
+	}
+	if section == nil {
+		return nil, fmt.Errorf("could not find pclntab section in %s", fileName)
 	}
 	tableData, err := section.Data()
 	if err != nil {
-		return nil, fmt.Errorf("found section but could not read .gopclntab from %s ", fileName)
+		return nil, fmt.Errorf("could not read %s section from %s", section.Name, fileName)
 	}
 
-	// Find .gopclntab by magic number even if there is no section label
-	magic := magicNumber(bi.GoVersion)
-	pclntabIndex := bytes.Index(tableData, magic)
-	if pclntabIndex < 0 {
-		magic = magicNumberBigEndian(bi.GoVersion)
-		pclntabIndex = bytes.Index(tableData, magic)
-		if pclntabIndex < 0 {
-			return nil, fmt.Errorf("could not find magic number in %s ", fileName)
+	// Dedicated pclntab sections start at offset 0; skip magic scanning.
+	if section.Name != ".data.rel.ro" && isValidPclntabHeader(tableData) {
+		if table := tryParseTable(tableData, 0, textSection.Addr); table != nil {
+			return table, nil
 		}
 	}
-	tableData = tableData[pclntabIndex:]
-	addr := exe.Section(".text").Addr
-	lineTable := gosym.NewLineTable(tableData, addr)
-	symTable, err := gosym.NewTable([]byte{}, lineTable)
-	if err != nil {
-		return nil, fmt.Errorf("could not create symbol table from  %s ", fileName)
+
+	// Try native endianness first to reduce false magic matches.
+	magics := [][]byte{magicNumber(bi.GoVersion), magicNumberBigEndian(bi.GoVersion)}
+	if exe.ByteOrder == binary.BigEndian {
+		magics[0], magics[1] = magics[1], magics[0]
 	}
-	return symTable, nil
+
+	for _, magic := range magics {
+		for offset := 0; ; {
+			idx := findPclntab(tableData[offset:], magic)
+			if idx < 0 {
+				break
+			}
+			candidate := offset + idx
+			if table := tryParseTable(tableData, candidate, textSection.Addr); table != nil {
+				return table, nil
+			}
+			offset = candidate + 1
+		}
+	}
+
+	return nil, fmt.Errorf("could not find valid pclntab in %s (section=%s)", fileName, section.Name)
 }
 
 // ExpectedSyms checks that .gopclntab contains any of the expectedSymbols.

@@ -2,70 +2,133 @@ package golang
 
 import (
 	"debug/buildinfo"
+	"encoding/binary"
 	"testing"
 )
 
-func TestReadTable_NonPIE(t *testing.T) {
-	const fixture = "../../test/resources/fips_compliant_app"
+func TestFindPclntab_ValidHeader(t *testing.T) {
+	magic := []byte{0xf1, 0xff, 0xff, 0xff}
+	data := make([]byte, 16)
+	copy(data[0:4], magic)
+	data[4] = 0
+	data[5] = 0
+	data[6] = 1
+	data[7] = 8
 
-	bi, err := buildinfo.ReadFile(fixture)
-	if err != nil {
-		t.Fatalf("buildinfo.ReadFile(%s): %v", fixture, err)
-	}
-
-	table, err := ReadTable(fixture, bi)
-	if err != nil {
-		t.Fatalf("ReadTable(%s): %v", fixture, err)
-	}
-	if table == nil {
-		t.Fatal("ReadTable returned nil table")
+	idx := findPclntab(data, magic)
+	if idx != 0 {
+		t.Fatalf("expected index 0, got %d", idx)
 	}
 }
 
-// Regression: LE magic 0xF1FFFFFF matches inside .gopclntab data before
-// the real BE pclntab at offset 0 on s390x.
-func TestReadTable_Go124_s390x(t *testing.T) {
-	const fixture = "../../test/resources/go124_s390x_app"
+func TestFindPclntab_SkipsFalseMatch(t *testing.T) {
+	magic := []byte{0xff, 0xff, 0xff, 0xf1} // BE magic
+	data := make([]byte, 32)
 
-	bi, err := buildinfo.ReadFile(fixture)
-	if err != nil {
-		t.Fatalf("buildinfo.ReadFile(%s): %v", fixture, err)
-	}
+	// False match at offset 0: magic present but invalid header bytes
+	copy(data[0:4], magic)
+	data[4] = 0x42
+	data[5] = 0x00
+	data[6] = 1
+	data[7] = 8
 
-	table, err := ReadTable(fixture, bi)
-	if err != nil {
-		t.Fatalf("ReadTable(%s): %v", fixture, err)
-	}
-	if table == nil {
-		t.Fatal("ReadTable returned nil table")
-	}
-	if len(table.Funcs) == 0 {
-		t.Fatal("ReadTable returned 0 functions - false LE magic match was not rejected by header validation")
+	// Real match at offset 16
+	copy(data[16:20], magic)
+	data[20] = 0
+	data[21] = 0
+	data[22] = 4
+	data[23] = 8
+
+	idx := findPclntab(data, magic)
+	if idx != 16 {
+		t.Fatalf("expected index 16 (skip false match), got %d", idx)
 	}
 }
 
-// TestReadTable_PIE_Go126_s390x exercises the section lookup fix from issue #329.
-// Go 1.26 emits .gopclntab as a separate section even for PIE builds.
-// Before the fix, ReadTable skipped .gopclntab when it saw -buildmode=pie
-// and looked only in .data.rel.ro, which no longer contains the pclntab.
-// On s390x (big-endian) .data.rel.ro has no accidental magic byte matches,
-// so the old code fails deterministically — making this a true regression test.
-func TestReadTable_PIE_Go126_s390x(t *testing.T) {
-	const fixture = "../../test/resources/pie_go126_s390x_app"
+func TestFindPclntab_NoMatch(t *testing.T) {
+	magic := []byte{0xf1, 0xff, 0xff, 0xff}
+	data := make([]byte, 64)
 
-	bi, err := buildinfo.ReadFile(fixture)
-	if err != nil {
-		t.Fatalf("buildinfo.ReadFile(%s): %v", fixture, err)
+	idx := findPclntab(data, magic)
+	if idx != -1 {
+		t.Fatalf("expected -1, got %d", idx)
 	}
-	if bi.GoVersion == "" {
-		t.Fatal("GoVersion is empty in build info")
+}
+
+func TestFindPclntab_AllFalseMatches(t *testing.T) {
+	magic := []byte{0xff, 0xff, 0xff, 0xf1}
+	data := make([]byte, 32)
+
+	copy(data[0:4], magic)
+	data[4] = 0xff
+	data[5] = 0xff
+	data[6] = 3 // invalid quantum
+	data[7] = 8
+
+	copy(data[16:20], magic)
+	data[20] = 0
+	data[21] = 0
+	data[22] = 7 // invalid quantum
+	data[23] = 8
+
+	idx := findPclntab(data, magic)
+	if idx != -1 {
+		t.Fatalf("expected -1 (all false matches), got %d", idx)
+	}
+}
+
+func TestFindPclntab_BEMagicValidQuantumAndPtrSize(t *testing.T) {
+	for _, quantum := range []byte{1, 2, 4} {
+		for _, ptrsize := range []byte{4, 8} {
+			magic := make([]byte, 4)
+			binary.BigEndian.PutUint32(magic, go120magic)
+			data := make([]byte, 16)
+			copy(data[0:4], magic)
+			data[4] = 0
+			data[5] = 0
+			data[6] = quantum
+			data[7] = ptrsize
+
+			idx := findPclntab(data, magic)
+			if idx != 0 {
+				t.Fatalf("quantum=%d ptrsize=%d: expected 0, got %d", quantum, ptrsize, idx)
+			}
+		}
+	}
+}
+
+func TestReadTable(t *testing.T) {
+	tests := []struct {
+		name    string
+		fixture string
+	}{
+		{"non-PIE aarch64", "../../test/resources/fips_compliant_app"},
+		// Regression: LE magic 0xF1FFFFFF matches inside .gopclntab data
+		// before the real BE pclntab at offset 0.
+		{"Go1.24 s390x external PIE (false LE match)", "../../test/resources/go124_s390x_app"},
+		// .data.rel.ro.gopclntab section layout from internal PIE
+		{"Go1.24 amd64 internal PIE", "../../test/resources/go124_internal_pie_amd64_app"},
+		// .gopclntab as separate section in Go 1.26 PIE (#329)
+		{"Go1.26 s390x PIE", "../../test/resources/pie_go126_s390x_app"},
 	}
 
-	table, err := ReadTable(fixture, bi)
-	if err != nil {
-		t.Fatalf("ReadTable(%s): %v", fixture, err)
-	}
-	if table == nil {
-		t.Fatal("ReadTable returned nil table")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			bi, err := buildinfo.ReadFile(tt.fixture)
+			if err != nil {
+				t.Fatalf("buildinfo.ReadFile(%s): %v", tt.fixture, err)
+			}
+
+			table, err := ReadTable(tt.fixture, bi)
+			if err != nil {
+				t.Fatalf("ReadTable(%s): %v", tt.fixture, err)
+			}
+			if table == nil {
+				t.Fatal("ReadTable returned nil table")
+			}
+			if len(table.Funcs) == 0 {
+				t.Fatal("ReadTable returned 0 functions")
+			}
+		})
 	}
 }
