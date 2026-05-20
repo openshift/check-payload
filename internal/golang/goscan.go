@@ -7,6 +7,7 @@ import (
 	"debug/gosym"
 	"encoding/binary"
 	"fmt"
+	"log/slog"
 	"strings"
 )
 
@@ -79,7 +80,12 @@ func findPclntab(data []byte, magic []byte) int {
 func tryParseTable(tableData []byte, offset int, textAddr uint64) *gosym.Table {
 	lineTable := gosym.NewLineTable(tableData[offset:], textAddr)
 	symTable, err := gosym.NewTable([]byte{}, lineTable)
-	if err != nil || len(symTable.Funcs) == 0 {
+	if err != nil {
+		slog.Debug("pclntab candidate rejected", "offset", offset, "error", err)
+		return nil
+	}
+	if len(symTable.Funcs) == 0 {
+		slog.Debug("pclntab candidate rejected", "offset", offset, "reason", "zero functions")
 		return nil
 	}
 	return symTable
