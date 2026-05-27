@@ -1,7 +1,3 @@
-certified_distributions = [
-  "Red Hat Enterprise Linux release 9.8 Beta (Plow)",
-]
-
 
 [[payload.ose-network-interface-bond-cni-container.ignore]]
 error = "ErrLibcryptoSoMissing"

@@ -14,18 +14,19 @@ certified_distributions = [
   "Red Hat Enterprise Linux release 9.8 (Plow)",
   "Red Hat Enterprise Linux release 10.0 (Coughlan)",
   "Red Hat Enterprise Linux release 10.1 (Coughlan)",
+  "Red Hat Enterprise Linux release 10.2 (Coughlan)",
 ]
 
 # FIPS certified modules. Multiple entries per module are alternatives — first match wins.
 fips_certified_modules = [
-  # OpenSSL 3.x FIPS Provider (CMVP #4282) — RHEL 9.4+
+  # OpenSSL 3.x FIPS Provider (CMVP #4857) — RHEL 9.4+ and RHEL 10 (pending OE update)
   { module = "openssl",
     artifact_source = "image",
     certified_artifact = "openssl-fips-provider",
     certified_artifact_min_version = "3.0.7",
     certified_artifact_paths = ["/usr/lib64/ossl-modules/fips.so"],
   },
-  # OpenSSL 3.x FIPS Provider (CMVP #4282) — RHEL 9.2-9.3
+  # OpenSSL 3.x FIPS Provider (CMVP #4857) — RHEL 9.2-9.3
   # Same certified module, different package: fips.so shipped inside openssl-libs.
   { module = "openssl",
     artifact_source = "image",
