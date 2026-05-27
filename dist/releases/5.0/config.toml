@@ -485,6 +485,10 @@ files = ["/usr/bin/container-disk"]
 error = "ErrNotDynLinked"
 files = ["/usr/bin/container-disk"]
 
+[[payload.virt-launcher-4-nv-rhel10-container.ignore]]
+error = "ErrNotDynLinked"
+files = ["/usr/bin/container-disk"]
+
 [[payload.virt-cdi-importer-rhel9-container.ignore]]
 error = "ErrGoNotCgoEnabled"
 files = ["/usr/bin/cdi-containerimage-server"]
