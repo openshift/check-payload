@@ -23,5 +23,5 @@ RUN wget -O /usr/local/bin/umoci "https://github.com/opencontainers/umoci/releas
 
 COPY --from=builder /app/check-payload /check-payload
 
-ENTRYPOINT ["/check-payload"]
+ENTRYPOINT []
 LABEL com.redhat.component="check-payload"
