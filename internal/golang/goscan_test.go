@@ -135,7 +135,9 @@ func TestReadTable(t *testing.T) {
 		// exercises the magic scanning loop in ReadTable.
 		{
 			"Go1.24 amd64 external PIE (.data.rel.ro)", "../../test/resources/go124_external_pie_amd64_app",
-			".data.rel.ro", []string{".gopclntab", ".data.rel.ro.gopclntab"}, elf.EM_X86_64,
+			".data.rel.ro",
+			[]string{".gopclntab", ".data.rel.ro.gopclntab"},
+			elf.EM_X86_64,
 		},
 		// native Go FIPS module (crypto/fips140)
 		{
