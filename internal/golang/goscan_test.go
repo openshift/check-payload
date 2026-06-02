@@ -2,6 +2,7 @@ package golang
 
 import (
 	"debug/buildinfo"
+	"debug/elf"
 	"encoding/binary"
 	"testing"
 )
@@ -99,21 +100,56 @@ func TestFindPclntab_BEMagicValidQuantumAndPtrSize(t *testing.T) {
 
 func TestReadTable(t *testing.T) {
 	tests := []struct {
-		name    string
-		fixture string
+		name           string
+		fixture        string
+		wantSection    string // expected ELF section containing pclntab
+		rejectSections []string
+		wantMachine    elf.Machine
 	}{
-		{"non-PIE aarch64", "../../test/resources/fips_compliant_app"},
+		{
+			"non-PIE amd64 boringcrypto", "../../test/resources/fips_compliant_app",
+			".gopclntab", nil, elf.EM_X86_64,
+		},
 		// Regression: LE magic 0xF1FFFFFF matches inside .gopclntab data
 		// before the real BE pclntab at offset 0.
-		{"Go1.24 s390x external PIE (false LE match)", "../../test/resources/go124_s390x_app"},
+		{
+			"Go1.24 s390x CGO (false LE match)", "../../test/resources/go124_s390x_app",
+			".gopclntab", nil, elf.EM_S390,
+		},
 		// .data.rel.ro.gopclntab section layout from internal PIE
-		{"Go1.24 amd64 internal PIE", "../../test/resources/go124_internal_pie_amd64_app"},
+		{
+			"Go1.24 amd64 internal PIE", "../../test/resources/go124_internal_pie_amd64_app",
+			".data.rel.ro.gopclntab", nil, elf.EM_X86_64,
+		},
 		// .gopclntab as separate section in Go 1.26 PIE (#329)
-		{"Go1.26 s390x PIE", "../../test/resources/pie_go126_s390x_app"},
+		{
+			"Go1.26 s390x PIE", "../../test/resources/pie_go126_s390x_app",
+			".gopclntab", nil, elf.EM_S390,
+		},
+		// quantum=4 unique to ppc64le (little-endian PowerPC)
+		{
+			"Go1.24 ppc64le CGO (quantum=4 LE)", "../../test/resources/go124_ppc64le_app",
+			".gopclntab", nil, elf.EM_PPC64,
+		},
+		// .data.rel.ro fallback: pclntab not in a dedicated section,
+		// exercises the magic scanning loop in ReadTable.
+		{
+			"Go1.24 amd64 external PIE (.data.rel.ro)", "../../test/resources/go124_external_pie_amd64_app",
+			".data.rel.ro",
+			[]string{".gopclntab", ".data.rel.ro.gopclntab"},
+			elf.EM_X86_64,
+		},
+		// native Go FIPS module (crypto/fips140)
+		{
+			"Go native FIPS amd64", "../../test/resources/go-native-fips-app",
+			".gopclntab", nil, elf.EM_X86_64,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			assertFixtureInvariants(t, tt.fixture, tt.wantSection, tt.rejectSections, tt.wantMachine)
+
 			bi, err := buildinfo.ReadFile(tt.fixture)
 			if err != nil {
 				t.Fatalf("buildinfo.ReadFile(%s): %v", tt.fixture, err)
@@ -130,5 +166,28 @@ func TestReadTable(t *testing.T) {
 				t.Fatal("ReadTable returned 0 functions")
 			}
 		})
+	}
+}
+
+func assertFixtureInvariants(t *testing.T, path string, wantSection string, rejectSections []string, wantMachine elf.Machine) {
+	t.Helper()
+	exe, err := elf.Open(path)
+	if err != nil {
+		t.Fatalf("elf.Open(%s): %v", path, err)
+	}
+	defer exe.Close()
+
+	if exe.Machine != wantMachine {
+		t.Fatalf("fixture arch = %v, want %v", exe.Machine, wantMachine)
+	}
+
+	if exe.Section(wantSection) == nil {
+		t.Fatalf("fixture missing expected section %s", wantSection)
+	}
+
+	for _, name := range rejectSections {
+		if exe.Section(name) != nil {
+			t.Fatalf("fixture has section %s which should be absent (would bypass the %s fallback path)", name, wantSection)
+		}
 	}
 }

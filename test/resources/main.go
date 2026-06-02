@@ -1,3 +1,5 @@
+//go:debug fips140=auto
+
 package main
 
 import (

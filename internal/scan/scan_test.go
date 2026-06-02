@@ -122,6 +122,10 @@ func TestRunLocalScan(t *testing.T) {
 		{"SymlinkedOsRelease", "../../test/resources/mock_os_symlinked", baseConfig, true},
 		{"ModuleModeRHEL94WithProvider", "../../test/resources/mock_unpacked_dir_9_4", moduleConfig94, true},
 		{"PIE_Go126_s390x", "../../test/resources/mock_unpacked_dir_pie_s390x", baseConfig, true},
+		{"Go124_s390x_false_match", "../../test/resources/mock_unpacked_dir_go124_s390x", baseConfig, true},
+		{"Go124_amd64_internal_PIE", "../../test/resources/mock_unpacked_dir_go124_amd64", baseConfig, true},
+		{"Go124_ppc64le_CGO", "../../test/resources/mock_unpacked_dir_go124_ppc64le", baseConfig, true},
+		{"Go124_amd64_external_PIE", "../../test/resources/mock_unpacked_dir_go124_external_pie_amd64", baseConfig, true},
 		{"NativeFIPSBinary", "../../test/resources/mock_native_fips", nativeFIPSConfig, true},
 	}
 	// Iterate over test cases
