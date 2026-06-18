@@ -77,6 +77,16 @@ func main() {
 		},
 	}
 
+	configsCmd := &cobra.Command{
+		Use:   "list-configs",
+		Short: "List available OpenShift version configurations",
+		Run: func(_ *cobra.Command, _ []string) {
+			for _, v := range releases.GetVersions() {
+				fmt.Println(v)
+			}
+		},
+	}
+
 	scanCmd := &cobra.Command{
 		Use:   "scan",
 		Short: "Run a scan",
@@ -284,6 +294,7 @@ func main() {
 	scanCmd.AddCommand(scanImage)
 
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(configsCmd)
 	rootCmd.AddCommand(scanCmd)
 
 	// Add klog flags.
