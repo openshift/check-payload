@@ -24,6 +24,6 @@ var (
 	ErrFipsArtifactMissing         = errors.New("required FIPS certified artifact not found")
 	ErrFipsArtifactVersionLow      = errors.New("FIPS certified artifact version below required minimum")
 	ErrFipsArtifactVersionHigh     = errors.New("FIPS certified artifact version above certified maximum")
-	ErrGoFIPSNotAuto               = errors.New("go binary does not set GODEBUG fips140=auto")
+	ErrGoFIPSNotEnabled            = errors.New("go binary does not set GODEBUG fips140={auto,on,only}")
 	ErrGoFIPSNotCertified          = errors.New("go binary not built with GOFIPS140 FIPS module")
 )

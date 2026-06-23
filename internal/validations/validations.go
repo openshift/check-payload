@@ -122,17 +122,22 @@ func validateGoNativeFIPS(_ context.Context, _ string, baton *Baton) *types.Vali
 	if baton.GoNoCrypto {
 		return nil
 	}
-	// Go <= 1.25: fips140=auto doesn't exist (RH patch is 1.26+ only).
+	// Go <= 1.25: native FIPS doesn't exist.
 	if !goGreaterThanOrEqualTo126.Check(baton.GoVersion) {
 		return nil
 	}
-	// Go 1.26: dual mode. No fips140=auto means golang-fips/OpenSSL path.
-	if goVersionIs126.Check(baton.GoVersion) && !hasGodebugFIPS140Auto(baton) {
+	// Go 1.26: dual mode. No FIPS GODEBUG means golang-fips/OpenSSL path.
+	if goVersionIs126.Check(baton.GoVersion) && !hasGodebugFIPS140Enabled(baton) {
+		if hasGOFIPS140Certified(baton) {
+			klog.Warningf("go %s: GOFIPS140 is set but DefaultGODEBUG does not contain fips140={auto,on,only}; "+
+				"binary has native FIPS module compiled in but no build-time activation — falling through to legacy OpenSSL checks. "+
+				"Set //go:debug fips140=auto (or use RH go-toolset which injects fips140=on automatically)", baton.GoVersion)
+		}
 		return nil
 	}
-	// Go >= 1.27 OR (Go 1.26 + fips140=auto): enforce native FIPS rules.
-	if !hasGodebugFIPS140Auto(baton) {
-		return types.NewValidationError(types.ErrGoFIPSNotAuto)
+	// Go >= 1.27 OR (Go 1.26 + fips140 enabled): enforce native FIPS rules.
+	if !hasGodebugFIPS140Enabled(baton) {
+		return types.NewValidationError(types.ErrGoFIPSNotEnabled)
 	}
 	if !hasGOFIPS140Certified(baton) {
 		return types.NewValidationError(types.ErrGoFIPSNotCertified)
@@ -142,13 +147,21 @@ func validateGoNativeFIPS(_ context.Context, _ string, baton *Baton) *types.Vali
 	return nil
 }
 
-func hasGodebugFIPS140Auto(baton *Baton) bool {
+// fips140ActiveModes are DefaultGODEBUG values that activate the native
+// FIPS 140 module at runtime. "auto" defers to host FIPS state, "on" and
+// "only" force FIPS unconditionally (the RH Go 1.26 toolchain defaults
+// to "on" when GOFIPS140 is set).
+var fips140ActiveModes = map[string]bool{
+	"fips140=auto": true,
+	"fips140=on":   true,
+	"fips140=only": true,
+}
+
+func hasGodebugFIPS140Enabled(baton *Baton) bool {
 	for _, bs := range baton.GoBuildInfo.Settings {
-		// //go:debug directives are stored under DefaultGODEBUG in BuildInfo,
-		// not GODEBUG. The value is comma-separated key=value pairs.
 		if bs.Key == "DefaultGODEBUG" || bs.Key == "GODEBUG" {
 			for _, kv := range strings.Split(bs.Value, ",") {
-				if strings.TrimSpace(kv) == "fips140=auto" {
+				if fips140ActiveModes[strings.TrimSpace(kv)] {
 					return true
 				}
 			}
