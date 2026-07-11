@@ -268,16 +268,24 @@ files = ["/usr/local/bin/mta-cli"]
 #
 # ErrNotDynLinked ignores cite RHOAIENG-58626 (umbrella epic for multiple check-payload
 # FIPS findings across RHOAI). py-spy waivers: track RHOAIENG-58916. Work is broken
-# down by failing component/image in Jira. Pandoc rebuild/remediation: AIPCC-7795.
+# down by failing component/image in Jira. VS Code 1.112 apply-seccomp (sandbox-runtime):
+# RHAIENG-6078. Pandoc rebuild/remediation: AIPCC-7795.
 # -----------------------------------------------------------------------------
 
 # odh-workbench-codeserver-datascience-cpu-py312-rhel9
 [[payload.odh-workbench-codeserver-datascience-cpu-py312-rhel9.ignore]]
-# py-spy: track RHOAIENG-58916. rg (@vscode/ripgrep, IDE search): RHOAIENG-58626. Static upstream.
+# py-spy: track RHOAIENG-58916. rg (@vscode/ripgrep, IDE search): RHOAIENG-58626.
+# apply-seccomp: VS Code 1.112+ @anthropic-ai/sandbox-runtime seccomp BPF loaders;
+# statically linked, no cryptography, optional MCP/terminal sandbox only (RHAIENG-6078).
+# npm ships arm64/x64 only (no arch-specific variants for ppc64le/s390x image builds).
 error = "ErrNotDynLinked"
 files = [
     "/opt/app-root/bin/py-spy",
     "/usr/lib/code-server/lib/vscode/node_modules/@vscode/ripgrep/bin/rg",
+    "/usr/lib/code-server/lib/vscode/node_modules/@anthropic-ai/sandbox-runtime/dist/vendor/seccomp/arm64/apply-seccomp",
+    "/usr/lib/code-server/lib/vscode/node_modules/@anthropic-ai/sandbox-runtime/dist/vendor/seccomp/x64/apply-seccomp",
+    "/usr/lib/code-server/lib/vscode/node_modules/@anthropic-ai/sandbox-runtime/vendor/seccomp/arm64/apply-seccomp",
+    "/usr/lib/code-server/lib/vscode/node_modules/@anthropic-ai/sandbox-runtime/vendor/seccomp/x64/apply-seccomp",
 ]
 
 # odh-workbench-jupyter-datascience-cpu-py312-rhel9
