@@ -216,7 +216,7 @@ files = ["/usr/bin/hl-smi"]
 
 [[payload.openshift-enterprise-pod-container.ignore]]
 error = "ErrNotDynLinked"
-files = ["/usr/bin/pod"]
+files = ["/usr/bin/pod", "/pause"]
 
 [[payload.openshift-virtualization-virt-container.ignore]]
 error = "ErrNotDynLinked"
