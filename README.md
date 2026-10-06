@@ -194,3 +194,9 @@ A statically linked, CMVP-validated module such as `aws-lc-fips-sys` fails until
 ### Printer
 
 The printer aggregates all the results and formats into a table, csv, markdown, etc. If any errors are found then the process exits non-zero. A successful run returns 0.
+
+### Crypto evidence inventory
+
+See [crypto inventory](docs/crypto-inventory.md) for source reachability and
+shipped-binary inventory commands, the versioned JSON contract, and periodic
+collection guidance. Inventory findings do not gate releases.

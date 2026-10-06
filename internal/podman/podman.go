@@ -48,6 +48,17 @@ func Pull(ctx context.Context, image string, insecure bool) error {
 	return nil
 }
 
+// PullWithAuth pulls a scanner input using an optional registry auth file.
+func PullWithAuth(ctx context.Context, image, authFile string) error {
+	args := []string{"pull"}
+	if authFile != "" {
+		args = append(args, "--authfile", authFile)
+	}
+	args = append(args, image)
+	_, err := runPodman(ctx, args...)
+	return err
+}
+
 func Inspect(ctx context.Context, image string, args ...string) (string, error) {
 	cmdArgs := append([]string{"inspect", image}, args...)
 	stdout, err := runPodman(ctx, cmdArgs...)
@@ -80,7 +91,7 @@ again:
 		// Exit code 8 is used to differentiate valid java scan returns from other execution errors.
 		const javaExitCode = 8
 		var exiterr *exec.ExitError
-		if errors.As(err, &exiterr); exiterr.ExitCode() == javaExitCode {
+		if errors.As(err, &exiterr) && exiterr.ExitCode() == javaExitCode {
 			return stdout, errors.New(stderr.String())
 		}
 		return stdout, fmt.Errorf("podman error (args=%v) (stderr=%v) (error=%w)", args, stderr.String(), err)
