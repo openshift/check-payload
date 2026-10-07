@@ -563,6 +563,12 @@ files = [
   "/usr/local/bin/ssp.test"
 ]
 
+# See BIFROST-1338. The pod infrastructure image uses FROM scratch and has no OS layer.
+# Skip OS validation only; binary and crypto module checks still apply.
+[[payload.openshift-enterprise-pod-container.ignore]]
+error = "ErrOSNotCertified"
+tags = ["pod"]
+
 # FIPS status is non blocker for RHCOS10 in 5.0
 [[tag.rhel-coreos-10.ignore]]
 error = "ErrOSNotCertified"
