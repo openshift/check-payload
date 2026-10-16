@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Go crypto evidence inventory",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "policyVersion",
+    "scannerVersion",
+    "mode",
+    "artifacts",
+    "limitations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "crypto-inventory/v1"
+    },
+    "policyVersion": {
+      "type": "string"
+    },
+    "scannerVersion": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "source",
+        "binary",
+        "local",
+        "image",
+        "payload"
+      ]
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": [
+        "path",
+        "coverage",
+        "findings"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "coverage": {
+          "enum": [
+            "analyzed",
+            "failed",
+            "not-go",
+            "unresolved"
+          ]
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/finding"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "required": [
+        "package",
+        "origin",
+        "symbol",
+        "classification",
+        "reason",
+        "evidence",
+        "guard",
+        "pqcBoundary"
+      ],
+      "properties": {
+        "package": {
+          "type": "string",
+          "pattern": "^golang\\.org/x/crypto/"
+        },
+        "origin": {
+          "enum": [
+            "module",
+            "stdlib-vendor"
+          ]
+        },
+        "symbol": {
+          "type": "string"
+        },
+        "classification": {
+          "enum": [
+            "F1",
+            "F2",
+            "F3",
+            "unresolved"
+          ]
+        },
+        "classificationCandidates": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "F1",
+              "F2",
+              "F3"
+            ]
+          }
+        },
+        "evidence": {
+          "enum": [
+            "linked-function",
+            "source-reachable",
+            "source-reflection-candidate"
+          ]
+        },
+        "guard": {
+          "const": "unresolved"
+        },
+        "pqcBoundary": {
+          "enum": [
+            "unresolved",
+            "needs-boundary-context"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "callChain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

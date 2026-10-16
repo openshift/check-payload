@@ -299,6 +299,7 @@ func main() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configsCmd)
 	rootCmd.AddCommand(scanCmd)
+	rootCmd.AddCommand(newInventoryCommand())
 
 	// Add klog flags.
 	klogFlags := flag.NewFlagSet("", flag.ExitOnError)

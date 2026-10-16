@@ -1,0 +1,137 @@
+{
+  "version": "OCPSTRAT-3446-candidate-v1",
+  "source": "https://redhat.atlassian.net/browse/OCPSTRAT-3446",
+  "authoritativeDocument": "https://docs.google.com/document/d/1LthkvCK98uTzRY-IC9M_K3zlK_mELHGtrg8PeqiWQ8w/edit",
+  "status": "provisional-document-not-validated",
+  "rules": [
+    {
+      "packages": [
+        "chacha20",
+        "chacha20poly1305",
+        "poly1305",
+        "internal/poly1305",
+        "salsa20",
+        "salsa20/salsa",
+        "nacl/box",
+        "nacl/secretbox",
+        "cast5",
+        "twofish",
+        "tea",
+        "xtea",
+        "md4",
+        "ripemd160",
+        "argon2",
+        "scrypt",
+        "pkcs12",
+        "otr",
+        "bn256",
+        "openpgp/elgamal",
+        "openpgp/s2k"
+      ],
+      "classification": "F1",
+      "reason": "Candidate non-approved primitive; security use and FIPS-mode executability require verification."
+    },
+    {
+      "packages": [
+        "bcrypt",
+        "ssh/internal/bcrypt_pbkdf"
+      ],
+      "classification": "F2",
+      "reason": "Candidate password/key-unlocking use; requires an owned, justified, time-bound exception or remediation."
+    },
+    {
+      "packages": [
+        "blowfish"
+      ],
+      "classification": "unresolved",
+      "candidates": [
+        "F1",
+        "F2"
+      ],
+      "reason": "Cipher use is F1; bcrypt or SSH bcrypt_pbkdf substrate may qualify for F2. Binary presence alone does not establish the caller."
+    },
+    {
+      "packages": [
+        "blake2b",
+        "blake2s"
+      ],
+      "classification": "unresolved",
+      "candidates": [
+        "F1",
+        "F2"
+      ],
+      "reason": "F2 applies to non-security roles; security intent requires contextual review."
+    },
+    {
+      "packages": [
+        "curve25519"
+      ],
+      "classification": "F1",
+      "boundary": "needs-boundary-context",
+      "reason": "Candidate standalone X25519; verify operation and runtime guard."
+    },
+    {
+      "packages": [
+        "ssh"
+      ],
+      "classification": "unresolved",
+      "candidates": [
+        "F1",
+        "F2",
+        "F3"
+      ],
+      "boundary": "needs-boundary-context",
+      "reason": "SSH transport in verified FIPS mode may be F3; encrypted-key handling and legacy algorithms require operation-specific review."
+    },
+    {
+      "packages": [
+        "openpgp",
+        "openpgp/packet"
+      ],
+      "classification": "unresolved",
+      "candidates": [
+        "F1",
+        "F2",
+        "F3"
+      ],
+      "reason": "Distinguish encryption, DSA signing/verification, and RSA/ECDSA plus SHA-2 verification."
+    },
+    {
+      "packages": [
+        "sha3",
+        "hkdf",
+        "pbkdf2",
+        "ed25519"
+      ],
+      "classification": "F3",
+      "minimumModuleVersion": "v0.51.0",
+      "reason": "Candidate stdlib wrapper; verify delegation and the selected validated module."
+    },
+    {
+      "packages": [
+        "nacl/sign",
+        "nacl/auth",
+        "xts"
+      ],
+      "classification": "F3",
+      "reason": "Candidate approved algorithm with wrapper/glue outside the module; retain residual-risk evidence."
+    },
+    {
+      "packages": [
+        "cryptobyte",
+        "cryptobyte/asn1",
+        "x509roots",
+        "x509roots/fallback",
+        "terminal",
+        "ssh/terminal",
+        "ssh/agent",
+        "ssh/knownhosts",
+        "ocsp",
+        "acme",
+        "acme/autocert"
+      ],
+      "classification": "F3",
+      "reason": "Candidate parsing/protocol or approved-algorithm glue; primitive callees are inventoried separately."
+    }
+  ]
+}
