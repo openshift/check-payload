@@ -41,6 +41,11 @@ above). These additional for-version configurations are embedded into the
 binary during build time from the directories under
 [dist/releases/](./dist/releases/).
 
+### Retained Go crypto targets
+
+Use the opt-in `scan --detect-go-crypto` detector to report retained functions
+matching a small TOML target list. See [configuration and limitations](docs/go-crypto-targets.md).
+
 ### Scan an OpenShift release payload
 
 ```sh
@@ -194,9 +199,3 @@ A statically linked, CMVP-validated module such as `aws-lc-fips-sys` fails until
 ### Printer
 
 The printer aggregates all the results and formats into a table, csv, markdown, etc. If any errors are found then the process exits non-zero. A successful run returns 0.
-
-### Crypto evidence inventory
-
-See [crypto inventory](docs/crypto-inventory.md) for source reachability and
-shipped-binary inventory commands, the versioned JSON contract, and periodic
-collection guidance. Inventory findings do not gate releases.
