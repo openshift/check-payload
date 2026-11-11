@@ -15,6 +15,7 @@ certified_distributions = [
   "Red Hat Enterprise Linux release 10.0 (Coughlan)",
   "Red Hat Enterprise Linux release 10.1 (Coughlan)",
   "Red Hat Enterprise Linux release 10.2 (Coughlan)",
+  "Red Hat Enterprise Linux release 10.3 (Coughlan)",
 ]
 
 # Rust crates that provide crypto outside the system OpenSSL FIPS provider,
