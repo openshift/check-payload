@@ -12,6 +12,7 @@ certified_distributions = [
   "Red Hat Enterprise Linux release 9.6 (Plow)",
   "Red Hat Enterprise Linux release 9.7 (Plow)",
   "Red Hat Enterprise Linux release 9.8 (Plow)",
+  "Red Hat Enterprise Linux release 9.9 (Plow)",
   "Red Hat Enterprise Linux release 10.0 (Coughlan)",
   "Red Hat Enterprise Linux release 10.1 (Coughlan)",
   "Red Hat Enterprise Linux release 10.2 (Coughlan)",
