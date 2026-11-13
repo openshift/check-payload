@@ -1,3 +1,15 @@
+# Opt-in binary evidence targets (--detect-go-crypto). Exact package selectors
+# match every retained function in that package, including initialization.
+# These are review candidates, not compliance verdicts or a complete crypto list.
+go_crypto_targets = [
+  { package = "golang.org/x/crypto/argon2", reason = "Argon2 password derivation requires review of security use and FIPS-mode guards.", reference = "https://redhat.atlassian.net/browse/DPTP-5284" },
+  { package = "golang.org/x/crypto/scrypt", reason = "scrypt password derivation requires review of security use and FIPS-mode guards.", reference = "https://redhat.atlassian.net/browse/DPTP-5284" },
+  { package = "golang.org/x/crypto/blowfish", reason = "Blowfish may be a cipher or bcrypt substrate; review callers and security context.", reference = "https://redhat.atlassian.net/browse/DPTP-5284" },
+  { package = "golang.org/x/crypto/chacha20poly1305", reason = "ChaCha20-Poly1305 requires review of security use and FIPS-mode guards.", reference = "https://redhat.atlassian.net/browse/DPTP-5284" },
+  { package = "golang.org/x/crypto/sha3", symbol = "golang.org/x/crypto/sha3.NewLegacyKeccak256", reason = "Legacy Keccak requires review of security use.", reference = "https://redhat.atlassian.net/browse/DPTP-5284" },
+  { package = "golang.org/x/crypto/sha3", symbol = "golang.org/x/crypto/sha3.NewLegacyKeccak512", reason = "Legacy Keccak requires review of security use.", reference = "https://redhat.atlassian.net/browse/DPTP-5284" },
+]
+
 certified_distributions = [
   "Red Hat Enterprise Linux release 8.4 (Ootpa)",
   "Red Hat Enterprise Linux release 8.5 (Ootpa)",

@@ -35,6 +35,7 @@ func VersionInRange(installed, minVersion, maxVersion string) (atLeast, atMost b
 }
 
 type Config struct {
+	DetectGoCrypto          bool          `json:"detect_go_crypto"`
 	Components              []string      `json:"components"`
 	FailOnWarnings          bool          `json:"fail_on_warnings"`
 	FilterFile              string        `json:"filter_file"`
@@ -61,12 +62,13 @@ type Config struct {
 // ConfigFile is a part of Config. It contains fields that can be set via a
 // configuration files.
 type ConfigFile struct {
-	FilterFiles            []string `json:"filter_files" toml:"filter_files"`
-	FilterDirs             []string `json:"filter_dirs" toml:"filter_dirs"`
-	FilterImages           []string `json:"filter_images" toml:"filter_images"`
-	JavaDisabledAlgorithms []string `json:"java_fips_disabled_algorithms" toml:"java_fips_disabled_algorithms"`
-	CertifiedDistributions []string `json:"certified_distributions" toml:"certified_distributions"`
-	RustDeniedCrypto       []string `json:"rust_denied_crypto" toml:"rust_denied_crypto"`
+	GoCryptoTargets        []GoCryptoTarget `json:"go_crypto_targets" toml:"go_crypto_targets"`
+	FilterFiles            []string         `json:"filter_files" toml:"filter_files"`
+	FilterDirs             []string         `json:"filter_dirs" toml:"filter_dirs"`
+	FilterImages           []string         `json:"filter_images" toml:"filter_images"`
+	JavaDisabledAlgorithms []string         `json:"java_fips_disabled_algorithms" toml:"java_fips_disabled_algorithms"`
+	CertifiedDistributions []string         `json:"certified_distributions" toml:"certified_distributions"`
+	RustDeniedCrypto       []string         `json:"rust_denied_crypto" toml:"rust_denied_crypto"`
 
 	FIPSCertifiedModules []FipsModule `json:"fips_certified_modules" toml:"fips_certified_modules"`
 
@@ -181,4 +183,13 @@ func (ve *ValidationError) IsError() bool {
 
 func (ve *ValidationError) IsWarning() bool {
 	return ve.Level == Warning
+}
+
+// GoCryptoTarget selects an exact Go package and optionally an exact full symbol.
+// Reason and Reference explain why a retained function warrants human review.
+type GoCryptoTarget struct {
+	Package   string `json:"package" toml:"package"`
+	Symbol    string `json:"symbol,omitempty" toml:"symbol"`
+	Reason    string `json:"reason" toml:"reason"`
+	Reference string `json:"reference,omitempty" toml:"reference"`
 }
