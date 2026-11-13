@@ -2,7 +2,11 @@
 
 approvers:
   - ashwindasr
+  - locriandev
+  - fgallott
 reviewers:
   - ashwindasr
+  - locriandev
+  - fgallott
 
 component: "Node"
