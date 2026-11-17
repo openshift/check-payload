@@ -41,6 +41,11 @@ above). These additional for-version configurations are embedded into the
 binary during build time from the directories under
 [dist/releases/](./dist/releases/).
 
+### Retained Go crypto targets
+
+Use the opt-in `scan --detect-go-crypto` detector to report retained functions
+matching a small TOML target list. See [configuration and limitations](docs/go-crypto-targets.md).
+
 ### Scan an OpenShift release payload
 
 ```sh

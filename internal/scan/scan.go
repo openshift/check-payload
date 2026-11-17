@@ -381,6 +381,7 @@ func walkDirScan(ctx context.Context, cfg *types.Config, tag *v1.TagReference, c
 	for _, phase := range []imagePhase{
 		validateOSPhase,
 		scanBinariesPhase,
+		scanGoCryptoPhase,
 		validateModuleArtifactsPhase,
 	} {
 		phase(ctx, cfg, tag, component, mountPath, results)

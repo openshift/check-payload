@@ -19,6 +19,14 @@ func (c *ConfigFile) Validate() (err, warn error) {
 	validateOverlaps("filter_", &warn, c.FilterFiles, c.FilterDirs)
 
 	validateFIPSCertifiedModules(&err, c.FIPSCertifiedModules)
+	for i, target := range c.GoCryptoTargets {
+		if target.Package == "" || target.Reason == "" || strings.ContainsAny(target.Package, "*?[] ") || strings.HasPrefix(target.Package, "vendor/") {
+			multierr.AppendInto(&err, fmt.Errorf("go_crypto_targets[%d] requires an exact unvendored package and a reason", i))
+		}
+		if target.Symbol != "" && !strings.HasPrefix(target.Symbol, target.Package+".") {
+			multierr.AppendInto(&err, fmt.Errorf("go_crypto_targets[%d] symbol must belong to its package", i))
+		}
+	}
 
 	validateIgnoreLists("payload", &err, &warn, c.PayloadIgnores)
 	validateIgnoreLists("tag", &err, &warn, c.TagIgnores)
@@ -170,6 +178,8 @@ func (c *ConfigFile) Add(add *ConfigFile) error {
 	c.FilterImages = appendUniq("filter_images", &err, c.FilterImages, add.FilterImages)
 	c.CertifiedDistributions = appendUniq("certified_distributions", &err, c.CertifiedDistributions, add.CertifiedDistributions)
 	c.RustDeniedCrypto = appendUniq("rust_denied_crypto", &err, c.RustDeniedCrypto, add.RustDeniedCrypto)
+
+	c.GoCryptoTargets = append(c.GoCryptoTargets, add.GoCryptoTargets...)
 
 	c.FIPSCertifiedModules = mergeFIPSModules(c.FIPSCertifiedModules, add.FIPSCertifiedModules)
 

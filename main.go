@@ -45,6 +45,7 @@ var (
 	configFile, configForVersion          string
 	cpuProfile                            string
 	failOnWarnings                        bool
+	detectGoCrypto                        bool
 	filterFiles, filterDirs, filterImages []string
 	javaDisabledAlgorithms                []string
 	insecurePull                          bool
@@ -91,11 +92,19 @@ func main() {
 	scanCmd := &cobra.Command{
 		Use:   "scan",
 		Short: "Run a scan",
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			if err := getConfig(&config.ConfigFile); err != nil {
 				return err
 			}
 			config.FailOnWarnings = failOnWarnings
+			config.DetectGoCrypto = detectGoCrypto
+			if detectGoCrypto {
+				rpmScan, _ := cmd.Flags().GetBool("rpm-scan")
+				walkScan, _ := cmd.Flags().GetBool("walk-scan")
+				if rpmScan || (cmd.Name() == "node" && !walkScan) {
+					return fmt.Errorf("--detect-go-crypto requires directory-walk scanning; use node --walk-scan or omit --rpm-scan")
+				}
+			}
 			config.FilterFiles = append(config.FilterFiles, filterFiles...)
 			config.FilterDirs = append(config.FilterDirs, filterDirs...)
 			config.FilterImages = append(config.FilterImages, filterImages...)
@@ -158,6 +167,7 @@ func main() {
 	scanCmd.PersistentFlags().StringSliceVar(&filterDirs, "filter-dirs", nil, "")
 	scanCmd.PersistentFlags().StringSliceVar(&filterImages, "filter-images", nil, "")
 	scanCmd.PersistentFlags().StringSliceVar(&components, "components", nil, "Filter scans by component. Payload scans support a list of components. Local scans support at most one component, which is intended to match the local unpacked image.")
+	scanCmd.PersistentFlags().BoolVar(&detectGoCrypto, "detect-go-crypto", false, "report retained Go functions matching configured crypto targets")
 	scanCmd.PersistentFlags().BoolVar(&failOnWarnings, "fail-on-warnings", false, "fail on warnings")
 	scanCmd.PersistentFlags().BoolVar(&insecurePull, "insecure-pull", false, "use insecure pull")
 	scanCmd.PersistentFlags().IntVar(&limit, "limit", -1, "limit the number of pods scanned")
