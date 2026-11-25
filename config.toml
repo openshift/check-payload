@@ -298,6 +298,43 @@ files = [
   "/checode-linux-libc/ubi9/node_modules/@vscode/ripgrep-universal/bin/linux-s390x/rg",
 ]
 
+# @github/copilot-sdk-<platform> — the Copilot SDK platform package that
+# Dev Spaces 3.32+ (VS Code 1.143) bundles for its agent host. Ships two
+# statically linked Rust search tools; neither performs cryptographic
+# operations.
+#
+# ripgrep — a separate CI build of BurntSushi/ripgrep from the excepted
+# @vscode/ripgrep-universal one (GitHub build agent paths embedded; SHA-256
+# differs), inspected independently: zero references to OpenSSL, libcrypto,
+# FIPS APIs or any cipher/TLS primitives — the only hits are the same two
+# false-positive classes as above (Unicode script/property table tokens and
+# Rust thread-local-storage strings).
+#
+# tgrep — tgrep-cli, a trigram-index search server (per-repo indexed search
+# for Copilot SDK sessions). Zero crypto markers of any kind. It links
+# blake3, used solely for content
+# fingerprinting of indexed files (index build/stale-check bookkeeping) —
+# not for encryption, TLS, key agreement, or any data-protection function,
+# and blake3 is not on the rust_denied_crypto list.
+#
+# Binaries inspected from the npm tarballs
+# @github/copilot-sdk-{linux-x64,linux-arm64}@1.0.23-preview.5; byte-identity
+# with the shipped image verified via sha256. No s390x/ppc64le packages
+# exist, so only x64/arm64 paths are listed.
+# -----------------------------------------------------------------------------
+[[payload.devspaces-code-rhel9-container.ignore]]
+error = "ErrNotDynLinked"
+files = [
+  "/checode-linux-libc/ubi8/node_modules/@github/copilot-sdk-linux-x64/ripgrep/bin/linux-x64/rg",
+  "/checode-linux-libc/ubi9/node_modules/@github/copilot-sdk-linux-x64/ripgrep/bin/linux-x64/rg",
+  "/checode-linux-libc/ubi8/node_modules/@github/copilot-sdk-linux-arm64/ripgrep/bin/linux-arm64/rg",
+  "/checode-linux-libc/ubi9/node_modules/@github/copilot-sdk-linux-arm64/ripgrep/bin/linux-arm64/rg",
+  "/checode-linux-libc/ubi8/node_modules/@github/copilot-sdk-linux-x64/tgrep/bin/linux-x64/tgrep",
+  "/checode-linux-libc/ubi9/node_modules/@github/copilot-sdk-linux-x64/tgrep/bin/linux-x64/tgrep",
+  "/checode-linux-libc/ubi8/node_modules/@github/copilot-sdk-linux-arm64/tgrep/bin/linux-arm64/tgrep",
+  "/checode-linux-libc/ubi9/node_modules/@github/copilot-sdk-linux-arm64/tgrep/bin/linux-arm64/tgrep",
+]
+
 # -----------------------------------------------------------------------------
 # Open Data Hub (ODH) / RHOAI payloads: odh-workbench-* and odh-pipeline-runtime-*
 #
